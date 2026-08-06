@@ -1,0 +1,123 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DataSense.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+        x:Class="DataSense.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="DataSense"
+        Width="1000"
+        Height="700"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Styles>
+        <!-- Sidebar Button Style -->
+        <Style Selector="Button.sidebar-btn">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#AAAAAA" />
+            <Setter Property="Padding" Value="16, 12" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.sidebar-btn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#2A2A2A" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+        </Style>
+        <Style Selector="Button.sidebar-btn.active /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#2A2A2A" />
+            <Setter Property="Foreground" Value="#007ACC" />
+        </Style>
+        <!-- Active indicator bar inside active button -->
+        <Style Selector="Button.sidebar-btn.active">
+            <Setter Property="BorderThickness" Value="4,0,0,0" />
+            <Setter Property="BorderBrush" Value="#007ACC" />
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="240,*">
+        <!-- Sidebar Navigation (Left Column) -->
+        <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto" Background="#1A1A1A">
+            <!-- App Logo / Title Header -->
+            <StackPanel Grid.Row="0" Margin="24" Spacing="8">
+                <TextBlock Text="DATASENSE" 
+                           FontSize="20" 
+                           FontWeight="Black" 
+                           LetterSpacing="2"
+                           Foreground="#FFFFFF" />
+                <TextBlock Text="Ubuntu Desktop Analytics" 
+                           FontSize="11" 
+                           Foreground="#777777" />
+                <Separator Height="1" Background="#2A2A2A" Margin="0,12,0,0" />
+            </StackPanel>
+
+            <!-- Navigation Buttons -->
+            <StackPanel Grid.Row="1" Spacing="4" Margin="12,0">
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsDashboardActive}"
+                        Command="{Binding NavigateToDashboardCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="📊" Width="20" />
+                        <TextBlock Text="Dashboard" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsHistoryActive}"
+                        Command="{Binding NavigateToHistoryCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="📜" Width="20" />
+                        <TextBlock Text="History Log" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsSettingsActive}"
+                        Command="{Binding NavigateToSettingsCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="⚙️" Width="20" />
+                        <TextBlock Text="Settings" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsAboutActive}"
+                        Command="{Binding NavigateToAboutCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="ℹ️" Width="20" />
+                        <TextBlock Text="About" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- Sidebar Footer -->
+            <StackPanel Grid.Row="2" Margin="24" Spacing="4">
+                <TextBlock Text="V1.0.0-Beta" 
+                           FontSize="10" 
+                           Foreground="#555555" 
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Main Content Area (Right Column) -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,*" Background="#121212">
+            <!-- Header bar -->
+            <Border Grid.Row="0" Background="#161616" BorderBrush="#1C1C1C" BorderThickness="0,0,0,1" Padding="24,16">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" 
+                               Text="{Binding CurrentPage.Title}" 
+                               FontSize="20" 
+                               FontWeight="Bold" 
+                               Foreground="#FFFFFF" 
+                               VerticalAlignment="Center"/>
+                    <Border Grid.Column="1" Background="#262626" CornerRadius="12" Padding="12,6">
+                        <TextBlock Text="Online" FontSize="11" FontWeight="SemiBold" Foreground="#4CAF50" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Dynamic Page Content -->
+            <ContentControl Grid.Row="1" Content="{Binding CurrentPage}" Margin="24" />
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DataSense.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="600"
+             x:Class="DataSense.Views.AboutView"
+             x:DataType="vm:AboutViewModel">
+    
+    <Grid ColumnDefinitions="*,Auto" Margin="0,40">
+        <!-- Text details -->
+        <StackPanel Grid.Column="0" Spacing="24">
+            <StackPanel Spacing="8">
+                <TextBlock Text="DataSense Desktop" FontSize="28" FontWeight="Bold" Foreground="#FFFFFF" />
+                <TextBlock Text="Version 1.0.0-Beta (Core-Build)" FontSize="13" Foreground="#888888" />
+            </StackPanel>
+
+            <TextBlock Text="DataSense is a high-performance system utility and network telemetry aggregator engineered specifically for enterprise Ubuntu Linux workstations. It provides offline logs recording, real-time interface speed diagnostics, and local hardware monitoring metrics with zero web technologies, telemetry leakage, or third-party cloud requirements." 
+                       TextWrapping="Wrap" 
+                       LineHeight="20"
+                       FontSize="13" 
+                       Foreground="#CCCCCC" />
+
+            <!-- Tech Details Grid -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Built With Modern Technologies" FontSize="14" FontWeight="Bold" Foreground="#007ACC" />
+                <Separator Height="1" Background="#242424" />
+                
+                <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto" Margin="0,4">
+                    <!-- Row 0 -->
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Language Runtime:" Foreground="#666666" FontSize="13" Margin="0,0,0,8" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="C# 13 • .NET 10" Foreground="#E0E0E0" FontSize="13" Margin="0,0,0,8" />
+
+                    <!-- Row 1 -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="UI Framework:" Foreground="#666666" FontSize="13" Margin="0,0,0,8" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Avalonia UI 11 (X11 &amp; Wayland native)" Foreground="#E0E0E0" FontSize="13" Margin="0,0,0,8" />
+
+                    <!-- Row 2 -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Architecture:" Foreground="#666666" FontSize="13" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Pure MVVM &amp; Microsoft dependency injection" Foreground="#E0E0E0" FontSize="13" />
+                </Grid>
+            </StackPanel>
+
+            <!-- Legal -->
+            <TextBlock Text="© 2026 DataSense Core Team. Licensed under the MIT License." 
+                       FontSize="11" 
+                       Foreground="#444444" />
+        </StackPanel>
+
+        <!-- Graphic Emblem (Right Side) -->
+        <Border Grid.Column="1" Width="180" Height="180" Background="#1A1A1A" BorderBrush="#242424" BorderThickness="1" CornerRadius="12" Margin="40,0,0,0" VerticalAlignment="Top">
+            <Grid>
+                <!-- Stylized decorative C# cube outline representing the core app engine -->
+                <TextBlock Text="DS" FontSize="72" FontWeight="Black" Foreground="#222222" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Ellipse Width="100" Height="100" Stroke="#007ACC" StrokeThickness="4" Opacity="0.5" />
+                <Ellipse Width="80" Height="80" Stroke="#FF8C00" StrokeThickness="2" Opacity="0.25" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

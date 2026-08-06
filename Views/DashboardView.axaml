@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DataSense.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="600"
+             x:Class="DataSense.Views.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24">
+            <!-- Grid of Cards -->
+            <UniformGrid Columns="3" Rows="1">
+                <!-- Card 1: System -->
+                <Border Background="#1A1A1A" BorderBrush="#222222" BorderThickness="1" CornerRadius="8" Padding="20" Margin="0,0,16,0">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="System Status" FontSize="14" FontWeight="SemiBold" Foreground="#888888" />
+                            <TextBlock Grid.Column="1" Text="🖥️" FontSize="18" />
+                        </Grid>
+                        <TextBlock Text="Running" FontSize="24" FontWeight="Bold" Foreground="#4CAF50" />
+                        <TextBlock Text="Host: Ubuntu 24.04 LTS" FontSize="12" Foreground="#666666" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 2: Database -->
+                <Border Background="#1A1A1A" BorderBrush="#222222" BorderThickness="1" CornerRadius="8" Padding="20" Margin="0,0,16,0">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Database Storage" FontSize="14" FontWeight="SemiBold" Foreground="#888888" />
+                            <TextBlock Grid.Column="1" Text="💾" FontSize="18" />
+                        </Grid>
+                        <TextBlock Text="12.4 MB" FontSize="24" FontWeight="Bold" Foreground="#E0E0E0" />
+                        <TextBlock Text="Engine: SQLite (Offline)" FontSize="12" Foreground="#666666" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 3: Network -->
+                <Border Background="#1A1A1A" BorderBrush="#222222" BorderThickness="1" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Interface Adapter" FontSize="14" FontWeight="SemiBold" Foreground="#888888" />
+                            <TextBlock Grid.Column="1" Text="🌐" FontSize="18" />
+                        </Grid>
+                        <TextBlock Text="Ethernet" FontSize="24" FontWeight="Bold" Foreground="#007ACC" />
+                        <TextBlock Text="Monitoring: Standby" FontSize="12" Foreground="#666666" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- Lower Section (Mock Chart Placeholder) -->
+            <Border Background="#1A1A1A" BorderBrush="#222222" BorderThickness="1" CornerRadius="8" Padding="24" Height="280">
+                <Grid RowDefinitions="Auto,*">
+                    <TextBlock Grid.Row="0" Text="Real-Time Network Activity" FontSize="16" FontWeight="Bold" Foreground="#E0E0E0" Margin="0,0,0,16" />
+                    
+                    <!-- Graph Placeholder Graphics -->
+                    <Border Grid.Row="1" Background="#141414" BorderBrush="#242424" BorderThickness="1" CornerRadius="4">
+                        <Grid>
+                            <TextBlock Text="[ Graph Placeholder • Network Telemetry Offline ]" 
+                                       Foreground="#555555" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center"
+                                       FontSize="14" />
+                            
+                            <!-- Simple stylized canvas-like lines using border margins -->
+                            <Path Data="M 0,100 L 100,80 L 200,120 L 300,40 L 400,110 L 500,90 L 600,150 L 700,50" 
+                                  Stroke="#007ACC" 
+                                  StrokeThickness="2" 
+                                  VerticalAlignment="Bottom" 
+                                  Margin="20"
+                                  Opacity="0.15" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
