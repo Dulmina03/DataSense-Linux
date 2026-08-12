@@ -41,7 +41,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateToHistory()
     {
-        SetCurrentPage(App.Services?.GetRequiredService<HistoryViewModel>() ?? new HistoryViewModel());
+        SetCurrentPage(App.Services?.GetRequiredService<HistoryViewModel>() ?? throw new InvalidOperationException("HistoryViewModel resolution failed"));
     }
 
     [RelayCommand]

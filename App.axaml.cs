@@ -1,8 +1,10 @@
 using System;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using DataSense.Database;
 using DataSense.Infrastructure;
 using DataSense.Services;
 using DataSense.ViewModels;
@@ -23,9 +25,28 @@ public partial class App : Application
     {
         Services = DependencyInjection.ConfigureServices();
 
+        // Initialize database repository asynchronously
+        var repository = Services.GetRequiredService<INetworkUsageRepository>();
+        Task.Run(async () =>
+        {
+            try
+            {
+                await repository.InitializeAsync();
+                await repository.PurgeOldRecordsAsync(TimeSpan.FromDays(30));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Database initialization error: {ex}");
+            }
+        });
+
         // Start background network monitoring worker
         var worker = Services.GetRequiredService<INetworkMonitorWorker>();
         worker.Start();
+
+        // Start background network persistence service
+        var persistenceService = Services.GetRequiredService<INetworkPersistenceService>();
+        persistenceService.Start();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

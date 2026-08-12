@@ -1,8 +1,9 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using DataSense.Database;
+using DataSense.Services;
 using DataSense.ViewModels;
 using DataSense.Views;
-using DataSense.Services;
 
 namespace DataSense.Infrastructure;
 
@@ -12,9 +13,13 @@ public static class DependencyInjection
     {
         var services = new ServiceCollection();
 
+        // Database
+        services.AddSingleton<INetworkUsageRepository, SqliteNetworkUsageRepository>();
+
         // Services
         services.AddSingleton<INetworkMonitorService, LinuxNetworkMonitorService>();
         services.AddSingleton<INetworkMonitorWorker, NetworkMonitorWorker>();
+        services.AddSingleton<INetworkPersistenceService, NetworkPersistenceService>();
 
         // ViewModels
         services.AddSingleton<MainWindowViewModel>();

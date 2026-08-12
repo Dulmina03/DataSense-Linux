@@ -1,89 +1,69 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DataSense.ViewModels"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="600"
              x:Class="DataSense.Views.HistoryView"
              x:DataType="vm:HistoryViewModel">
-    
-    <Grid RowDefinitions="Auto,*,Auto" RowSpan="1">
-        <!-- Top Toolbar -->
-        <Border Grid.Row="0" Background="#1A1A1A" BorderBrush="#222222" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,16">
-            <Grid ColumnDefinitions="*,Auto,Auto">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-                    <TextBlock Text="Filter:" Foreground="#888888" VerticalAlignment="Center" FontSize="13" />
-                    <ComboBox SelectedIndex="0" Width="130" FontSize="12">
-                        <ComboBoxItem Content="All Entries" />
-                        <ComboBoxItem Content="Info" />
-                        <ComboBoxItem Content="Warnings" />
-                        <ComboBoxItem Content="System" />
-                    </ComboBox>
-                </StackPanel>
-                <Button Grid.Column="1" Content="Export CSV" Background="#242424" BorderBrush="#333333" BorderThickness="1" FontSize="12" Padding="12,6" Margin="0,0,8,0" IsEnabled="False" />
-                <Button Grid.Column="2" Content="Clear Logs" Background="#2D1919" Foreground="#FF6B6B" BorderBrush="#4A1E1E" BorderThickness="1" FontSize="12" Padding="12,6" IsEnabled="False" />
-            </Grid>
-        </Border>
+    <!-- Use Margin on Grid instead of Padding (Grid does not have Padding) -->
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16" Background="#121212">
+        <!-- Toolbar -->
+        <StackPanel Orientation="Horizontal" Spacing="12" Grid.Row="0">
+            <ComboBox ItemsSource="{Binding DatePresets}" SelectedItem="{Binding SelectedPreset}" Width="150"/>
+            <ComboBox ItemsSource="{Binding Interfaces}" SelectedItem="{Binding SelectedInterface}" Width="150"/>
+            <Button Content="Refresh" Command="{Binding RefreshCommand}"/>
+        </StackPanel>
 
-        <!-- Grid Logs Table Container -->
-        <Border Grid.Row="1" Background="#1A1A1A" BorderBrush="#222222" BorderThickness="1" CornerRadius="8" Padding="1">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <!-- Summary Cards -->
+        <StackPanel Orientation="Horizontal" Spacing="24" Grid.Row="1" Margin="0,16,0,8">
+            <Border Background="#1A1A1A" CornerRadius="6" Padding="12">
                 <StackPanel>
-                    <!-- Header -->
-                    <Grid ColumnDefinitions="140,100,*,80" Background="#242424" Margin="16,10">
-                        <TextBlock Grid.Column="0" Text="Timestamp" FontWeight="Bold" Foreground="#888888" FontSize="12" />
-                        <TextBlock Grid.Column="1" Text="Type" FontWeight="Bold" Foreground="#888888" FontSize="12" />
-                        <TextBlock Grid.Column="2" Text="Description" FontWeight="Bold" Foreground="#888888" FontSize="12" />
-                        <TextBlock Grid.Column="3" Text="Size (KB)" FontWeight="Bold" Foreground="#888888" FontSize="12" HorizontalAlignment="Right" />
-                    </Grid>
-                    
-                    <Separator Height="1" Background="#222222" Margin="0" />
-
-                    <!-- Row 1 -->
-                    <Grid ColumnDefinitions="140,100,*,80" Margin="16,12" Background="#1A1A1A">
-                        <TextBlock Grid.Column="0" Text="2026-08-06 14:32:01" Foreground="#888888" FontSize="12" />
-                        <TextBlock Grid.Column="1" Text="SYSTEM" Foreground="#007ACC" FontWeight="Bold" FontSize="12" />
-                        <TextBlock Grid.Column="2" Text="Application database instance initialized successfully." Foreground="#DDDDDD" FontSize="12" />
-                        <TextBlock Grid.Column="3" Text="N/A" Foreground="#888888" FontSize="12" HorizontalAlignment="Right" />
-                    </Grid>
-                    <Separator Height="1" Background="#222222" Margin="0" />
-
-                    <!-- Row 2 -->
-                    <Grid ColumnDefinitions="140,100,*,80" Margin="16,12" Background="#161616">
-                        <TextBlock Grid.Column="0" Text="2026-08-06 14:32:05" Foreground="#888888" FontSize="12" />
-                        <TextBlock Grid.Column="1" Text="INFO" Foreground="#4CAF50" FontWeight="Bold" FontSize="12" />
-                        <TextBlock Grid.Column="2" Text="Telemetry background worker registered (Standby)." Foreground="#DDDDDD" FontSize="12" />
-                        <TextBlock Grid.Column="3" Text="12" Foreground="#DDDDDD" FontSize="12" HorizontalAlignment="Right" />
-                    </Grid>
-                    <Separator Height="1" Background="#222222" Margin="0" />
-
-                    <!-- Row 3 -->
-                    <Grid ColumnDefinitions="140,100,*,80" Margin="16,12" Background="#1A1A1A">
-                        <TextBlock Grid.Column="0" Text="2026-08-06 14:35:10" Foreground="#888888" FontSize="12" />
-                        <TextBlock Grid.Column="1" Text="WARNING" Foreground="#FFC107" FontWeight="Bold" FontSize="12" />
-                        <TextBlock Grid.Column="2" Text="Data tracking limits not configured. Defaulting to unrestricted." Foreground="#DDDDDD" FontSize="12" />
-                        <TextBlock Grid.Column="3" Text="45" Foreground="#DDDDDD" FontSize="12" HorizontalAlignment="Right" />
-                    </Grid>
-                    <Separator Height="1" Background="#222222" Margin="0" />
-
-                    <!-- Row 4 -->
-                    <Grid ColumnDefinitions="140,100,*,80" Margin="16,12" Background="#161616">
-                        <TextBlock Grid.Column="0" Text="2026-08-06 14:40:00" Foreground="#888888" FontSize="12" />
-                        <TextBlock Grid.Column="1" Text="INFO" Foreground="#4CAF50" FontWeight="Bold" FontSize="12" />
-                        <TextBlock Grid.Column="2" Text="Initial system diagnostic probe completed successfully." Foreground="#DDDDDD" FontSize="12" />
-                        <TextBlock Grid.Column="3" Text="8" Foreground="#DDDDDD" FontSize="12" HorizontalAlignment="Right" />
-                    </Grid>
+                    <TextBlock Text="Total Downloaded" Foreground="#888888" FontSize="12"/>
+                    <TextBlock Text="{Binding TotalDownloadedText}" FontSize="14" Foreground="#FFFFFF"/>
                 </StackPanel>
-            </ScrollViewer>
-        </Border>
+            </Border>
+            <Border Background="#1A1A1A" CornerRadius="6" Padding="12">
+                <StackPanel>
+                    <TextBlock Text="Total Uploaded" Foreground="#888888" FontSize="12"/>
+                    <TextBlock Text="{Binding TotalUploadedText}" FontSize="14" Foreground="#FFFFFF"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#1A1A1A" CornerRadius="6" Padding="12">
+                <StackPanel>
+                    <TextBlock Text="Peak Download Speed" Foreground="#888888" FontSize="12"/>
+                    <TextBlock Text="{Binding PeakDownloadSpeedText}" FontSize="14" Foreground="#FFFFFF"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#1A1A1A" CornerRadius="6" Padding="12">
+                <StackPanel>
+                    <TextBlock Text="Samples" Foreground="#888888" FontSize="12"/>
+                    <TextBlock Text="{Binding SampleCountText}" FontSize="14" Foreground="#FFFFFF"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
 
-        <!-- Footer Pagination -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,16,0,0">
-            <TextBlock Grid.Column="0" Text="Showing 4 logs" VerticalAlignment="Center" Foreground="#555555" FontSize="11" />
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                <Button Content="Previous" IsEnabled="False" FontSize="11" Padding="10,4" />
-                <Button Content="Next" IsEnabled="False" FontSize="11" Padding="10,4" />
-            </StackPanel>
-        </Grid>
+        <!-- Data List -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <!-- ItemsControl can bind to an ObservableCollection via the Items property -->
+            <ItemsControl ItemsSource="{Binding Records}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:HistoryItemViewModel">
+                        <Border Background="#1A1A1A" CornerRadius="4" Padding="8" Margin="0,4,0,4">
+                            <Grid ColumnDefinitions="200,100,100,100,100,100">
+                                <TextBlock Text="{Binding TimestampText}" Grid.Column="0" Foreground="#CCCCCC"/>
+                                <TextBlock Text="{Binding InterfaceName}" Grid.Column="1" Foreground="#CCCCCC"/>
+                                <TextBlock Text="{Binding DownloadSpeedText}" Grid.Column="2" Foreground="#CCCCCC"/>
+                                <TextBlock Text="{Binding UploadSpeedText}" Grid.Column="3" Foreground="#CCCCCC"/>
+                                <TextBlock Text="{Binding TotalDownloadedText}" Grid.Column="4" Foreground="#CCCCCC"/>
+                                <TextBlock Text="{Binding TotalUploadedText}" Grid.Column="5" Foreground="#CCCCCC"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Loading overlay -->
+        <Border Background="#80000000" IsVisible="{Binding IsLoading}" Grid.RowSpan="3">
+            <TextBlock Text="Loading..." HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="16"/>
+        </Border>
     </Grid>
 </UserControl>

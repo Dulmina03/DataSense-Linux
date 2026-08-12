@@ -20,6 +20,7 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
     public double UploadSpeed { get; private set; }
     public long TotalBytesDownloaded { get; private set; }
     public long TotalBytesUploaded { get; private set; }
+    public long TotalDataUsage => TotalBytesDownloaded + TotalBytesUploaded;
     public NetworkUsage? LatestUsage { get; private set; }
 
     public event Action<NetworkUsage>? NetworkUsageUpdated;

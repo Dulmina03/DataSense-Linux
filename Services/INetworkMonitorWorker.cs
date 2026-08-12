@@ -10,6 +10,7 @@ public interface INetworkMonitorWorker
     double UploadSpeed { get; }
     long TotalBytesDownloaded { get; }
     long TotalBytesUploaded { get; }
+    long TotalDataUsage { get; } // Total downloaded + uploaded bytes
     NetworkUsage? LatestUsage { get; }
     
     event Action<NetworkUsage>? NetworkUsageUpdated;
