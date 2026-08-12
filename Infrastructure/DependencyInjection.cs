@@ -14,10 +14,11 @@ public static class DependencyInjection
 
         // Services
         services.AddSingleton<INetworkMonitorService, LinuxNetworkMonitorService>();
+        services.AddSingleton<INetworkMonitorWorker, NetworkMonitorWorker>();
 
         // ViewModels
         services.AddSingleton<MainWindowViewModel>();
-        services.AddTransient<DashboardViewModel>();
+        services.AddSingleton<DashboardViewModel>();
         services.AddTransient<HistoryViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<AboutViewModel>();

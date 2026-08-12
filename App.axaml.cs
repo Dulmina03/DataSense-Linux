@@ -22,11 +22,23 @@ public partial class App : Application
     {
         Services = DependencyInjection.ConfigureServices();
 
+        // Start background network monitoring worker
+        var worker = Services.GetRequiredService<INetworkMonitorWorker>();
+        worker.Start();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainWindow = Services.GetRequiredService<MainWindow>();
             mainWindow.DataContext = Services.GetRequiredService<MainWindowViewModel>();
             desktop.MainWindow = mainWindow;
+
+            desktop.Exit += (sender, e) =>
+            {
+                if (Services is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
