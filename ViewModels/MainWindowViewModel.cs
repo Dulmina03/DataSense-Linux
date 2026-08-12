@@ -32,7 +32,10 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateToDashboard()
     {
-        SetCurrentPage(App.Services?.GetRequiredService<DashboardViewModel>() ?? new DashboardViewModel());
+        if (App.Services != null)
+        {
+            SetCurrentPage(App.Services.GetRequiredService<DashboardViewModel>());
+        }
     }
 
     [RelayCommand]

@@ -8,6 +8,9 @@ public interface INetworkMonitorWorker
     string? ActiveInterface { get; }
     double DownloadSpeed { get; }
     double UploadSpeed { get; }
+    long TotalBytesDownloaded { get; }
+    long TotalBytesUploaded { get; }
+    NetworkUsage? LatestUsage { get; }
     
     event Action<NetworkUsage>? NetworkUsageUpdated;
 

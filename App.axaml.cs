@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using DataSense.Infrastructure;
+using DataSense.Services;
 using DataSense.ViewModels;
 using DataSense.Views;
 

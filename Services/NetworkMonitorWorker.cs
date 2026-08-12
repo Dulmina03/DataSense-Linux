@@ -18,6 +18,9 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
     public string? ActiveInterface { get; private set; }
     public double DownloadSpeed { get; private set; }
     public double UploadSpeed { get; private set; }
+    public long TotalBytesDownloaded { get; private set; }
+    public long TotalBytesUploaded { get; private set; }
+    public NetworkUsage? LatestUsage { get; private set; }
 
     public event Action<NetworkUsage>? NetworkUsageUpdated;
 
@@ -33,7 +36,7 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
             if (_cts != null) return; // Already running
 
             _cts = new CancellationTokenSource();
-            _runTask = RunAsync(_cts.Token);
+            _runTask = Task.Run(() => RunAsync(_cts.Token));
         }
     }
 
@@ -87,6 +90,9 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
                         ActiveInterface = usage.InterfaceName;
                         DownloadSpeed = usage.DownloadSpeed;
                         UploadSpeed = usage.UploadSpeed;
+                        TotalBytesDownloaded = usage.BytesReceived;
+                        TotalBytesUploaded = usage.BytesSent;
+                        LatestUsage = usage;
 
                         NetworkUsageUpdated?.Invoke(usage);
                     }
@@ -95,12 +101,16 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
                         ActiveInterface = activeIface;
                         DownloadSpeed = 0;
                         UploadSpeed = 0;
+                        TotalBytesDownloaded = 0;
+                        TotalBytesUploaded = 0;
 
-                        NetworkUsageUpdated?.Invoke(new NetworkUsage
+                        var fallbackUsage = new NetworkUsage
                         {
                             InterfaceName = activeIface,
                             Timestamp = DateTime.UtcNow
-                        });
+                        };
+                        LatestUsage = fallbackUsage;
+                        NetworkUsageUpdated?.Invoke(fallbackUsage);
                     }
                 }
                 else
@@ -108,12 +118,16 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
                     ActiveInterface = null;
                     DownloadSpeed = 0;
                     UploadSpeed = 0;
+                    TotalBytesDownloaded = 0;
+                    TotalBytesUploaded = 0;
 
-                    NetworkUsageUpdated?.Invoke(new NetworkUsage
+                    var fallbackUsage = new NetworkUsage
                     {
                         InterfaceName = "None",
                         Timestamp = DateTime.UtcNow
-                    });
+                    };
+                    LatestUsage = fallbackUsage;
+                    NetworkUsageUpdated?.Invoke(fallbackUsage);
                 }
             }
             catch (Exception ex)
