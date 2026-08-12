@@ -1,13 +1,16 @@
 using System;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using DataSense.Helpers;
 using DataSense.Models;
 using DataSense.Services;
 
 namespace DataSense.ViewModels;
 
-public partial class DashboardViewModel : ViewModelBase
+public partial class DashboardViewModel : ViewModelBase, IDisposable
 {
     private readonly INetworkMonitorWorker _networkMonitorWorker;
+    private bool _disposed;
 
     [ObservableProperty]
     private string _activeInterface = "Unknown";
@@ -19,6 +22,12 @@ public partial class DashboardViewModel : ViewModelBase
     private string _uploadSpeedText = "0.0 B/s";
 
     [ObservableProperty]
+    private string _totalDownloadedText = "0.00 B";
+
+    [ObservableProperty]
+    private string _totalUploadedText = "0.00 B";
+
+    [ObservableProperty]
     private string _statusText = "Standby";
 
     public override string Title => "Dashboard";
@@ -28,7 +37,13 @@ public partial class DashboardViewModel : ViewModelBase
         _networkMonitorWorker = networkMonitorWorker ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
         
         // Initialize with current values
-        UpdateValues(_networkMonitorWorker.ActiveInterface, _networkMonitorWorker.DownloadSpeed, _networkMonitorWorker.UploadSpeed);
+        UpdateValues(
+            _networkMonitorWorker.ActiveInterface,
+            _networkMonitorWorker.DownloadSpeed,
+            _networkMonitorWorker.UploadSpeed,
+            _networkMonitorWorker.TotalBytesDownloaded,
+            _networkMonitorWorker.TotalBytesUploaded
+        );
 
         // Subscribe to updates
         _networkMonitorWorker.NetworkUsageUpdated += OnNetworkUsageUpdated;
@@ -36,29 +51,43 @@ public partial class DashboardViewModel : ViewModelBase
 
     private void OnNetworkUsageUpdated(NetworkUsage usage)
     {
-        UpdateValues(usage.InterfaceName, usage.DownloadSpeed, usage.UploadSpeed);
+        Dispatcher.UIThread.Post(() =>
+        {
+            UpdateValues(
+                usage.InterfaceName,
+                usage.DownloadSpeed,
+                usage.UploadSpeed,
+                usage.BytesReceived,
+                usage.BytesSent
+            );
+        });
     }
 
-    private void UpdateValues(string? iface, double downloadSpeed, double uploadSpeed)
+    private void UpdateValues(string? iface, double downloadSpeed, double uploadSpeed, long bytesReceived, long bytesSent)
     {
         ActiveInterface = string.IsNullOrEmpty(iface) || iface == "None" ? "Disconnected" : iface;
-        DownloadSpeedText = FormatSpeed(downloadSpeed);
-        UploadSpeedText = FormatSpeed(uploadSpeed);
+        DownloadSpeedText = ByteFormatter.FormatSpeed(downloadSpeed);
+        UploadSpeedText = ByteFormatter.FormatSpeed(uploadSpeed);
+        TotalDownloadedText = ByteFormatter.FormatBytes(bytesReceived);
+        TotalUploadedText = ByteFormatter.FormatBytes(bytesSent);
         StatusText = string.IsNullOrEmpty(iface) || iface == "None" ? "Offline" : "Monitoring";
     }
 
-    private static string FormatSpeed(double bytesPerSecond)
+    public void Dispose()
     {
-        string[] units = { "B/s", "KB/s", "MB/s", "GB/s", "TB/s" };
-        int unitIndex = 0;
-        double speed = bytesPerSecond;
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
 
-        while (speed >= 1024 && unitIndex < units.Length - 1)
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
         {
-            speed /= 1024;
-            unitIndex++;
+            if (disposing)
+            {
+                _networkMonitorWorker.NetworkUsageUpdated -= OnNetworkUsageUpdated;
+            }
+            _disposed = true;
         }
-
-        return $"{speed:F1} {units[unitIndex]}";
     }
 }
