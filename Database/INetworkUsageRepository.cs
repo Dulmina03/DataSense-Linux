@@ -22,4 +22,19 @@ public interface INetworkUsageRepository
 
     /// <summary>Returns the distinct interface names stored in the database.</summary>
     Task<IEnumerable<string>> GetInterfaceNamesAsync();
+
+    /// <summary>
+    /// Returns today's total downloaded and uploaded bytes using the MAX–MIN
+    /// cumulative-counter approach for the current UTC calendar day.
+    /// Negative deltas (counter resets) are clamped to 0.
+    /// Returns (0, 0) when no records exist for today.
+    /// </summary>
+    Task<(long BytesDownloaded, long BytesUploaded)> GetTodaySummaryAsync(string? interfaceName = null);
+
+    /// <summary>
+    /// Returns the current UTC calendar month's total downloaded and uploaded bytes
+    /// by summing each day's MAX–MIN cumulative-counter deltas.
+    /// Returns (0, 0) when no records exist for the current month.
+    /// </summary>
+    Task<(long BytesDownloaded, long BytesUploaded)> GetMonthSummaryAsync(string? interfaceName = null);
 }

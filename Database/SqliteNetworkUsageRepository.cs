@@ -301,4 +301,39 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         return names;
     }
+
+    /// <summary>
+    /// Returns today's downloaded and uploaded bytes (UTC calendar day) by
+    /// delegating to GetDailyUsageAsync with today's date range.
+    /// Reuses MAX–MIN clamping already in that method.
+    /// </summary>
+    public async Task<(long BytesDownloaded, long BytesUploaded)> GetTodaySummaryAsync(string? interfaceName = null)
+    {
+        var utcNow = DateTime.UtcNow;
+        var start  = utcNow.Date;
+        var end    = utcNow.Date.AddDays(1).AddTicks(-1);
+
+        var daily = await GetDailyUsageAsync(start, end, interfaceName);
+        var row   = daily.FirstOrDefault();
+
+        return row is null ? (0L, 0L) : (row.BytesDownloaded, row.BytesUploaded);
+    }
+
+    /// <summary>
+    /// Returns the current UTC calendar month's downloaded and uploaded bytes by
+    /// summing each day's already-clamped delta returned by GetDailyUsageAsync.
+    /// </summary>
+    public async Task<(long BytesDownloaded, long BytesUploaded)> GetMonthSummaryAsync(string? interfaceName = null)
+    {
+        var utcNow     = DateTime.UtcNow;
+        var monthStart = new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var monthEnd   = monthStart.AddMonths(1).AddTicks(-1);
+
+        var daily  = await GetDailyUsageAsync(monthStart, monthEnd, interfaceName);
+        long dl    = 0;
+        long ul    = 0;
+        foreach (var d in daily) { dl += d.BytesDownloaded; ul += d.BytesUploaded; }
+
+        return (dl, ul);
+    }
 }
