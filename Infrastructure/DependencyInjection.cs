@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddSingleton<INetworkMonitorService, LinuxNetworkMonitorService>();
         services.AddSingleton<INetworkMonitorWorker, NetworkMonitorWorker>();
         services.AddSingleton<INetworkPersistenceService, NetworkPersistenceService>();
+        services.AddSingleton<INetworkConnectionService, LinuxNetworkConnectionService>();
 
         // ViewModels
         // DashboardViewModel is Singleton: it subscribes to the monitor worker event

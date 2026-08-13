@@ -19,7 +19,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 {
     private readonly INetworkMonitorWorker    _networkMonitorWorker;
     private readonly INetworkUsageRepository  _repository;
+    private readonly INetworkConnectionService _connectionService;
     private bool _disposed;
+    private int _tickCount = 4; // Start at 4 so first tick triggers details load immediately
 
     // ── Live monitoring properties ──────────────────────────────────────────
 
@@ -50,6 +52,23 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     // GridLength properties so AXAML compiled bindings can drive ColumnDefinition.Width
     [ObservableProperty] private GridLength _downloadColumnWidth = new GridLength(1, GridUnitType.Star);
     [ObservableProperty] private GridLength _uploadColumnWidth   = new GridLength(1, GridUnitType.Star);
+
+    // ── Connection details properties ───────────────────────────────────────
+
+    [ObservableProperty] private string _connectionType = "—";
+    [ObservableProperty] private string _connectionState = "—";
+    [ObservableProperty] private string _connectionName = "—";
+    [ObservableProperty] private string _ipv4Address = "—";
+    [ObservableProperty] private string _ipv6Address = "—";
+    [ObservableProperty] private string _gateway = "—";
+    [ObservableProperty] private string _dnsServers = "—";
+    [ObservableProperty] private string _macAddress = "—";
+    [ObservableProperty] private string _wifiSsid = "—";
+    [ObservableProperty] private int _wifiSignalStrength = -1;
+    [ObservableProperty] private string _wifiSignalStrengthText = "—";
+    [ObservableProperty] private string _linkSpeed = "—";
+    [ObservableProperty] private bool _hasWifi = false;
+    [ObservableProperty] private bool _isConnectionDetailsLoading = false;
 
     // ── Chart ───────────────────────────────────────────────────────────────
 
@@ -85,10 +104,12 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     public DashboardViewModel(
         INetworkMonitorWorker   networkMonitorWorker,
-        INetworkUsageRepository repository)
+        INetworkUsageRepository repository,
+        INetworkConnectionService connectionService)
     {
         _networkMonitorWorker = networkMonitorWorker ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
         _repository           = repository           ?? throw new ArgumentNullException(nameof(repository));
+        _connectionService    = connectionService    ?? throw new ArgumentNullException(nameof(connectionService));
 
         // Populate live card with current worker state immediately
         UpdateLiveValues(
@@ -103,6 +124,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
         // Kick off async analytics (fire-and-forget; errors surfaced via AnalyticsError)
         _ = LoadAnalyticsAsync();
+        
+        // Initial load of connection details
+        _ = LoadConnectionDetailsAsync(_networkMonitorWorker.ActiveInterface);
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -127,6 +151,14 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 usage.BytesReceived,
                 usage.BytesSent);
         });
+
+        // Query connection details every 5 seconds (5 ticks)
+        _tickCount++;
+        if (_tickCount >= 5)
+        {
+            _tickCount = 0;
+            _ = LoadConnectionDetailsAsync(usage.InterfaceName);
+        }
     }
 
     private void UpdateLiveValues(
@@ -279,6 +311,60 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         }
 
         return items;
+    }
+
+    private async Task LoadConnectionDetailsAsync(string? interfaceName)
+    {
+        if (string.IsNullOrEmpty(interfaceName) || interfaceName == "None" || interfaceName == "Disconnected")
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                ConnectionType = "—";
+                ConnectionState = "Disconnected";
+                ConnectionName = "—";
+                Ipv4Address = "—";
+                Ipv6Address = "—";
+                Gateway = "—";
+                DnsServers = "—";
+                MacAddress = "—";
+                WifiSsid = "—";
+                WifiSignalStrength = -1;
+                WifiSignalStrengthText = "—";
+                LinkSpeed = "—";
+                HasWifi = false;
+            });
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() => IsConnectionDetailsLoading = true);
+
+        try
+        {
+            var details = await _connectionService.GetConnectionDetailsAsync(interfaceName);
+            
+            Dispatcher.UIThread.Post(() =>
+            {
+                ConnectionType = details.ConnectionType;
+                ConnectionState = details.ConnectionState;
+                ConnectionName = details.ConnectionName;
+                Ipv4Address = details.Ipv4Address;
+                Ipv6Address = details.Ipv6Address;
+                Gateway = details.Gateway;
+                DnsServers = details.DnsServers;
+                MacAddress = details.MacAddress;
+                WifiSsid = details.WifiSsid;
+                WifiSignalStrength = details.WifiSignalStrength;
+                WifiSignalStrengthText = details.WifiSignalStrength >= 0 ? $"{details.WifiSignalStrength}%" : "—";
+                LinkSpeed = details.LinkSpeed;
+                HasWifi = details.ConnectionType.Equals("wifi", StringComparison.OrdinalIgnoreCase);
+                IsConnectionDetailsLoading = false;
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load connection details: {ex.Message}");
+            Dispatcher.UIThread.Post(() => IsConnectionDetailsLoading = false);
+        }
     }
 
     // ────────────────────────────────────────────────────────────────────────
