@@ -1,14 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataSense.Database;
 using DataSense.Helpers;
-using DataSense.Models;
 
 namespace DataSense.ViewModels;
 
@@ -23,163 +20,143 @@ public enum HistoryDatePreset
 public partial class HistoryViewModel : ViewModelBase
 {
     private readonly INetworkUsageRepository _repository;
+    private bool _initialising = true;
 
     public HistoryViewModel(INetworkUsageRepository repository)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        // defaults
-        SelectedPreset = HistoryDatePreset.Last7Days;
-        SelectedInterface = "All";
-        PageSize = 50;
-        CurrentPage = 0;
-        // initial load (fire‑and‑forget, UI will react to IsLoading)
-        _ = LoadHistoryAsync();
+
+        // Set backing fields directly so OnChanged callbacks don't fire during construction
+        _selectedPreset    = HistoryDatePreset.Last7Days;
+        _selectedInterface = "All";
+        _initialising      = false;
+
+        _ = LoadAsync();
     }
 
-    // Observable collections & flags
-    public ObservableCollection<HistoryItemViewModel> Records { get; } = new();
+    // ── Observable Collections ─────────────────────────────────────────────────
 
-    // Collections for ComboBoxes
-    public IEnumerable<HistoryDatePreset> DatePresets => Enum.GetValues(typeof(HistoryDatePreset)).Cast<HistoryDatePreset>();
+    /// <summary>One row per calendar day, most-recent first.</summary>
+    public ObservableCollection<DailyUsageViewModel> DailyUsage { get; } = new();
+
+    /// <summary>Interface names available in the DB (populated on first load).</summary>
     public ObservableCollection<string> Interfaces { get; } = new();
 
-    [ObservableProperty]
-    private string _title = "History Log";
+    /// <summary>All date-range preset values for the first ComboBox.</summary>
+    public HistoryDatePreset[] DatePresets { get; } =
+        (HistoryDatePreset[])Enum.GetValues(typeof(HistoryDatePreset));
 
-    [ObservableProperty]
-    private bool _isLoading;
+    // ── State ──────────────────────────────────────────────────────────────────
 
-    [ObservableProperty]
-    private bool _isEmpty;
+    [ObservableProperty] private bool   _isLoading;
+    [ObservableProperty] private bool   _isEmpty;
+    [ObservableProperty] private string? _errorMessage;
 
-    [ObservableProperty]
-    private string? _errorMessage;
+    // ── Filter state ───────────────────────────────────────────────────────────
 
-    // Pagination / filter state
-    public int PageSize { get; }
+    [ObservableProperty] private HistoryDatePreset _selectedPreset;
+    [ObservableProperty] private string            _selectedInterface = "All";
+    [ObservableProperty] private DateTime          _customStart = DateTime.Today;
+    [ObservableProperty] private DateTime          _customEnd   = DateTime.Today;
 
-    [ObservableProperty]
-    private int _currentPage;
+    // ── Summary totals ─────────────────────────────────────────────────────────
 
-    [ObservableProperty]
-    private int _totalPages;
+    [ObservableProperty] private string _totalDownloadedText = "0 B";
+    [ObservableProperty] private string _totalUploadedText   = "0 B";
+    [ObservableProperty] private string _totalUsageText      = "0 B";
+    [ObservableProperty] private string _dayCountText        = "0";
 
-    [ObservableProperty]
-    private int _totalRecords;
+    // ── ViewModelBase ──────────────────────────────────────────────────────────
 
-    [ObservableProperty]
-    private HistoryDatePreset _selectedPreset;
+    public override string Title => "History Log";
 
-    [ObservableProperty]
-    private DateTime _customStart = DateTime.Today;
+    // ── Commands ───────────────────────────────────────────────────────────────
 
-    [ObservableProperty]
-    private DateTime _customEnd = DateTime.Today;
+    [RelayCommand]
+    private async Task Refresh() => await LoadAsync();
 
-    [ObservableProperty]
-    private string _selectedInterface;
+    // ── Property-change callbacks ──────────────────────────────────────────────
 
-    // Summary texts
-    [ObservableProperty]
-    private string _totalDownloadedText = "0 B";
-
-    [ObservableProperty]
-    private string _totalUploadedText = "0 B";
-
-    [ObservableProperty]
-    private string _peakDownloadSpeedText = "0 B/s";
-
-    [ObservableProperty]
-    private string _sampleCountText = "0";
-
-    // Commands
-    public IRelayCommand RefreshCommand => new RelayCommand(async () => await RefreshAsync());
-    public IRelayCommand NextPageCommand => new RelayCommand(async () => await ChangePageAsync(CurrentPage + 1), () => CurrentPage + 1 < TotalPages);
-    public IRelayCommand PrevPageCommand => new RelayCommand(async () => await ChangePageAsync(CurrentPage - 1), () => CurrentPage > 0);
-
-    private async Task RefreshAsync()
+    partial void OnSelectedPresetChanged(HistoryDatePreset value)
     {
-        CurrentPage = 0;
-        await LoadHistoryAsync();
+        if (!_initialising) _ = LoadAsync();
     }
 
-    private async Task ChangePageAsync(int newPage)
+    partial void OnSelectedInterfaceChanged(string value)
     {
-        if (newPage < 0 || newPage >= TotalPages) return;
-        CurrentPage = newPage;
-        await LoadHistoryAsync();
+        if (!_initialising) _ = LoadAsync();
     }
+
+    // ── Core load logic ────────────────────────────────────────────────────────
 
     private (DateTime start, DateTime end) ComputeDateRange()
     {
         var utcNow = DateTime.UtcNow;
         return SelectedPreset switch
         {
-            HistoryDatePreset.Today => (utcNow.Date, utcNow.Date.AddDays(1).AddTicks(-1)),
-            HistoryDatePreset.Last7Days => (utcNow.AddDays(-7), utcNow),
-            HistoryDatePreset.Last30Days => (utcNow.AddDays(-30), utcNow),
-            HistoryDatePreset.Custom => (CustomStart.ToUniversalTime(), CustomEnd.ToUniversalTime()),
-            _ => (utcNow.AddDays(-7), utcNow)
+            HistoryDatePreset.Today       => (utcNow.Date, utcNow.Date.AddDays(1).AddTicks(-1)),
+            HistoryDatePreset.Last7Days   => (utcNow.Date.AddDays(-6), utcNow.Date.AddDays(1).AddTicks(-1)),
+            HistoryDatePreset.Last30Days  => (utcNow.Date.AddDays(-29), utcNow.Date.AddDays(1).AddTicks(-1)),
+            HistoryDatePreset.Custom      => (CustomStart.ToUniversalTime(), CustomEnd.ToUniversalTime().AddDays(1).AddTicks(-1)),
+            _                             => (utcNow.Date.AddDays(-6), utcNow.Date.AddDays(1).AddTicks(-1))
         };
     }
 
-    private async Task LoadHistoryAsync()
+    private async Task LoadAsync()
     {
-        IsLoading = true;
+        IsLoading    = true;
         ErrorMessage = null;
-        Records.Clear();
-        // Populate interface list (reset)
-        Interfaces.Clear();
-        Interfaces.Add("All");
+        DailyUsage.Clear();
+
         try
         {
+            // 1. Populate interface list from DB (once is enough but harmless to repeat)
+            var ifaces = await _repository.GetInterfaceNamesAsync();
+            var ifaceList = ifaces.ToList();
+
+            var currentInterface = SelectedInterface; // capture before we clear
+            Interfaces.Clear();
+            Interfaces.Add("All");
+            foreach (var iface in ifaceList)
+                Interfaces.Add(iface);
+
+            // Restore selection if it still exists, otherwise fall back to "All"
+            if (!Interfaces.Contains(currentInterface))
+            {
+                _initialising = true;           // suppress callback
+                SelectedInterface = "All";
+                _initialising = false;
+            }
+
+            // 2. Query aggregated daily data
             var (start, end) = ComputeDateRange();
-            string? iface = SelectedInterface == "All" ? null : SelectedInterface;
-            var (records, totalCount) = await _repository.GetHistoryPagedAsync(start, end, iface, CurrentPage, PageSize);
+            string? ifaceFilter = SelectedInterface == "All" ? null : SelectedInterface;
 
-            foreach (var rec in records)
-            {
-                Records.Add(new HistoryItemViewModel(rec));
-            }
+            var daily = (await _repository.GetDailyUsageAsync(start, end, ifaceFilter)).ToList();
 
-            // Update interface collection based on loaded records
-            foreach (var ifaceName in records.Select(r => r.InterfaceName).Distinct())
-            {
-                if (!Interfaces.Contains(ifaceName)) Interfaces.Add(ifaceName);
-            }
+            foreach (var row in daily)
+                DailyUsage.Add(new DailyUsageViewModel(row));
 
-            TotalRecords = totalCount;
-            TotalPages = (int)Math.Ceiling((double)TotalRecords / PageSize);
-            IsEmpty = !Records.Any();
+            // 3. Compute period totals from the daily aggregates (not from raw counters)
+            long totalDl = daily.Sum(r => r.BytesDownloaded);
+            long totalUl = daily.Sum(r => r.BytesUploaded);
+            long total   = totalDl + totalUl;
 
-            if (records.Any())
-            {
-                var totalDown = records.Sum(r => r.BytesReceived);
-                var totalUp = records.Sum(r => r.BytesSent);
-                var peakDown = records.Max(r => r.DownloadSpeed);
+            TotalDownloadedText = ByteFormatter.FormatBytes(totalDl);
+            TotalUploadedText   = ByteFormatter.FormatBytes(totalUl);
+            TotalUsageText      = ByteFormatter.FormatBytes(total);
+            DayCountText        = daily.Count.ToString();
 
-                TotalDownloadedText = ByteFormatter.FormatBytes(totalDown);
-                TotalUploadedText = ByteFormatter.FormatBytes(totalUp);
-                PeakDownloadSpeedText = ByteFormatter.FormatSpeed(peakDown);
-                SampleCountText = totalCount.ToString();
-            }
-            else
-            {
-                TotalDownloadedText = "0 B";
-                TotalUploadedText = "0 B";
-                PeakDownloadSpeedText = "0 B/s";
-                SampleCountText = "0";
-            }
+            IsEmpty = !daily.Any();
         }
         catch (Exception ex)
         {
             ErrorMessage = $"Failed to load history: {ex.Message}";
+            IsEmpty      = true;
         }
         finally
         {
             IsLoading = false;
-            (NextPageCommand as RelayCommand)?.NotifyCanExecuteChanged();
-            (PrevPageCommand as RelayCommand)?.NotifyCanExecuteChanged();
         }
     }
 }

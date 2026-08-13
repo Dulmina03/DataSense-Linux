@@ -220,4 +220,85 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         await command.ExecuteNonQueryAsync();
     }
+
+    /// <summary>
+    /// Aggregates usage by day using MIN/MAX of cumulative counters.
+    /// Daily download = MAX(BytesReceived) - MIN(BytesReceived) for that UTC day.
+    /// Counter resets (where delta would be negative) are clamped to 0.
+    /// Results are ordered by day descending (most recent first).
+    /// </summary>
+    public async Task<IEnumerable<DailyUsageRecord>> GetDailyUsageAsync(
+        DateTime start,
+        DateTime end,
+        string? interfaceName = null)
+    {
+        var results = new List<DailyUsageRecord>();
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT
+                date(Timestamp) AS Day,
+                MIN(BytesReceived)  AS MinRx,
+                MAX(BytesReceived)  AS MaxRx,
+                MIN(BytesSent)      AS MinTx,
+                MAX(BytesSent)      AS MaxTx
+            FROM NetworkUsageRecords
+            WHERE Timestamp >= @Start AND Timestamp <= @End";
+
+        if (!string.IsNullOrEmpty(interfaceName))
+            sql += " AND InterfaceName = @InterfaceName";
+
+        sql += " GROUP BY date(Timestamp) ORDER BY Day DESC;";
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
+        cmd.Parameters.AddWithValue("@End",   end.ToString("o"));
+        if (!string.IsNullOrEmpty(interfaceName))
+            cmd.Parameters.AddWithValue("@InterfaceName", interfaceName);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var day      = DateTime.Parse(reader.GetString(0));
+            long minRx   = reader.GetInt64(1);
+            long maxRx   = reader.GetInt64(2);
+            long minTx   = reader.GetInt64(3);
+            long maxTx   = reader.GetInt64(4);
+
+            // Clamp to 0 in case of counter resets
+            long dl = Math.Max(0, maxRx - minRx);
+            long ul = Math.Max(0, maxTx - minTx);
+
+            results.Add(new DailyUsageRecord
+            {
+                Day             = day,
+                BytesDownloaded = dl,
+                BytesUploaded   = ul,
+            });
+        }
+
+        return results;
+    }
+
+    /// <summary>Returns distinct interface names recorded in the database.</summary>
+    public async Task<IEnumerable<string>> GetInterfaceNamesAsync()
+    {
+        var names = new List<string>();
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        const string sql = "SELECT DISTINCT InterfaceName FROM NetworkUsageRecords ORDER BY InterfaceName;";
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            names.Add(reader.GetString(0));
+
+        return names;
+    }
 }
