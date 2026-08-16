@@ -204,10 +204,6 @@
                                 <TextBlock Text="📊" FontSize="14"/>
                                 <TextBlock Text="Usage Summary" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
                             </StackPanel>
-                            <Button Grid.Column="1" Content="↻  Refresh"
-                                    Command="{Binding RefreshAnalyticsCommand}"
-                                    Background="#252540" Foreground="#A0A0C0"
-                                    BorderBrush="#3A3A5C" CornerRadius="6" Padding="12,5" FontSize="12"/>
                         </Grid>
 
                         <Grid ColumnDefinitions="*,16,*">

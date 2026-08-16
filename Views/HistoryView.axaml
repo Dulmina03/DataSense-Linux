@@ -60,10 +60,6 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
-
-                    <Button Content="↻  Refresh" Command="{Binding RefreshCommand}"
-                            Background="#252540" Foreground="#A0A0C0"
-                            BorderBrush="#3A3A5C" CornerRadius="6" Padding="14,6"/>
                 </StackPanel>
 
                 <!-- Day count badge -->

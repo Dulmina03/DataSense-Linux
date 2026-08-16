@@ -7,6 +7,8 @@ using CommunityToolkit.Mvvm.Input;
 using DataSense.Database;
 using DataSense.Helpers;
 
+using DataSense.Services;
+
 namespace DataSense.ViewModels;
 
 public enum HistoryDatePreset
@@ -17,19 +19,25 @@ public enum HistoryDatePreset
     Custom
 }
 
-public partial class HistoryViewModel : ViewModelBase
+public partial class HistoryViewModel : ViewModelBase, IDisposable
 {
     private readonly INetworkUsageRepository _repository;
+    private readonly INetworkMonitorWorker   _networkMonitorWorker;
     private bool _initialising = true;
+    private bool _disposed;
+    private int  _tickCount = 4; // Start at 4 so first tick triggers immediately if needed
 
-    public HistoryViewModel(INetworkUsageRepository repository)
+    public HistoryViewModel(INetworkUsageRepository repository, INetworkMonitorWorker networkMonitorWorker)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _repository           = repository ?? throw new ArgumentNullException(nameof(repository));
+        _networkMonitorWorker = networkMonitorWorker ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
 
         // Set backing fields directly so OnChanged callbacks don't fire during construction
         _selectedPreset    = HistoryDatePreset.Last7Days;
         _selectedInterface = "All";
         _initialising      = false;
+
+        _networkMonitorWorker.NetworkUsageUpdated += OnNetworkUsageUpdated;
 
         _ = LoadAsync();
     }
@@ -74,8 +82,7 @@ public partial class HistoryViewModel : ViewModelBase
 
     // ── Commands ───────────────────────────────────────────────────────────────
 
-    [RelayCommand]
-    private async Task Refresh() => await LoadAsync();
+    // Refresh command removed - auto-updates every 5 seconds
 
     // ── Property-change callbacks ──────────────────────────────────────────────
 
@@ -122,9 +129,22 @@ public partial class HistoryViewModel : ViewModelBase
         };
     }
 
-    private async Task LoadAsync()
+    private void OnNetworkUsageUpdated(Models.NetworkUsage usage)
     {
-        IsLoading    = true;
+        _tickCount++;
+        if (_tickCount >= 5)
+        {
+            _tickCount = 0;
+            _ = LoadAsync(showLoading: false);
+        }
+    }
+
+    private async Task LoadAsync(bool showLoading = true)
+    {
+        if (showLoading)
+        {
+            IsLoading    = true;
+        }
         IsDataState  = false;
         ErrorMessage = null;
         DailyUsage.Clear();
@@ -186,7 +206,26 @@ public partial class HistoryViewModel : ViewModelBase
         }
         finally
         {
-            IsLoading = false;
+            if (showLoading)
+            {
+                IsLoading = false;
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+                _networkMonitorWorker.NetworkUsageUpdated -= OnNetworkUsageUpdated;
+            _disposed = true;
         }
     }
 }

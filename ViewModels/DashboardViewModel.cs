@@ -151,10 +151,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     // ────────────────────────────────────────────────────────────────────────
     // Commands
-    // ────────────────────────────────────────────────────────────────────────
+    // ── Commands ───────────────────────────────────────────────────────────────
 
-    [RelayCommand]
-    private async Task RefreshAnalytics() => await LoadAnalyticsAsync();
+    // Refresh command removed - analytics auto-update every 5 seconds
 
     // ────────────────────────────────────────────────────────────────────────
     // Chart width — called from view's SizeChanged handler
@@ -221,12 +220,13 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         if (utcToday != _lastAnalyticsDate && _lastAnalyticsDate != DateTime.MinValue)
             _ = LoadAnalyticsAsync();
 
-        // Query connection details every 5 seconds (5 ticks)
+        // Query connection details and analytics every 5 seconds (5 ticks)
         _tickCount++;
         if (_tickCount >= 5)
         {
             _tickCount = 0;
             _ = LoadConnectionDetailsAsync(usage.InterfaceName);
+            _ = LoadAnalyticsAsync(showLoading: false);
         }
     }
 
@@ -249,16 +249,19 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     // ────────────────────────────────────────────────────────────────────────
     // Analytics loading
-    // ────────────────────────────────────────────────────────────────────────
+    // ── Analytics loading ───────────────────────────────────────────────────
 
-    private async Task LoadAnalyticsAsync()
+    private async Task LoadAnalyticsAsync(bool showLoading = true)
     {
         // Show loading state on UI thread before kicking off the background work
-        Dispatcher.UIThread.Post(() =>
+        if (showLoading)
         {
-            IsAnalyticsLoading = true;
-            AnalyticsError     = null;
-        });
+            Dispatcher.UIThread.Post(() =>
+            {
+                IsAnalyticsLoading = true;
+                AnalyticsError     = null;
+            });
+        }
 
         try
         {
@@ -372,7 +375,10 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                     DailyChartItems.Add(item);
                 IsChartEmpty = !chartItems.Any(b => b.HasData);
 
-                IsAnalyticsLoading = false;
+                if (showLoading)
+                {
+                    IsAnalyticsLoading = false;
+                }
             });
 
             // Record the UTC date so midnight auto-refresh fires correctly
@@ -383,7 +389,10 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             Dispatcher.UIThread.Post(() =>
             {
                 AnalyticsError     = $"Analytics unavailable: {ex.Message}";
-                IsAnalyticsLoading = false;
+                if (showLoading)
+                {
+                    IsAnalyticsLoading = false;
+                }
             });
         }
     }
