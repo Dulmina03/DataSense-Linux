@@ -1,20 +1,24 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DataSense.ViewModels"
+             xmlns:conv="using:DataSense.Converters"
              x:Class="DataSense.Views.HistoryView"
              x:DataType="vm:HistoryViewModel">
 
+    <UserControl.Resources>
+        <conv:HistoryPresetConverter    x:Key="PresetConverter"/>
+        <conv:HistoryPresetIsCustomConverter x:Key="IsCustomConverter"/>
+    </UserControl.Resources>
+
     <UserControl.Styles>
-        <!-- Summary card style -->
         <Style Selector="Border.summary-card">
-            <Setter Property="Background"     Value="#1A1A2E"/>
-            <Setter Property="BorderBrush"    Value="#2D2D44"/>
+            <Setter Property="Background"      Value="#1A1A2E"/>
+            <Setter Property="BorderBrush"     Value="#2D2D44"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius"   Value="10"/>
-            <Setter Property="Padding"        Value="18,14"/>
-            <Setter Property="MinWidth"       Value="160"/>
+            <Setter Property="CornerRadius"    Value="10"/>
+            <Setter Property="Padding"         Value="16,12"/>
+            <Setter Property="MinWidth"        Value="150"/>
         </Style>
-        <!-- Day row alternating -->
         <Style Selector="Border.day-row">
             <Setter Property="Background"  Value="#161625"/>
             <Setter Property="CornerRadius" Value="6"/>
@@ -26,23 +30,21 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="Auto,Auto,*" Margin="0" Background="#0D0D18">
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Background="#0D0D18">
 
-        <!-- ── Toolbar ────────────────────────────────────────────────────────── -->
+        <!-- ── Toolbar ── -->
         <Border Grid.Row="0" Background="#13131F" BorderBrush="#1E1E30" BorderThickness="0,0,0,1" Padding="20,14">
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
 
-                    <!-- Date Range ComboBox -->
+                    <!-- Date Range ComboBox with human-readable labels -->
                     <ComboBox ItemsSource="{Binding DatePresets}"
                               SelectedItem="{Binding SelectedPreset}"
-                              MinWidth="150"
-                              Background="#1A1A2E"
-                              BorderBrush="#2D2D44"
-                              Foreground="#CCCCDD">
+                              MinWidth="160"
+                              Background="#1A1A2E" BorderBrush="#2D2D44" Foreground="#CCCCDD">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding}" />
+                                <TextBlock Text="{Binding Converter={StaticResource PresetConverter}}"/>
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
@@ -51,23 +53,17 @@
                     <ComboBox ItemsSource="{Binding Interfaces}"
                               SelectedItem="{Binding SelectedInterface}"
                               MinWidth="150"
-                              Background="#1A1A2E"
-                              BorderBrush="#2D2D44"
-                              Foreground="#CCCCDD">
+                              Background="#1A1A2E" BorderBrush="#2D2D44" Foreground="#CCCCDD">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding}" />
+                                <TextBlock Text="{Binding}"/>
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
 
-                    <Button Content="↻  Refresh"
-                            Command="{Binding RefreshCommand}"
-                            Background="#252540"
-                            Foreground="#A0A0C0"
-                            BorderBrush="#3A3A5C"
-                            CornerRadius="6"
-                            Padding="14,6"/>
+                    <Button Content="↻  Refresh" Command="{Binding RefreshCommand}"
+                            Background="#252540" Foreground="#A0A0C0"
+                            BorderBrush="#3A3A5C" CornerRadius="6" Padding="14,6"/>
                 </StackPanel>
 
                 <!-- Day count badge -->
@@ -81,80 +77,100 @@
             </Grid>
         </Border>
 
-        <!-- ── Summary Cards ──────────────────────────────────────────────────── -->
-        <Border Grid.Row="1" Background="#10101C" Padding="20,16">
-            <StackPanel Orientation="Horizontal" Spacing="16">
-
-                <!-- Total Data Usage (hero card) -->
-                <Border Classes="summary-card" Background="#1A1A3A" BorderBrush="#3535AA" MinWidth="220">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="🌐  Total Data Usage" Foreground="#7777BB" FontSize="12"/>
-                        <TextBlock Text="{Binding TotalUsageText}" FontSize="26" FontWeight="Bold" Foreground="#8888FF"/>
-                        <TextBlock Text="for selected period" Foreground="#44445A" FontSize="11"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- Downloaded -->
-                <Border Classes="summary-card">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="⬇  Downloaded" Foreground="#336688" FontSize="12"/>
-                        <TextBlock Text="{Binding TotalDownloadedText}" FontSize="20" FontWeight="Bold" Foreground="#00D2FF"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- Uploaded -->
-                <Border Classes="summary-card">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="⬆  Uploaded" Foreground="#226633" FontSize="12"/>
-                        <TextBlock Text="{Binding TotalUploadedText}" FontSize="20" FontWeight="Bold" Foreground="#00E676"/>
-                    </StackPanel>
-                </Border>
+        <!-- ── Custom date pickers (only visible for Custom preset) ── -->
+        <Border Grid.Row="1"
+                IsVisible="{Binding SelectedPreset, Converter={StaticResource IsCustomConverter}}"
+                Background="#0F0F1C" BorderBrush="#1E1E30" BorderThickness="0,0,0,1" Padding="20,10">
+            <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                <TextBlock Text="From:" Foreground="#888899" FontSize="13" VerticalAlignment="Center"/>
+                <CalendarDatePicker SelectedDate="{Binding CustomStart}"
+                                    Background="#1A1A2E" Foreground="#CCCCDD"
+                                    BorderBrush="#2D2D44"/>
+                <TextBlock Text="To:" Foreground="#888899" FontSize="13" VerticalAlignment="Center"/>
+                <CalendarDatePicker SelectedDate="{Binding CustomEnd}"
+                                    Background="#1A1A2E" Foreground="#CCCCDD"
+                                    BorderBrush="#2D2D44"/>
             </StackPanel>
         </Border>
 
-        <!-- ── Daily Breakdown / States ───────────────────────────────────────── -->
-        <Grid Grid.Row="2">
+        <!-- ── Summary Cards ── -->
+        <Border Grid.Row="2" Background="#10101C" Padding="20,14">
+            <UniformGrid Columns="4" Rows="1">
+                <!-- Total usage (hero) -->
+                <Border Classes="summary-card" Background="#1A1A3A" BorderBrush="#3535AA" Margin="0,0,12,0">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="🌐  Total Usage" Foreground="#7777BB" FontSize="11"/>
+                        <TextBlock Text="{Binding TotalUsageText}" FontSize="24" FontWeight="Bold" Foreground="#8888FF"/>
+                        <TextBlock Text="for selected period" Foreground="#44445A" FontSize="11"/>
+                    </StackPanel>
+                </Border>
+                <!-- Downloaded -->
+                <Border Classes="summary-card" Margin="0,0,12,0">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="⬇  Downloaded" Foreground="#336688" FontSize="11"/>
+                        <TextBlock Text="{Binding TotalDownloadedText}" FontSize="18" FontWeight="Bold" Foreground="#00D2FF"/>
+                    </StackPanel>
+                </Border>
+                <!-- Uploaded -->
+                <Border Classes="summary-card" Margin="0,0,12,0">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="⬆  Uploaded" Foreground="#226633" FontSize="11"/>
+                        <TextBlock Text="{Binding TotalUploadedText}" FontSize="18" FontWeight="Bold" Foreground="#00E676"/>
+                    </StackPanel>
+                </Border>
+                <!-- Avg / day -->
+                <Border Classes="summary-card">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="📈  Avg / Day" Foreground="#446644" FontSize="11"/>
+                        <TextBlock Text="{Binding AvgDailyText}" FontSize="18" FontWeight="Bold" Foreground="#88BBAA"/>
+                        <TextBlock Text="active days only" Foreground="#44445A" FontSize="11"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+        </Border>
 
-            <!-- Loading overlay -->
-            <Border Background="#80000000" IsVisible="{Binding IsLoading}" ZIndex="10">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
-                    <TextBlock Text="Loading…" Foreground="#8888FF" FontSize="18" FontWeight="SemiBold"
-                               HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Border>
+        <!-- ── Daily Breakdown / States ── -->
+        <Grid Grid.Row="3">
+
+            <!-- Loading state -->
+            <StackPanel IsVisible="{Binding IsLoading}"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+                <ProgressBar IsIndeterminate="True" Width="160" Height="4"/>
+                <TextBlock Text="Loading…" Foreground="#8888FF" FontSize="16" FontWeight="SemiBold"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
 
             <!-- Error state -->
             <Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                    Background="#1A0A0A" CornerRadius="10" Margin="20" Padding="24" ZIndex="5">
+                    Background="#1A0A0A" CornerRadius="10" Margin="20" Padding="24">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
                     <TextBlock Text="⚠️  Error" Foreground="#FF6666" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#CC5555" FontSize="13" TextWrapping="Wrap"
-                               HorizontalAlignment="Center" MaxWidth="500"/>
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#CC5555" FontSize="13"
+                               TextWrapping="Wrap" HorizontalAlignment="Center" MaxWidth="500"/>
                 </StackPanel>
             </Border>
 
             <!-- Empty state -->
-            <Border IsVisible="{Binding IsEmpty}" ZIndex="4">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-                    <TextBlock Text="📭" FontSize="48" HorizontalAlignment="Center"/>
-                    <TextBlock Text="No data for this period" Foreground="#666688" FontSize="15"
-                               HorizontalAlignment="Center"/>
-                    <TextBlock Text="Try a wider date range or a different interface filter."
-                               Foreground="#44445A" FontSize="12" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Border>
+            <StackPanel IsVisible="{Binding IsEmpty}"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                <TextBlock Text="📭" FontSize="48" HorizontalAlignment="Center"/>
+                <TextBlock Text="No data for this period" Foreground="#666688" FontSize="15" HorizontalAlignment="Center"/>
+                <TextBlock Text="Try a wider date range or a different interface filter."
+                           Foreground="#44445A" FontSize="12" HorizontalAlignment="Center"/>
+            </StackPanel>
 
             <!-- Daily breakdown list -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,12">
-                <StackPanel Spacing="0">
+            <ScrollViewer IsVisible="{Binding IsDataState}" VerticalScrollBarVisibility="Auto" Padding="20,12">
+                <StackPanel Spacing="0" MaxWidth="1400">
 
                     <!-- Column headers -->
                     <Border Background="#13131F" CornerRadius="6" Padding="14,8" Margin="0,0,0,4">
-                        <Grid ColumnDefinitions="*,140,140,140">
-                            <TextBlock Grid.Column="0" Text="Date"      Foreground="#555577" FontSize="12" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="1" Text="Downloaded" Foreground="#336688" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
-                            <TextBlock Grid.Column="2" Text="Uploaded"  Foreground="#226633" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
-                            <TextBlock Grid.Column="3" Text="Total"     Foreground="#555599" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                        <Grid ColumnDefinitions="Auto,*,120,120,120">
+                            <TextBlock Grid.Column="0" Text="Day"        Foreground="#555577" FontSize="12" FontWeight="SemiBold" Width="40"/>
+                            <TextBlock Grid.Column="1" Text="Date"       Foreground="#555577" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="2" Text="Downloaded" Foreground="#336688" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            <TextBlock Grid.Column="3" Text="Uploaded"   Foreground="#226633" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            <TextBlock Grid.Column="4" Text="Total"      Foreground="#555599" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
                         </Grid>
                     </Border>
 
@@ -162,25 +178,26 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:DailyUsageViewModel">
                                 <Border Classes="day-row">
-                                    <Grid ColumnDefinitions="*,140,140,140">
+                                    <Grid ColumnDefinitions="Auto,*,120,120,120">
+                                        <!-- Day of week -->
+                                        <TextBlock Grid.Column="0" Text="{Binding DayOfWeekLabel}"
+                                                   Foreground="#555577" FontSize="11" FontWeight="SemiBold"
+                                                   Width="40" VerticalAlignment="Center"/>
                                         <!-- Date -->
-                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                            <TextBlock Text="📅" FontSize="13" VerticalAlignment="Center"/>
-                                            <StackPanel Spacing="2">
-                                                <TextBlock Text="{Binding DayLabel}" Foreground="#CCCCDD" FontSize="14" FontWeight="SemiBold"/>
-                                                <TextBlock Text="{Binding DayFull}"  Foreground="#55556A" FontSize="11"/>
-                                            </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DayLabel}" Foreground="#CCCCDD" FontSize="14" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding DayFull}"  Foreground="#55556A" FontSize="11"/>
                                         </StackPanel>
                                         <!-- Downloaded -->
-                                        <TextBlock Grid.Column="1" Text="{Binding DownloadedText}"
+                                        <TextBlock Grid.Column="2" Text="{Binding DownloadedText}"
                                                    Foreground="#00D2FF" FontSize="13" FontWeight="Medium"
                                                    HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                         <!-- Uploaded -->
-                                        <TextBlock Grid.Column="2" Text="{Binding UploadedText}"
+                                        <TextBlock Grid.Column="3" Text="{Binding UploadedText}"
                                                    Foreground="#00E676" FontSize="13" FontWeight="Medium"
                                                    HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                         <!-- Total -->
-                                        <TextBlock Grid.Column="3" Text="{Binding TotalText}"
+                                        <TextBlock Grid.Column="4" Text="{Binding TotalText}"
                                                    Foreground="#8888FF" FontSize="13" FontWeight="Bold"
                                                    HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                     </Grid>

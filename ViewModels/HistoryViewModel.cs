@@ -48,22 +48,24 @@ public partial class HistoryViewModel : ViewModelBase
 
     // ── State ──────────────────────────────────────────────────────────────────
 
-    [ObservableProperty] private bool   _isLoading;
-    [ObservableProperty] private bool   _isEmpty;
+    [ObservableProperty] private bool    _isLoading;
+    [ObservableProperty] private bool    _isEmpty;
+    [ObservableProperty] private bool    _isDataState;    // true when data is loaded and non-empty
     [ObservableProperty] private string? _errorMessage;
 
     // ── Filter state ───────────────────────────────────────────────────────────
 
     [ObservableProperty] private HistoryDatePreset _selectedPreset;
     [ObservableProperty] private string            _selectedInterface = "All";
-    [ObservableProperty] private DateTime          _customStart = DateTime.Today;
-    [ObservableProperty] private DateTime          _customEnd   = DateTime.Today;
+    [ObservableProperty] private DateTimeOffset? _customStart = DateTimeOffset.Now;
+    [ObservableProperty] private DateTimeOffset? _customEnd   = DateTimeOffset.Now;
 
     // ── Summary totals ─────────────────────────────────────────────────────────
 
-    [ObservableProperty] private string _totalDownloadedText = "0 B";
-    [ObservableProperty] private string _totalUploadedText   = "0 B";
-    [ObservableProperty] private string _totalUsageText      = "0 B";
+    [ObservableProperty] private string _totalDownloadedText = "—";
+    [ObservableProperty] private string _totalUploadedText   = "—";
+    [ObservableProperty] private string _totalUsageText      = "—";
+    [ObservableProperty] private string _avgDailyText        = "—";
     [ObservableProperty] private string _dayCountText        = "0";
 
     // ── ViewModelBase ──────────────────────────────────────────────────────────
@@ -87,6 +89,16 @@ public partial class HistoryViewModel : ViewModelBase
         if (!_initialising) _ = LoadAsync();
     }
 
+    partial void OnCustomStartChanged(DateTimeOffset? value)
+    {
+        if (!_initialising && SelectedPreset == HistoryDatePreset.Custom) _ = LoadAsync();
+    }
+
+    partial void OnCustomEndChanged(DateTimeOffset? value)
+    {
+        if (!_initialising && SelectedPreset == HistoryDatePreset.Custom) _ = LoadAsync();
+    }
+
     // ── Core load logic ────────────────────────────────────────────────────────
 
     private (DateTime start, DateTime end) ComputeDateRange()
@@ -94,24 +106,33 @@ public partial class HistoryViewModel : ViewModelBase
         var utcNow = DateTime.UtcNow;
         return SelectedPreset switch
         {
-            HistoryDatePreset.Today       => (utcNow.Date, utcNow.Date.AddDays(1).AddTicks(-1)),
-            HistoryDatePreset.Last7Days   => (utcNow.Date.AddDays(-6), utcNow.Date.AddDays(1).AddTicks(-1)),
-            HistoryDatePreset.Last30Days  => (utcNow.Date.AddDays(-29), utcNow.Date.AddDays(1).AddTicks(-1)),
-            HistoryDatePreset.Custom      => (CustomStart.ToUniversalTime(), CustomEnd.ToUniversalTime().AddDays(1).AddTicks(-1)),
-            _                             => (utcNow.Date.AddDays(-6), utcNow.Date.AddDays(1).AddTicks(-1))
+            HistoryDatePreset.Today      => (utcNow.Date, utcNow.Date.AddDays(1).AddTicks(-1)),
+            HistoryDatePreset.Last7Days  => (utcNow.Date.AddDays(-6), utcNow.Date.AddDays(1).AddTicks(-1)),
+            HistoryDatePreset.Last30Days => (utcNow.Date.AddDays(-29), utcNow.Date.AddDays(1).AddTicks(-1)),
+            HistoryDatePreset.Custom     =>
+                // User picks a local calendar date via CalendarDatePicker (DateTimeOffset?)
+                // Fall back to UTC today if either picker is null
+                (CustomStart.HasValue
+                    ? CustomStart.Value.LocalDateTime.Date.ToUniversalTime()
+                    : utcNow.Date,
+                 CustomEnd.HasValue
+                    ? CustomEnd.Value.LocalDateTime.Date.ToUniversalTime().AddDays(1).AddTicks(-1)
+                    : utcNow.Date.AddDays(1).AddTicks(-1)),
+            _ => (utcNow.Date.AddDays(-6), utcNow.Date.AddDays(1).AddTicks(-1))
         };
     }
 
     private async Task LoadAsync()
     {
         IsLoading    = true;
+        IsDataState  = false;
         ErrorMessage = null;
         DailyUsage.Clear();
 
         try
         {
             // 1. Populate interface list from DB (once is enough but harmless to repeat)
-            var ifaces = await _repository.GetInterfaceNamesAsync();
+            var ifaces    = await _repository.GetInterfaceNamesAsync();
             var ifaceList = ifaces.ToList();
 
             var currentInterface = SelectedInterface; // capture before we clear
@@ -123,9 +144,9 @@ public partial class HistoryViewModel : ViewModelBase
             // Restore selection if it still exists, otherwise fall back to "All"
             if (!Interfaces.Contains(currentInterface))
             {
-                _initialising = true;           // suppress callback
+                _initialising     = true; // suppress callback
                 SelectedInterface = "All";
-                _initialising = false;
+                _initialising     = false;
             }
 
             // 2. Query aggregated daily data
@@ -142,17 +163,26 @@ public partial class HistoryViewModel : ViewModelBase
             long totalUl = daily.Sum(r => r.BytesUploaded);
             long total   = totalDl + totalUl;
 
-            TotalDownloadedText = ByteFormatter.FormatBytes(totalDl);
-            TotalUploadedText   = ByteFormatter.FormatBytes(totalUl);
-            TotalUsageText      = ByteFormatter.FormatBytes(total);
+            // 4. Avg / day (exclude days with zero usage to avoid diluting the average)
+            var activeDays = daily.Where(r => r.TotalBytes > 0).ToList();
+            long avgBytes  = activeDays.Count > 0
+                ? (long)activeDays.Average(r => r.TotalBytes)
+                : 0;
+
+            TotalDownloadedText = daily.Any() ? ByteFormatter.FormatBytes(totalDl) : "—";
+            TotalUploadedText   = daily.Any() ? ByteFormatter.FormatBytes(totalUl) : "—";
+            TotalUsageText      = daily.Any() ? ByteFormatter.FormatBytes(total)   : "—";
+            AvgDailyText        = avgBytes > 0 ? ByteFormatter.FormatBytes(avgBytes) : "—";
             DayCountText        = daily.Count.ToString();
 
-            IsEmpty = !daily.Any();
+            IsEmpty    = !daily.Any();
+            IsDataState = daily.Any();
         }
         catch (Exception ex)
         {
             ErrorMessage = $"Failed to load history: {ex.Message}";
             IsEmpty      = true;
+            IsDataState  = false;
         }
         finally
         {

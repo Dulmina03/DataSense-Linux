@@ -16,6 +16,9 @@ public class DailyUsageViewModel
         _record = record ?? throw new ArgumentNullException(nameof(record));
     }
 
+    /// <summary>Short day-of-week label, e.g. "Mon".</summary>
+    public string DayOfWeekLabel => _record.Day.ToString("ddd");
+
     /// <summary>Display label for the day, e.g. "Aug 12".</summary>
     public string DayLabel => _record.Day.ToString("MMM dd");
 
