@@ -358,6 +358,65 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         return (dl, ul);
     }
 
+    /// <summary>
+    /// Returns one <see cref="HourlyUsageRecord"/> per clock-hour for a single UTC calendar day.
+    /// Uses the same MAX–MIN clamping strategy as GetDailyUsageAsync.
+    /// Hours with no records are omitted (caller fills gaps for display if needed).
+    /// </summary>
+    public async Task<IEnumerable<HourlyUsageRecord>> GetHourlyUsageAsync(
+        DateTime day, string? interfaceName = null)
+    {
+        var results = new List<HourlyUsageRecord>();
+
+        // Clamp to UTC day boundaries
+        var dayStart = day.Date.ToUniversalTime();
+        var dayEnd   = dayStart.AddDays(1).AddTicks(-1);
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT
+                CAST(strftime('%H', Timestamp) AS INTEGER) AS Hour,
+                MIN(BytesReceived) AS MinRx,
+                MAX(BytesReceived) AS MaxRx,
+                MIN(BytesSent)     AS MinTx,
+                MAX(BytesSent)     AS MaxTx
+            FROM NetworkUsageRecords
+            WHERE Timestamp >= @Start AND Timestamp <= @End";
+
+        if (!string.IsNullOrEmpty(interfaceName))
+            sql += " AND InterfaceName = @InterfaceName";
+
+        sql += " GROUP BY Hour ORDER BY Hour ASC;";
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Start", dayStart.ToString("o"));
+        cmd.Parameters.AddWithValue("@End",   dayEnd.ToString("o"));
+        if (!string.IsNullOrEmpty(interfaceName))
+            cmd.Parameters.AddWithValue("@InterfaceName", interfaceName);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            int  hour  = reader.GetInt32(0);
+            long minRx = reader.GetInt64(1);
+            long maxRx = reader.GetInt64(2);
+            long minTx = reader.GetInt64(3);
+            long maxTx = reader.GetInt64(4);
+
+            results.Add(new HourlyUsageRecord
+            {
+                Hour            = hour,
+                BytesDownloaded = Math.Max(0, maxRx - minRx),
+                BytesUploaded   = Math.Max(0, maxTx - minTx),
+            });
+        }
+
+        return results;
+    }
+
     // ────────────────────────────────────────────────────────────────────────
     // Network Sessions
     // ────────────────────────────────────────────────────────────────────────

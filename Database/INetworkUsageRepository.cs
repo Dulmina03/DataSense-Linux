@@ -38,6 +38,12 @@ public interface INetworkUsageRepository
     /// </summary>
     Task<(long BytesDownloaded, long BytesUploaded)> GetMonthSummaryAsync(string? interfaceName = null);
 
+    /// <summary>
+    /// Returns one <see cref="HourlyUsageRecord"/> per clock-hour (UTC) for a given calendar day.
+    /// Usage is computed as MAX – MIN of cumulative byte counters, clamped to 0.
+    /// </summary>
+    Task<IEnumerable<HourlyUsageRecord>> GetHourlyUsageAsync(DateTime day, string? interfaceName = null);
+
     // Network Sessions
     Task SaveSessionAsync(NetworkSession session);
     Task UpdateSessionAsync(NetworkSession session);

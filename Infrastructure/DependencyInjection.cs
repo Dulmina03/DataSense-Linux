@@ -15,6 +15,7 @@ public static class DependencyInjection
 
         // Database
         services.AddSingleton<INetworkUsageRepository, SqliteNetworkUsageRepository>();
+        services.AddSingleton<IAnalyticsService, AnalyticsService>();
 
         // Services
         services.AddSingleton<INetworkMonitorService, LinuxNetworkMonitorService>();

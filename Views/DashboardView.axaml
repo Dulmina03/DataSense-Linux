@@ -423,6 +423,147 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Section 5: Advanced Period Trend -->
+                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <TextBlock Text="📈" FontSize="14"/>
+                                <TextBlock Text="Network Usage Trend" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
+                            </StackPanel>
+                            <!-- Period Selector -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsEnabled="{Binding !IsPeriodAnalyticsLoading}">
+                                <Button Content="Today"      Command="{Binding SelectPeriodCommand}" CommandParameter="Today"      Classes="link-button" Background="Transparent" Foreground="{Binding SelectedPeriod, Converter={x:Static StringConverters.IsNullOrEmpty}}"/> <!-- TODO: custom converter or style for active state -->
+                                <Button Content="7 Days"     Command="{Binding SelectPeriodCommand}" CommandParameter="Last7Days"  Classes="link-button" Background="Transparent"/>
+                                <Button Content="30 Days"    Command="{Binding SelectPeriodCommand}" CommandParameter="Last30Days" Classes="link-button" Background="Transparent"/>
+                                <Button Content="This Month" Command="{Binding SelectPeriodCommand}" CommandParameter="ThisMonth"  Classes="link-button" Background="Transparent"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <ProgressBar IsIndeterminate="True" Height="2" IsVisible="{Binding IsPeriodAnalyticsLoading}" Foreground="#00D2FF"/>
+
+                        <Border IsVisible="{Binding IsPeriodChartEmpty}" Background="#0D0D18" CornerRadius="6" Padding="20" Height="200">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                                <TextBlock Text="📭" FontSize="36" HorizontalAlignment="Center"/>
+                                <TextBlock Text="No usage data for the selected period" Foreground="#555577" FontSize="13" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel IsVisible="{Binding !IsPeriodChartEmpty}" Spacing="0">
+                            <Grid Height="160" SizeChanged="ChartContainer_SizeChanged">
+                                <Canvas>
+                                    <Line StartPoint="0,0"   EndPoint="2000,0"   Stroke="#1E1E30" StrokeThickness="1" Opacity="0.6"/>
+                                    <Line StartPoint="0,40"  EndPoint="2000,40"  Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
+                                    <Line StartPoint="0,80"  EndPoint="2000,80"  Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
+                                    <Line StartPoint="0,120" EndPoint="2000,120" Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
+                                    <Line StartPoint="0,160" EndPoint="2000,160" Stroke="#1E1E30" StrokeThickness="1" Opacity="0.6"/>
+                                </Canvas>
+                                <!-- Daily Bars -->
+                                <ItemsControl ItemsSource="{Binding PeriodChartItems}" IsVisible="{Binding !IsHourlyChart}">
+                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="160"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:DailyChartBarViewModel">
+                                            <Canvas>
+                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}" Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}" Fill="#00E676" Opacity="0.85" RadiusX="3" RadiusY="3" ToolTip.Tip="{Binding Tooltip}"/>
+                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}" Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}" Fill="#00D2FF" Opacity="0.85" ToolTip.Tip="{Binding Tooltip}"/>
+                                            </Canvas>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <!-- Hourly Bars -->
+                                <ItemsControl ItemsSource="{Binding HourlyChartItems}" IsVisible="{Binding IsHourlyChart}">
+                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="160"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:HourlyChartBarViewModel">
+                                            <Canvas>
+                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}" Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}" Fill="#00E676" Opacity="0.85" RadiusX="3" RadiusY="3" ToolTip.Tip="{Binding Tooltip}"/>
+                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}" Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}" Fill="#00D2FF" Opacity="0.85" ToolTip.Tip="{Binding Tooltip}"/>
+                                            </Canvas>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                            
+                            <!-- Day Labels -->
+                            <ItemsControl ItemsSource="{Binding PeriodChartItems}" IsVisible="{Binding !IsHourlyChart}">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="28"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:DailyChartBarViewModel">
+                                        <TextBlock Canvas.Left="{Binding BarX}" Canvas.Top="4" Text="{Binding DayLabel}" FontSize="10" Foreground="#7777AA" Width="{Binding BarWidth}" TextAlignment="Center"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            
+                            <!-- Hourly Labels -->
+                            <ItemsControl ItemsSource="{Binding HourlyChartItems}" IsVisible="{Binding IsHourlyChart}">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="28"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:HourlyChartBarViewModel">
+                                        <TextBlock Canvas.Left="{Binding BarX}" Canvas.Top="4" Text="{Binding HourLabel}" FontSize="9" Foreground="#7777AA" Width="{Binding BarWidth}" TextAlignment="Center"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Section 6: Analytics Summary -->
+                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
+                    <StackPanel Spacing="14">
+                        <TextBlock Text="Analytics Summary" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
+                        <Grid ColumnDefinitions="*,12,*,12,*,12,*,12,*">
+                            <Border Grid.Column="0" Classes="stat-card" Background="#1A1A2E">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Avg Daily" Classes="insight-label"/>
+                                    <TextBlock Text="{Binding PeriodAvgDailyText}" Classes="insight-value" Foreground="#FFFFFF"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Classes="stat-card" Background="#1A1A2E">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Peak Day" Classes="insight-label"/>
+                                    <TextBlock Text="{Binding PeriodPeakDayText}" Classes="insight-value" Foreground="#FF9800"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="4" Classes="stat-card" Background="#1A1A2E">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="⬇ Downloaded" Classes="insight-label" Foreground="#00D2FF"/>
+                                    <TextBlock Text="{Binding PeriodTotalDownloadedText}" Classes="insight-value" Foreground="#00D2FF"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="6" Classes="stat-card" Background="#1A1A2E">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="⬆ Uploaded" Classes="insight-label" Foreground="#00E676"/>
+                                    <TextBlock Text="{Binding PeriodTotalUploadedText}" Classes="insight-value" Foreground="#00E676"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="8" Classes="stat-card" Background="#1A1A2E" BorderBrush="#3535AA">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Total Usage" Classes="insight-label" Foreground="#8888FF"/>
+                                    <TextBlock Text="{Binding PeriodTotalUsageText}" Classes="insight-value" Foreground="#8888FF"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Section 7: Peak Usage -->
+                <Grid ColumnDefinitions="*,12,*">
+                    <Border Grid.Column="0" Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="🔥  Peak Hour Today" Classes="insight-label"/>
+                            <TextBlock Text="{Binding PeakHourText}" Classes="insight-value" Foreground="#FF5252"/>
+                            <TextBlock Text="{Binding PeakHourUsageText}" Classes="insight-label" Foreground="#AA5555"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="🏆  Highest Day in Period" Classes="insight-label"/>
+                            <TextBlock Text="{Binding PeakDayInPeriodText}" Classes="insight-value" Foreground="#FFB300"/>
+                            <TextBlock Text="{Binding PeakDayInPeriodUsageText}" Classes="insight-label" Foreground="#AA8800"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

@@ -20,6 +20,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly INetworkMonitorWorker     _networkMonitorWorker;
     private readonly INetworkUsageRepository   _repository;
     private readonly INetworkConnectionService _connectionService;
+    private readonly IAnalyticsService         _analyticsService;
     private bool     _disposed;
     private int      _tickCount  = 4; // Start at 4 so first tick triggers details load immediately
     private DateTime _lastAnalyticsDate = DateTime.MinValue; // Track UTC date for midnight auto-refresh
@@ -106,6 +107,26 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string? _analyticsError;
     [ObservableProperty] private bool    _isChartEmpty = true;
 
+    // ── Period Analytics ────────────────────────────────────────────────────
+
+    [ObservableProperty] private AnalyticsPeriod _selectedPeriod = AnalyticsPeriod.Last7Days;
+    
+    [ObservableProperty] private string _periodTotalDownloadedText = "—";
+    [ObservableProperty] private string _periodTotalUploadedText   = "—";
+    [ObservableProperty] private string _periodTotalUsageText      = "—";
+    [ObservableProperty] private string _periodAvgDailyText        = "—";
+    [ObservableProperty] private string _periodPeakDayText         = "—";
+    [ObservableProperty] private string _peakHourText              = "—";
+    [ObservableProperty] private string _peakHourUsageText         = "—";
+    [ObservableProperty] private string _peakDayInPeriodText       = "—";
+    [ObservableProperty] private string _peakDayInPeriodUsageText  = "—";
+    [ObservableProperty] private bool   _isHourlyChart             = false;
+    [ObservableProperty] private bool   _isPeriodChartEmpty        = true;
+    [ObservableProperty] private bool   _isPeriodAnalyticsLoading  = false;
+
+    public ObservableCollection<DailyChartBarViewModel> PeriodChartItems { get; } = new();
+    public ObservableCollection<HourlyChartBarViewModel> HourlyChartItems { get; } = new();
+
     // ── Chart layout constants ──────────────────────────────────────────────
 
     /// <summary>Fixed canvas height for the bar chart area in device-independent pixels.</summary>
@@ -128,11 +149,13 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     public DashboardViewModel(
         INetworkMonitorWorker    networkMonitorWorker,
         INetworkUsageRepository  repository,
-        INetworkConnectionService connectionService)
+        INetworkConnectionService connectionService,
+        IAnalyticsService         analyticsService)
     {
         _networkMonitorWorker = networkMonitorWorker ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
         _repository           = repository           ?? throw new ArgumentNullException(nameof(repository));
         _connectionService    = connectionService    ?? throw new ArgumentNullException(nameof(connectionService));
+        _analyticsService     = analyticsService     ?? throw new ArgumentNullException(nameof(analyticsService));
 
         // Populate live card with current worker state immediately
         UpdateLiveValues(
@@ -154,9 +177,20 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     // ────────────────────────────────────────────────────────────────────────
     // Commands
-    // ── Commands ───────────────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────────────────────────────
 
-    // Refresh command removed - analytics auto-update every 5 seconds
+    [RelayCommand]
+    private async Task SelectPeriodAsync(string periodString)
+    {
+        if (Enum.TryParse<AnalyticsPeriod>(periodString, out var period))
+        {
+            if (SelectedPeriod != period)
+            {
+                SelectedPeriod = period;
+                await LoadPeriodAnalyticsAsync(showLoading: true);
+            }
+        }
+    }
 
     // ────────────────────────────────────────────────────────────────────────
     // Chart width — called from view's SizeChanged handler
@@ -195,6 +229,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                     DailyChartItems.Add(item);
                 IsChartEmpty = !chartItems.Any(b => b.HasData);
             });
+
+            // Also rebuild the period-aware chart for the new width without showing loading overlay
+            _ = LoadPeriodAnalyticsAsync(showLoading: false);
         }
         catch
         {
@@ -386,6 +423,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
             // Record the UTC date so midnight auto-refresh fires correctly
             _lastAnalyticsDate = utcNow.Date;
+
+            // Load period analytics
+            await LoadPeriodAnalyticsAsync(showLoading);
         }
         catch (Exception ex)
         {
@@ -397,6 +437,68 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                     IsAnalyticsLoading = false;
                 }
             });
+        }
+    }
+
+    private async Task LoadPeriodAnalyticsAsync(bool showLoading)
+    {
+        if (showLoading)
+        {
+            Dispatcher.UIThread.Post(() => IsPeriodAnalyticsLoading = true);
+        }
+
+        try
+        {
+            var summary = await _analyticsService.GetSummaryAsync(SelectedPeriod);
+
+            if (SelectedPeriod == AnalyticsPeriod.Today)
+            {
+                var hourlyData = await _analyticsService.GetTodayHourlyAsync();
+                var hourlyItems = BuildHourlyChartItems(hourlyData.ToList(), ChartWidth);
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    IsHourlyChart = true;
+                    HourlyChartItems.Clear();
+                    foreach (var item in hourlyItems) HourlyChartItems.Add(item);
+                    IsPeriodChartEmpty = !hourlyItems.Any(i => i.HasData);
+                });
+            }
+            else
+            {
+                var dailyData = await _analyticsService.GetDailySeriesAsync(SelectedPeriod);
+                var dailyItems = BuildChartItems(dailyData.ToList(), ChartWidth);
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    IsHourlyChart = false;
+                    PeriodChartItems.Clear();
+                    foreach (var item in dailyItems) PeriodChartItems.Add(item);
+                    IsPeriodChartEmpty = !dailyItems.Any(i => i.HasData);
+                });
+            }
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                PeriodTotalDownloadedText = ByteFormatter.FormatBytes(summary.TotalDownloaded);
+                PeriodTotalUploadedText   = ByteFormatter.FormatBytes(summary.TotalUploaded);
+                PeriodTotalUsageText      = ByteFormatter.FormatBytes(summary.TotalUsage);
+                PeriodAvgDailyText        = summary.AvgDailyBytes > 0 ? ByteFormatter.FormatBytes(summary.AvgDailyBytes) : "—";
+                
+                PeriodPeakDayText         = summary.PeakDay != null ? summary.PeakDay.Day.ToString("MMM d") : "—";
+                PeakDayInPeriodText       = summary.PeakDay != null ? summary.PeakDay.Day.ToString("dddd") : "—";
+                PeakDayInPeriodUsageText  = summary.PeakDay != null ? ByteFormatter.FormatBytes(summary.PeakDay.TotalBytes) : "—";
+
+                PeakHourText              = summary.PeakHourToday != null ? $"{summary.PeakHourToday.Hour:00}:00 - {summary.PeakHourToday.Hour + 1:00}:00" : "—";
+                PeakHourUsageText         = summary.PeakHourToday != null ? ByteFormatter.FormatBytes(summary.PeakHourToday.TotalBytes) : "—";
+
+                if (showLoading) IsPeriodAnalyticsLoading = false;
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Period analytics failed: {ex.Message}");
+            Dispatcher.UIThread.Post(() => { if (showLoading) IsPeriodAnalyticsLoading = false; });
         }
     }
 
@@ -445,6 +547,58 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 DownloadedText  = ByteFormatter.FormatBytes(d.BytesDownloaded),
                 UploadedText    = ByteFormatter.FormatBytes(d.BytesUploaded),
                 TotalText       = ByteFormatter.FormatBytes(d.TotalBytes),
+                BarX            = barX,
+                BarWidth        = Math.Max(barWidth, 1),
+                DownloadBarHeight = Math.Max(dlBarHeight, 0),
+                UploadBarHeight   = Math.Max(ulBarHeight, 0),
+                DownloadBarY    = dlBarY,
+                UploadBarY      = ulBarY,
+                LabelY          = ChartHeight + 4,
+            });
+        }
+
+        return items;
+    }
+
+    private static List<HourlyChartBarViewModel> BuildHourlyChartItems(
+        List<HourlyUsageRecord> hourly, double chartWidth)
+    {
+        if (hourly.Count == 0) return new List<HourlyChartBarViewModel>();
+
+        long maxTotal = hourly.Max(h => h.TotalBytes);
+        if (maxTotal <= 0) maxTotal = 1; // guard
+
+        int    count    = hourly.Count;
+        double barWidth = (chartWidth - (count - 1) * BarGap) / Math.Max(count, 1);
+
+        var items = new List<HourlyChartBarViewModel>(count);
+
+        for (int i = 0; i < count; i++)
+        {
+            var h = hourly[i];
+
+            double totalBarHeight = (double)h.TotalBytes / maxTotal * ChartHeight;
+
+            double dlFrac = h.TotalBytes > 0 ? (double)h.BytesDownloaded / h.TotalBytes : 0.5;
+            double ulFrac = 1.0 - dlFrac;
+
+            double dlBarHeight = totalBarHeight * dlFrac;
+            double ulBarHeight = totalBarHeight * ulFrac;
+
+            double dlBarY = ChartHeight - dlBarHeight;
+            double ulBarY = dlBarY - ulBarHeight;
+
+            double barX = i * (barWidth + BarGap);
+
+            items.Add(new HourlyChartBarViewModel
+            {
+                Hour            = h.Hour,
+                BytesDownloaded = h.BytesDownloaded,
+                BytesUploaded   = h.BytesUploaded,
+                TotalBytes      = h.TotalBytes,
+                DownloadedText  = ByteFormatter.FormatBytes(h.BytesDownloaded),
+                UploadedText    = ByteFormatter.FormatBytes(h.BytesUploaded),
+                TotalText       = ByteFormatter.FormatBytes(h.TotalBytes),
                 BarX            = barX,
                 BarWidth        = Math.Max(barWidth, 1),
                 DownloadBarHeight = Math.Max(dlBarHeight, 0),
