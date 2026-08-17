@@ -43,6 +43,9 @@ public partial class App : Application
         // Start background network monitoring worker
         var worker = Services.GetRequiredService<INetworkMonitorWorker>();
         worker.Start();
+        // Start background process network monitoring worker
+        var processWorker = Services.GetRequiredService<ProcessNetworkMonitorWorker>();
+        processWorker.Start();
 
         // Start background network persistence service
         var persistenceService = Services.GetRequiredService<INetworkPersistenceService>();

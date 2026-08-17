@@ -24,6 +24,9 @@ public static class DependencyInjection
         services.AddSingleton<INetworkConnectionService, LinuxNetworkConnectionService>();
         services.AddSingleton<NetworkSessionManager>();
         services.AddSingleton<ISpeedTestService, CloudflareSpeedTestService>();
+        // Process-level monitoring services
+        services.AddSingleton<IProcessNetworkMonitor, NethogsProcessNetworkMonitor>();
+        services.AddSingleton<ProcessNetworkMonitorWorker>();
 
         // ViewModels
         // DashboardViewModel is Singleton: it subscribes to the monitor worker event
@@ -36,6 +39,7 @@ public static class DependencyInjection
         services.AddTransient<SpeedTestViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<AboutViewModel>();
+        services.AddTransient<ApplicationAnalyticsViewModel>();
 
 
         // Views

@@ -21,6 +21,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly INetworkUsageRepository   _repository;
     private readonly INetworkConnectionService _connectionService;
     private readonly IAnalyticsService         _analyticsService;
+    private readonly ProcessNetworkMonitorWorker _processMonitorWorker;
     private bool     _disposed;
     private int      _tickCount  = 4; // Start at 4 so first tick triggers details load immediately
     private DateTime _lastAnalyticsDate = DateTime.MinValue; // Track UTC date for midnight auto-refresh
@@ -127,6 +128,10 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     public ObservableCollection<DailyChartBarViewModel> PeriodChartItems { get; } = new();
     public ObservableCollection<HourlyChartBarViewModel> HourlyChartItems { get; } = new();
 
+    // ── Process Analytics ───────────────────────────────────────────────────
+    public ObservableCollection<ProcessNetworkUsage> LiveProcessTraffic { get; } = new();
+    public ObservableCollection<ProcessUsageRecord> TopProcesses { get; } = new();
+
     // ── Chart layout constants ──────────────────────────────────────────────
 
     /// <summary>Fixed canvas height for the bar chart area in device-independent pixels.</summary>
@@ -150,12 +155,14 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         INetworkMonitorWorker    networkMonitorWorker,
         INetworkUsageRepository  repository,
         INetworkConnectionService connectionService,
-        IAnalyticsService         analyticsService)
+        IAnalyticsService         analyticsService,
+        ProcessNetworkMonitorWorker processMonitorWorker)
     {
         _networkMonitorWorker = networkMonitorWorker ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
         _repository           = repository           ?? throw new ArgumentNullException(nameof(repository));
         _connectionService    = connectionService    ?? throw new ArgumentNullException(nameof(connectionService));
         _analyticsService     = analyticsService     ?? throw new ArgumentNullException(nameof(analyticsService));
+        _processMonitorWorker = processMonitorWorker ?? throw new ArgumentNullException(nameof(processMonitorWorker));
 
         // Populate live card with current worker state immediately
         UpdateLiveValues(
@@ -167,6 +174,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
         // Subscribe to live updates
         _networkMonitorWorker.NetworkUsageUpdated += OnNetworkUsageUpdated;
+        _processMonitorWorker.LiveTrafficUpdated += OnLiveTrafficUpdated;
 
         // Kick off async analytics (fire-and-forget; errors surfaced via AnalyticsError)
         _ = LoadAnalyticsAsync();
@@ -190,6 +198,16 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 await LoadPeriodAnalyticsAsync(showLoading: true);
             }
         }
+    }
+
+    [RelayCommand]
+    private void NavigateToProcessAnalytics(string processName)
+    {
+        if (string.IsNullOrWhiteSpace(processName)) return;
+        
+        // Find MainWindowViewModel via DI
+        var mainWindowVm = App.Services?.GetService(typeof(MainWindowViewModel)) as MainWindowViewModel;
+        mainWindowVm?.NavigateToApplicationAnalytics(processName);
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -242,6 +260,25 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     // ────────────────────────────────────────────────────────────────────────
     // Live monitoring
     // ────────────────────────────────────────────────────────────────────────
+
+    private void OnLiveTrafficUpdated(IEnumerable<ProcessNetworkUsage> currentBatch)
+    {
+        // Limit to processes actually transmitting data, sort by download + upload
+        var active = currentBatch
+            .Where(p => p.DownloadRateBytesPerSec > 0 || p.UploadRateBytesPerSec > 0)
+            .OrderByDescending(p => p.DownloadRateBytesPerSec + p.UploadRateBytesPerSec)
+            .Take(10)
+            .ToList();
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            LiveProcessTraffic.Clear();
+            foreach (var process in active)
+            {
+                LiveProcessTraffic.Add(process);
+            }
+        });
+    }
 
     private void OnNetworkUsageUpdated(NetworkUsage usage)
     {
@@ -494,6 +531,17 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
                 if (showLoading) IsPeriodAnalyticsLoading = false;
             });
+
+            // Load Top Processes
+            var topProcesses = await _analyticsService.GetTopDataConsumersAsync(SelectedPeriod, 5);
+            Dispatcher.UIThread.Post(() =>
+            {
+                TopProcesses.Clear();
+                foreach (var process in topProcesses)
+                {
+                    TopProcesses.Add(process);
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -708,7 +756,10 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         if (!_disposed)
         {
             if (disposing)
+            {
                 _networkMonitorWorker.NetworkUsageUpdated -= OnNetworkUsageUpdated;
+                _processMonitorWorker.LiveTrafficUpdated -= OnLiveTrafficUpdated;
+            }
             _disposed = true;
         }
     }

@@ -65,6 +65,16 @@ public partial class MainWindowViewModel : ViewModelBase
         SetCurrentPage(App.Services?.GetRequiredService<SpeedTestViewModel>() ?? throw new InvalidOperationException("SpeedTestViewModel resolution failed"));
     }
 
+    public void NavigateToApplicationAnalytics(string processName)
+    {
+        if (App.Services != null)
+        {
+            var vm = App.Services.GetRequiredService<ApplicationAnalyticsViewModel>();
+            vm.Initialize(processName);
+            SetCurrentPage(vm);
+        }
+    }
+
     private void SetCurrentPage(ViewModelBase page)
     {
         CurrentPage = page;

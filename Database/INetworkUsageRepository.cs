@@ -52,4 +52,16 @@ public interface INetworkUsageRepository
     // Speed Tests
     Task SaveSpeedTestAsync(SpeedTestRecord record);
     Task<IEnumerable<SpeedTestRecord>> GetSpeedTestsAsync(int count = 50);
+
+    // Process Analytics
+    Task SaveProcessUsageAsync(ProcessUsageRecord record);
+    
+    /// <summary>Returns one aggregated DailyUsageRecord per clock-hour (UTC) for a single process.</summary>
+    Task<IEnumerable<HourlyUsageRecord>> GetProcessHourlyUsageAsync(string processName, DateTime day);
+    
+    /// <summary>Returns one DailyUsageRecord per calendar day for a single process.</summary>
+    Task<IEnumerable<DailyUsageRecord>> GetProcessDailyUsageAsync(string processName, DateTime start, DateTime end);
+    
+    /// <summary>Returns top N processes by usage within the given time range.</summary>
+    Task<IEnumerable<ProcessUsageRecord>> GetTopProcessesAsync(DateTime start, DateTime end, int limit);
 }

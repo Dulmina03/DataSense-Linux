@@ -43,4 +43,24 @@ public interface IAnalyticsService
 
     /// <summary>Returns per-day usage for the selected period, chronological order.</summary>
     Task<IList<DailyUsageRecord>> GetDailySeriesAsync(AnalyticsPeriod period);
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Process Analytics
+    // ────────────────────────────────────────────────────────────────────────
+
+    Task<ProcessAnalyticsSummary> GetProcessSummaryAsync(string processName, AnalyticsPeriod period);
+    Task<IList<DailyUsageRecord>> GetProcessDailySeriesAsync(string processName, AnalyticsPeriod period);
+    Task<IList<HourlyUsageRecord>> GetProcessTodayHourlyAsync(string processName);
+    Task<IEnumerable<ProcessUsageRecord>> GetTopDataConsumersAsync(AnalyticsPeriod period, int limit);
+}
+
+public class ProcessAnalyticsSummary
+{
+    public long TotalDownloaded { get; init; }
+    public long TotalUploaded   { get; init; }
+    public long TotalUsage      => TotalDownloaded + TotalUploaded;
+
+    public DateTime? FirstActive { get; init; }
+    public DateTime? LastActive { get; init; }
+    public int DaysUsed { get; init; }
 }

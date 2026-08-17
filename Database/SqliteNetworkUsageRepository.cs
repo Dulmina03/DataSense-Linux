@@ -78,6 +78,19 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
                 JitterMs REAL NOT NULL,
                 ServerName TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS ProcessUsageRecords (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Timestamp TEXT NOT NULL,
+                ProcessName TEXT NOT NULL,
+                BytesDownloaded INTEGER NOT NULL,
+                BytesUploaded INTEGER NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS IX_ProcessUsageRecords_Timestamp 
+            ON ProcessUsageRecords(Timestamp);
+            CREATE INDEX IF NOT EXISTS IX_ProcessUsageRecords_ProcessName 
+            ON ProcessUsageRecords(ProcessName);
         ";
 
         using var command = connection.CreateCommand();
@@ -579,5 +592,142 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         }
 
         return records;
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Process Analytics
+    // ────────────────────────────────────────────────────────────────────────
+
+    public async Task SaveProcessUsageAsync(ProcessUsageRecord record)
+    {
+        if (string.IsNullOrEmpty(record.ProcessName)) return;
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        const string sql = @"
+            INSERT INTO ProcessUsageRecords (Timestamp, ProcessName, BytesDownloaded, BytesUploaded)
+            VALUES (@Timestamp, @ProcessName, @BytesDownloaded, @BytesUploaded);
+        ";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@Timestamp", record.Timestamp.ToString("o"));
+        command.Parameters.AddWithValue("@ProcessName", record.ProcessName);
+        command.Parameters.AddWithValue("@BytesDownloaded", record.BytesDownloaded);
+        command.Parameters.AddWithValue("@BytesUploaded", record.BytesUploaded);
+
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<IEnumerable<HourlyUsageRecord>> GetProcessHourlyUsageAsync(string processName, DateTime day)
+    {
+        var results = new List<HourlyUsageRecord>();
+        var dayStart = day.Date.ToUniversalTime();
+        var dayEnd   = dayStart.AddDays(1).AddTicks(-1);
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        // For ProcessUsageRecords, each row is a discrete chunk of integrated usage (not cumulative counters).
+        // So we just SUM them by hour.
+        string sql = @"
+            SELECT
+                CAST(strftime('%H', Timestamp) AS INTEGER) AS Hour,
+                SUM(BytesDownloaded) AS TotalDl,
+                SUM(BytesUploaded)   AS TotalUl
+            FROM ProcessUsageRecords
+            WHERE Timestamp >= @Start AND Timestamp <= @End AND ProcessName = @ProcessName
+            GROUP BY Hour ORDER BY Hour ASC;";
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Start", dayStart.ToString("o"));
+        cmd.Parameters.AddWithValue("@End", dayEnd.ToString("o"));
+        cmd.Parameters.AddWithValue("@ProcessName", processName);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new HourlyUsageRecord
+            {
+                Hour = reader.GetInt32(0),
+                BytesDownloaded = reader.GetInt64(1),
+                BytesUploaded = reader.GetInt64(2)
+            });
+        }
+        return results;
+    }
+
+    public async Task<IEnumerable<DailyUsageRecord>> GetProcessDailyUsageAsync(string processName, DateTime start, DateTime end)
+    {
+        var results = new List<DailyUsageRecord>();
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT
+                date(Timestamp) AS Day,
+                SUM(BytesDownloaded) AS TotalDl,
+                SUM(BytesUploaded)   AS TotalUl
+            FROM ProcessUsageRecords
+            WHERE Timestamp >= @Start AND Timestamp <= @End AND ProcessName = @ProcessName
+            GROUP BY date(Timestamp) ORDER BY Day DESC;";
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
+        cmd.Parameters.AddWithValue("@End", end.ToString("o"));
+        cmd.Parameters.AddWithValue("@ProcessName", processName);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new DailyUsageRecord
+            {
+                Day = DateTime.Parse(reader.GetString(0)),
+                BytesDownloaded = reader.GetInt64(1),
+                BytesUploaded = reader.GetInt64(2)
+            });
+        }
+        return results;
+    }
+
+    public async Task<IEnumerable<ProcessUsageRecord>> GetTopProcessesAsync(DateTime start, DateTime end, int limit)
+    {
+        var results = new List<ProcessUsageRecord>();
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT
+                ProcessName,
+                SUM(BytesDownloaded) AS TotalDl,
+                SUM(BytesUploaded)   AS TotalUl
+            FROM ProcessUsageRecords
+            WHERE Timestamp >= @Start AND Timestamp <= @End
+            GROUP BY ProcessName
+            ORDER BY (SUM(BytesDownloaded) + SUM(BytesUploaded)) DESC
+            LIMIT @Limit;";
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
+        cmd.Parameters.AddWithValue("@End", end.ToString("o"));
+        cmd.Parameters.AddWithValue("@Limit", limit);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new ProcessUsageRecord
+            {
+                ProcessName = reader.GetString(0),
+                BytesDownloaded = reader.GetInt64(1),
+                BytesUploaded = reader.GetInt64(2)
+            });
+        }
+        return results;
     }
 }

@@ -37,28 +37,14 @@ public class AnalyticsService : IAnalyticsService
     public async Task<AnalyticsSummary> GetSummaryAsync(AnalyticsPeriod period)
     {
         var (start, end) = GetRange(period);
-
-        // Daily series for summary aggregation
         var daily = (await _repository.GetDailyUsageAsync(start, end)).ToList();
-
         long totalDl = daily.Sum(d => d.BytesDownloaded);
         long totalUl = daily.Sum(d => d.BytesUploaded);
-
         var activeDays = daily.Where(d => d.TotalBytes > 0).ToList();
-        long avgDaily  = activeDays.Count > 0
-            ? (long)activeDays.Average(d => d.TotalBytes)
-            : 0;
-
-        var peakDay = activeDays.Count > 0
-            ? activeDays.MaxBy(d => d.TotalBytes)
-            : null;
-
-        // Peak hour is always from today regardless of period
+        long avgDaily = activeDays.Count > 0 ? (long)activeDays.Average(d => d.TotalBytes) : 0;
+        var peakDay = activeDays.Count > 0 ? activeDays.MaxBy(d => d.TotalBytes) : null;
         var todayHourly = await GetTodayHourlyAsync();
-        var peakHour    = todayHourly.Count > 0
-            ? todayHourly.MaxBy(h => h.TotalBytes)
-            : null;
-
+        var peakHour = todayHourly.Count > 0 ? todayHourly.MaxBy(h => h.TotalBytes) : null;
         return new AnalyticsSummary
         {
             TotalDownloaded = totalDl,
@@ -78,10 +64,50 @@ public class AnalyticsService : IAnalyticsService
     public async Task<IList<DailyUsageRecord>> GetDailySeriesAsync(AnalyticsPeriod period)
     {
         var (start, end) = GetRange(period);
-        var raw          = (await _repository.GetDailyUsageAsync(start, end)).ToList();
-
-        // Repository returns DESC; reverse to chronological for chart display
-        raw.Reverse();
+        var raw = (await _repository.GetDailyUsageAsync(start, end)).ToList();
+        raw.Reverse(); // chronological order for UI
         return raw;
+    }
+
+    // ── Process analytics ─────────────────────────────────────────────────────
+
+    public async Task<ProcessAnalyticsSummary> GetProcessSummaryAsync(string processName, AnalyticsPeriod period)
+    {
+        var (start, end) = GetRange(period);
+        var daily = (await _repository.GetProcessDailyUsageAsync(processName, start, end)).ToList();
+        long totalDl = daily.Sum(d => d.BytesDownloaded);
+        long totalUl = daily.Sum(d => d.BytesUploaded);
+        var activeDays = daily.Where(d => d.TotalBytes > 0).ToList();
+        DateTime? first = activeDays.Any() ? activeDays.Min(d => d.Day) : (DateTime?)null;
+        DateTime? last  = activeDays.Any() ? activeDays.Max(d => d.Day) : (DateTime?)null;
+        return new ProcessAnalyticsSummary
+        {
+            TotalDownloaded = totalDl,
+            TotalUploaded   = totalUl,
+            FirstActive    = first,
+            LastActive     = last,
+            DaysUsed       = activeDays.Count
+        };
+    }
+
+    public async Task<IList<DailyUsageRecord>> GetProcessDailySeriesAsync(string processName, AnalyticsPeriod period)
+    {
+        var (start, end) = GetRange(period);
+        var raw = (await _repository.GetProcessDailyUsageAsync(processName, start, end)).ToList();
+        raw.Reverse(); // chronological order for UI
+        return raw;
+    }
+
+    public async Task<IList<HourlyUsageRecord>> GetProcessTodayHourlyAsync(string processName)
+    {
+        var hourly = await _repository.GetProcessHourlyUsageAsync(processName, DateTime.UtcNow.Date);
+        return hourly.ToList();
+    }
+
+    public async Task<IEnumerable<ProcessUsageRecord>> GetTopDataConsumersAsync(AnalyticsPeriod period, int limit)
+    {
+        var (start, end) = GetRange(period);
+        var top = await _repository.GetTopProcessesAsync(start, end, limit);
+        return top;
     }
 }
