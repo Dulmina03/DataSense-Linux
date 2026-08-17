@@ -155,52 +155,95 @@
                            Foreground="#44445A" FontSize="12" HorizontalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Daily breakdown list -->
+            <!-- Daily breakdown + Sessions list -->
             <ScrollViewer IsVisible="{Binding IsDataState}" VerticalScrollBarVisibility="Auto" Padding="20,12">
-                <StackPanel Spacing="0" MaxWidth="1400">
+                <StackPanel Spacing="24" MaxWidth="1400">
 
-                    <!-- Column headers -->
-                    <Border Background="#13131F" CornerRadius="6" Padding="14,8" Margin="0,0,0,4">
-                        <Grid ColumnDefinitions="Auto,*,120,120,120">
-                            <TextBlock Grid.Column="0" Text="Day"        Foreground="#555577" FontSize="12" FontWeight="SemiBold" Width="40"/>
-                            <TextBlock Grid.Column="1" Text="Date"       Foreground="#555577" FontSize="12" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="2" Text="Downloaded" Foreground="#336688" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
-                            <TextBlock Grid.Column="3" Text="Uploaded"   Foreground="#226633" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
-                            <TextBlock Grid.Column="4" Text="Total"      Foreground="#555599" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
-                        </Grid>
-                    </Border>
+                    <!-- ── Daily Usage ── -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Daily Breakdown" Foreground="#888899" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,4"/>
 
-                    <ItemsControl ItemsSource="{Binding DailyUsage}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="vm:DailyUsageViewModel">
-                                <Border Classes="day-row">
-                                    <Grid ColumnDefinitions="Auto,*,120,120,120">
-                                        <!-- Day of week -->
-                                        <TextBlock Grid.Column="0" Text="{Binding DayOfWeekLabel}"
-                                                   Foreground="#555577" FontSize="11" FontWeight="SemiBold"
-                                                   Width="40" VerticalAlignment="Center"/>
-                                        <!-- Date -->
-                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding DayLabel}" Foreground="#CCCCDD" FontSize="14" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding DayFull}"  Foreground="#55556A" FontSize="11"/>
-                                        </StackPanel>
-                                        <!-- Downloaded -->
-                                        <TextBlock Grid.Column="2" Text="{Binding DownloadedText}"
-                                                   Foreground="#00D2FF" FontSize="13" FontWeight="Medium"
-                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                        <!-- Uploaded -->
-                                        <TextBlock Grid.Column="3" Text="{Binding UploadedText}"
-                                                   Foreground="#00E676" FontSize="13" FontWeight="Medium"
-                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                        <!-- Total -->
-                                        <TextBlock Grid.Column="4" Text="{Binding TotalText}"
-                                                   Foreground="#8888FF" FontSize="13" FontWeight="Bold"
-                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        <!-- Column headers -->
+                        <Border Background="#13131F" CornerRadius="6" Padding="14,8">
+                            <Grid ColumnDefinitions="Auto,*,120,120,120">
+                                <TextBlock Grid.Column="0" Text="Day"        Foreground="#555577" FontSize="12" FontWeight="SemiBold" Width="40"/>
+                                <TextBlock Grid.Column="1" Text="Date"       Foreground="#555577" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="2" Text="Downloaded" Foreground="#336688" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="3" Text="Uploaded"   Foreground="#226633" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="4" Text="Total"      Foreground="#555599" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </Border>
+
+                        <ItemsControl ItemsSource="{Binding DailyUsage}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:DailyUsageViewModel">
+                                    <Border Classes="day-row">
+                                        <Grid ColumnDefinitions="Auto,*,120,120,120">
+                                            <TextBlock Grid.Column="0" Text="{Binding DayOfWeekLabel}"
+                                                       Foreground="#555577" FontSize="11" FontWeight="SemiBold"
+                                                       Width="40" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding DayLabel}" Foreground="#CCCCDD" FontSize="14" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding DayFull}"  Foreground="#55556A" FontSize="11"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding DownloadedText}"
+                                                       Foreground="#00D2FF" FontSize="13" FontWeight="Medium"
+                                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding UploadedText}"
+                                                       Foreground="#00E676" FontSize="13" FontWeight="Medium"
+                                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="4" Text="{Binding TotalText}"
+                                                       Foreground="#8888FF" FontSize="13" FontWeight="Bold"
+                                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- ── Network Sessions ── -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Network Sessions" Foreground="#888899" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,4"/>
+
+                        <Border Background="#13131F" CornerRadius="6" Padding="14,8">
+                            <Grid ColumnDefinitions="*,100,170,170,110,110">
+                                <TextBlock Grid.Column="0" Text="Network"    Foreground="#555577" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="1" Text="Type"       Foreground="#555577" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="2" Text="Started"    Foreground="#555577" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="3" Text="Ended"      Foreground="#555577" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="4" Text="Downloaded" Foreground="#336688" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="5" Text="Uploaded"   Foreground="#226633" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </Border>
+
+                        <ItemsControl ItemsSource="{Binding NetworkSessions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes="day-row">
+                                        <Grid ColumnDefinitions="*,100,170,170,110,110">
+                                            <StackPanel Grid.Column="0" Spacing="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding NetworkName}" Foreground="#CCCCEE" FontSize="13" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding InterfaceName}" Foreground="#55556A" FontSize="11"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding ConnectionType}" Foreground="#888899" FontSize="12" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding StartTime, StringFormat='MMM dd, HH:mm'}" Foreground="#AAAACC" FontSize="12" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding EndTime, StringFormat='MMM dd, HH:mm', FallbackValue='Active'}" Foreground="#AAAACC" FontSize="12" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="4" Text="{Binding BytesDownloaded, Converter={x:Static conv:ByteFormatConverter.Instance}}"
+                                                       Foreground="#00D2FF" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="5" Text="{Binding BytesUploaded, Converter={x:Static conv:ByteFormatConverter.Instance}}"
+                                                       Foreground="#00E676" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="No sessions recorded for this period."
+                                   IsVisible="{Binding !NetworkSessions.Count}"
+                                   Foreground="#44445A" FontSize="12" Margin="0,8" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
                 </StackPanel>
             </ScrollViewer>
         </Grid>

@@ -73,6 +73,14 @@
                     </StackPanel>
                 </Button>
                 <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsSpeedTestActive}"
+                        Command="{Binding NavigateToSpeedTestCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="🚀" Width="20" />
+                        <TextBlock Text="Speed Test" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
                         Classes.active="{Binding IsSettingsActive}"
                         Command="{Binding NavigateToSettingsCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="12">

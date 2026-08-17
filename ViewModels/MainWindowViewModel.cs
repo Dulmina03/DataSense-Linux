@@ -22,6 +22,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isAboutActive;
 
+    [ObservableProperty]
+    private bool _isSpeedTestActive;
+
     public MainWindowViewModel()
     {
         // Default to Dashboard
@@ -56,12 +59,19 @@ public partial class MainWindowViewModel : ViewModelBase
         SetCurrentPage(App.Services?.GetRequiredService<AboutViewModel>() ?? new AboutViewModel());
     }
 
+    [RelayCommand]
+    private void NavigateToSpeedTest()
+    {
+        SetCurrentPage(App.Services?.GetRequiredService<SpeedTestViewModel>() ?? throw new InvalidOperationException("SpeedTestViewModel resolution failed"));
+    }
+
     private void SetCurrentPage(ViewModelBase page)
     {
         CurrentPage = page;
         
         IsDashboardActive = page is DashboardViewModel;
         IsHistoryActive = page is HistoryViewModel;
+        IsSpeedTestActive = page is SpeedTestViewModel;
         IsSettingsActive = page is SettingsViewModel;
         IsAboutActive = page is AboutViewModel;
     }

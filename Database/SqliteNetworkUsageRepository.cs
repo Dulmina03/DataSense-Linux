@@ -57,6 +57,27 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
             CREATE INDEX IF NOT EXISTS IX_NetworkUsageRecords_Timestamp 
             ON NetworkUsageRecords(Timestamp);
+
+            CREATE TABLE IF NOT EXISTS NetworkSessions (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                NetworkName TEXT NOT NULL,
+                InterfaceName TEXT NOT NULL,
+                ConnectionType TEXT NOT NULL,
+                StartTime TEXT NOT NULL,
+                EndTime TEXT,
+                BytesDownloaded INTEGER NOT NULL,
+                BytesUploaded INTEGER NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS SpeedTestRecords (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Timestamp TEXT NOT NULL,
+                DownloadSpeedMbps REAL NOT NULL,
+                UploadSpeedMbps REAL NOT NULL,
+                PingMs REAL NOT NULL,
+                JitterMs REAL NOT NULL,
+                ServerName TEXT NOT NULL
+            );
         ";
 
         using var command = connection.CreateCommand();
@@ -335,5 +356,169 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         foreach (var d in daily) { dl += d.BytesDownloaded; ul += d.BytesUploaded; }
 
         return (dl, ul);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Network Sessions
+    // ────────────────────────────────────────────────────────────────────────
+
+    public async Task SaveSessionAsync(NetworkSession session)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        const string sql = @"
+            INSERT INTO NetworkSessions (NetworkName, InterfaceName, ConnectionType, StartTime, EndTime, BytesDownloaded, BytesUploaded)
+            VALUES (@NetworkName, @InterfaceName, @ConnectionType, @StartTime, @EndTime, @BytesDownloaded, @BytesUploaded);
+            SELECT last_insert_rowid();";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@NetworkName", session.NetworkName);
+        command.Parameters.AddWithValue("@InterfaceName", session.InterfaceName);
+        command.Parameters.AddWithValue("@ConnectionType", session.ConnectionType);
+        command.Parameters.AddWithValue("@StartTime", session.StartTime.ToString("o"));
+        command.Parameters.AddWithValue("@EndTime", session.EndTime.HasValue ? session.EndTime.Value.ToString("o") : DBNull.Value);
+        command.Parameters.AddWithValue("@BytesDownloaded", session.BytesDownloaded);
+        command.Parameters.AddWithValue("@BytesUploaded", session.BytesUploaded);
+
+        var id = await command.ExecuteScalarAsync();
+        if (id != null)
+        {
+            session.Id = Convert.ToInt64(id);
+        }
+    }
+
+    public async Task UpdateSessionAsync(NetworkSession session)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        const string sql = @"
+            UPDATE NetworkSessions
+            SET EndTime = @EndTime,
+                BytesDownloaded = @BytesDownloaded,
+                BytesUploaded = @BytesUploaded
+            WHERE Id = @Id;";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@Id", session.Id);
+        command.Parameters.AddWithValue("@EndTime", session.EndTime.HasValue ? session.EndTime.Value.ToString("o") : DBNull.Value);
+        command.Parameters.AddWithValue("@BytesDownloaded", session.BytesDownloaded);
+        command.Parameters.AddWithValue("@BytesUploaded", session.BytesUploaded);
+
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<IEnumerable<NetworkSession>> GetSessionsAsync(DateTime start, DateTime end, string? interfaceName = null)
+    {
+        var sessions = new List<NetworkSession>();
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT Id, NetworkName, InterfaceName, ConnectionType, StartTime, EndTime, BytesDownloaded, BytesUploaded
+            FROM NetworkSessions
+            WHERE StartTime >= @Start AND StartTime <= @End";
+
+        if (!string.IsNullOrEmpty(interfaceName))
+        {
+            sql += " AND InterfaceName = @InterfaceName";
+        }
+        
+        sql += " ORDER BY StartTime DESC;";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@Start", start.ToString("o"));
+        command.Parameters.AddWithValue("@End", end.ToString("o"));
+        
+        if (!string.IsNullOrEmpty(interfaceName))
+        {
+            command.Parameters.AddWithValue("@InterfaceName", interfaceName);
+        }
+
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            sessions.Add(new NetworkSession
+            {
+                Id = reader.GetInt64(0),
+                NetworkName = reader.GetString(1),
+                InterfaceName = reader.GetString(2),
+                ConnectionType = reader.GetString(3),
+                StartTime = DateTime.Parse(reader.GetString(4)),
+                EndTime = reader.IsDBNull(5) ? null : DateTime.Parse(reader.GetString(5)),
+                BytesDownloaded = reader.GetInt64(6),
+                BytesUploaded = reader.GetInt64(7)
+            });
+        }
+        
+        return sessions;
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Speed Tests
+    // ────────────────────────────────────────────────────────────────────────
+
+    public async Task SaveSpeedTestAsync(SpeedTestRecord record)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        const string sql = @"
+            INSERT INTO SpeedTestRecords (Timestamp, DownloadSpeedMbps, UploadSpeedMbps, PingMs, JitterMs, ServerName)
+            VALUES (@Timestamp, @DownloadSpeedMbps, @UploadSpeedMbps, @PingMs, @JitterMs, @ServerName);
+            SELECT last_insert_rowid();";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@Timestamp", record.Timestamp.ToString("o"));
+        command.Parameters.AddWithValue("@DownloadSpeedMbps", record.DownloadSpeedMbps);
+        command.Parameters.AddWithValue("@UploadSpeedMbps", record.UploadSpeedMbps);
+        command.Parameters.AddWithValue("@PingMs", record.PingMs);
+        command.Parameters.AddWithValue("@JitterMs", record.JitterMs);
+        command.Parameters.AddWithValue("@ServerName", record.ServerName);
+
+        var id = await command.ExecuteScalarAsync();
+        if (id != null)
+        {
+            record.Id = Convert.ToInt64(id);
+        }
+    }
+
+    public async Task<IEnumerable<SpeedTestRecord>> GetSpeedTestsAsync(int count = 50)
+    {
+        var records = new List<SpeedTestRecord>();
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        const string sql = @"
+            SELECT Id, Timestamp, DownloadSpeedMbps, UploadSpeedMbps, PingMs, JitterMs, ServerName
+            FROM SpeedTestRecords
+            ORDER BY Timestamp DESC
+            LIMIT @Count;";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@Count", count);
+
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            records.Add(new SpeedTestRecord
+            {
+                Id = reader.GetInt64(0),
+                Timestamp = DateTime.Parse(reader.GetString(1)),
+                DownloadSpeedMbps = reader.GetDouble(2),
+                UploadSpeedMbps = reader.GetDouble(3),
+                PingMs = reader.GetDouble(4),
+                JitterMs = reader.GetDouble(5),
+                ServerName = reader.GetString(6)
+            });
+        }
+
+        return records;
     }
 }

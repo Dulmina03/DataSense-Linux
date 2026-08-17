@@ -87,6 +87,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool   _hasWifi                = false;
     [ObservableProperty] private bool   _isConnectionDetailsLoading = false;
 
+    [ObservableProperty] private string _networkTypeText = "—";
+    [ObservableProperty] private string _networkIdentityText = "—";
+
     // ── Chart ───────────────────────────────────────────────────────────────
 
     public ObservableCollection<DailyChartBarViewModel> DailyChartItems { get; } = new();
@@ -478,6 +481,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 WifiSignalStrengthText = "—";
                 LinkSpeed              = "—";
                 HasWifi                = false;
+                NetworkTypeText        = "Disconnected";
+                NetworkIdentityText    = "—";
             });
             return;
         }
@@ -504,6 +509,27 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 LinkSpeed              = details.LinkSpeed;
                 HasWifi                = details.ConnectionType.Equals("wifi", StringComparison.OrdinalIgnoreCase);
                 IsConnectionDetailsLoading = false;
+
+                if (HasWifi)
+                {
+                    NetworkTypeText = "Wi-Fi";
+                    NetworkIdentityText = !string.IsNullOrEmpty(details.WifiSsid) && details.WifiSsid != "—" ? details.WifiSsid : "Connected";
+                }
+                else if (details.ConnectionType.Equals("ethernet", StringComparison.OrdinalIgnoreCase))
+                {
+                    NetworkTypeText = "Ethernet";
+                    NetworkIdentityText = "Connected";
+                }
+                else if (string.IsNullOrEmpty(interfaceName) || interfaceName == "None" || interfaceName == "Disconnected")
+                {
+                    NetworkTypeText = "Disconnected";
+                    NetworkIdentityText = "—";
+                }
+                else
+                {
+                    NetworkTypeText = details.ConnectionType;
+                    NetworkIdentityText = !string.IsNullOrEmpty(details.ConnectionName) && details.ConnectionName != "—" ? details.ConnectionName : "Connected";
+                }
             });
         }
         catch (Exception ex)

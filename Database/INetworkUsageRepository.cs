@@ -37,4 +37,13 @@ public interface INetworkUsageRepository
     /// Returns (0, 0) when no records exist for the current month.
     /// </summary>
     Task<(long BytesDownloaded, long BytesUploaded)> GetMonthSummaryAsync(string? interfaceName = null);
+
+    // Network Sessions
+    Task SaveSessionAsync(NetworkSession session);
+    Task UpdateSessionAsync(NetworkSession session);
+    Task<IEnumerable<NetworkSession>> GetSessionsAsync(DateTime start, DateTime end, string? interfaceName = null);
+
+    // Speed Tests
+    Task SaveSpeedTestAsync(SpeedTestRecord record);
+    Task<IEnumerable<SpeedTestRecord>> GetSpeedTestsAsync(int count = 50);
 }

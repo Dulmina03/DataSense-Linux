@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DataSense.Database;
 using DataSense.Helpers;
-
+using DataSense.Models;
 using DataSense.Services;
 
 namespace DataSense.ViewModels;
@@ -46,6 +46,9 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
     /// <summary>One row per calendar day, most-recent first.</summary>
     public ObservableCollection<DailyUsageViewModel> DailyUsage { get; } = new();
+
+    /// <summary>Network sessions for the selected period.</summary>
+    public ObservableCollection<NetworkSession> NetworkSessions { get; } = new();
 
     /// <summary>Interface names available in the DB (populated on first load).</summary>
     public ObservableCollection<string> Interfaces { get; } = new();
@@ -177,6 +180,13 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
             foreach (var row in daily)
                 DailyUsage.Add(new DailyUsageViewModel(row));
+
+            var sessions = await _repository.GetSessionsAsync(start, end, ifaceFilter);
+            NetworkSessions.Clear();
+            foreach (var session in sessions)
+            {
+                NetworkSessions.Add(session);
+            }
 
             // 3. Compute period totals from the daily aggregates (not from raw counters)
             long totalDl = daily.Sum(r => r.BytesDownloaded);

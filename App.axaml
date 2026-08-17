@@ -11,6 +11,9 @@
         <DataTemplate DataType="{x:Type vm:HistoryViewModel}">
             <v:HistoryView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SpeedTestViewModel}">
+            <v:SpeedTestView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
             <v:SettingsView />
         </DataTemplate>

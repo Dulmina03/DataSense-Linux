@@ -48,11 +48,45 @@ public partial class App : Application
         var persistenceService = Services.GetRequiredService<INetworkPersistenceService>();
         persistenceService.Start();
 
+        // Start background session manager
+        var sessionManager = Services.GetRequiredService<NetworkSessionManager>();
+        sessionManager.Start();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainWindow = Services.GetRequiredService<MainWindow>();
             mainWindow.DataContext = Services.GetRequiredService<MainWindowViewModel>();
             desktop.MainWindow = mainWindow;
+
+            var trayViewModel = Services.GetRequiredService<TrayIconViewModel>();
+            var trayIcon = new Avalonia.Controls.TrayIcon
+            {
+                Command = trayViewModel.ShowAppCommand,
+                ToolTipText = trayViewModel.SpeedText,
+                Menu = new Avalonia.Controls.NativeMenu
+                {
+                    Items =
+                    {
+                        new Avalonia.Controls.NativeMenuItem { Header = "Open DataSense", Command = trayViewModel.ShowAppCommand },
+                        new Avalonia.Controls.NativeMenuItem { Header = "Exit", Command = trayViewModel.ExitAppCommand }
+                    }
+                }
+            };
+            
+            trayViewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(TrayIconViewModel.SpeedText))
+                {
+                    trayIcon.ToolTipText = trayViewModel.SpeedText;
+                }
+                else if (e.PropertyName == nameof(TrayIconViewModel.TrayIconImage))
+                {
+                    trayIcon.Icon = trayViewModel.TrayIconImage;
+                }
+            };
+
+            var icons = new Avalonia.Controls.TrayIcons { trayIcon };
+            Avalonia.Controls.TrayIcon.SetIcons(this, icons);
 
             desktop.Exit += (sender, e) =>
             {

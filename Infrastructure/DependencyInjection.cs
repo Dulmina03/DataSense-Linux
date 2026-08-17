@@ -21,6 +21,8 @@ public static class DependencyInjection
         services.AddSingleton<INetworkMonitorWorker, NetworkMonitorWorker>();
         services.AddSingleton<INetworkPersistenceService, NetworkPersistenceService>();
         services.AddSingleton<INetworkConnectionService, LinuxNetworkConnectionService>();
+        services.AddSingleton<NetworkSessionManager>();
+        services.AddSingleton<ISpeedTestService, CloudflareSpeedTestService>();
 
         // ViewModels
         // DashboardViewModel is Singleton: it subscribes to the monitor worker event
@@ -28,7 +30,9 @@ public static class DependencyInjection
         // can force a reload via the Refresh button.
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<DashboardViewModel>();
+        services.AddSingleton<TrayIconViewModel>();
         services.AddTransient<HistoryViewModel>();
+        services.AddTransient<SpeedTestViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<AboutViewModel>();
 
