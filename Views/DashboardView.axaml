@@ -4,8 +4,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:conv="using:DataSense.Converters"
+
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="900"
              x:Class="DataSense.Views.DashboardView"
+             xmlns:m="using:DataSense.Models"
              x:DataType="vm:DashboardViewModel">
 
     <UserControl.Styles>
@@ -108,12 +110,13 @@
             <!-- ══ Connection Details Panel ══ -->
             <Border Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="20">
                 <StackPanel Spacing="14">
-                    <Grid ColumnDefinitions="*,Auto">
+                    <Grid ColumnDefinitions="*,Auto,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="⚙️" FontSize="14" VerticalAlignment="Center"/>
                             <TextBlock Text="Network Connection Details" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
                         </StackPanel>
                         <ProgressBar Grid.Column="1" IsIndeterminate="True" Height="4" Width="50" IsVisible="{Binding IsConnectionDetailsLoading}"/>
+                        <Button Grid.Column="2" Content="Analytics ➔" Classes="link-button" Foreground="#8888FF" FontSize="12" Margin="16,0,0,0" VerticalAlignment="Center" Command="{Binding NavigateToNetworkAnalyticsCommand}" CommandParameter="{Binding ConnectionName}"/>
                     </Grid>
                     <Grid ColumnDefinitions="*,24,*">
                         <!-- Left column -->
@@ -277,23 +280,44 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Section 2: Insights Row -->
-                <Grid ColumnDefinitions="*,12,*">
-                    <Border Grid.Column="0" Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="📈  Avg Daily Usage (14 days)" Classes="insight-label"/>
-                            <TextBlock Text="{Binding AvgDailyText}" Classes="insight-value"/>
-                            <TextBlock Text="Active days with recorded data" Classes="insight-label"/>
+                <!-- Section 2: Network Intelligence -->
+                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16" IsVisible="{Binding HasInsights}">
+                    <StackPanel Spacing="14">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="🧠" FontSize="14"/>
+                            <TextBlock Text="Network Intelligence" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
                         </StackPanel>
-                    </Border>
-                    <Border Grid.Column="2" Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="🏆  Peak Day (14 days)" Classes="insight-label"/>
-                            <TextBlock Text="{Binding PeakDayText}" Classes="insight-value"/>
-                            <TextBlock Text="Highest single-day usage" Classes="insight-label"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>
+                        
+                        <ItemsControl ItemsSource="{Binding Insights}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Margin="-4" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="m:NetworkInsight">
+                                    <Border Background="#1A1A2E" BorderBrush="#2D2D44" BorderThickness="1" CornerRadius="8" Padding="16" Margin="4" Width="300" 
+                                            Cursor="Hand"
+                                            PointerPressed="OnInsightCardPressed">
+                                        <Border.Styles>
+                                            <Style Selector="Border:pointerover">
+                                                <Setter Property="Background" Value="#222238"/>
+                                                <Setter Property="BorderBrush" Value="#444466"/>
+                                            </Style>
+                                        </Border.Styles>
+                                        <StackPanel Spacing="8">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding Severity, Converter={x:Static conv:InsightSeverityIconConverter.Instance}}" FontSize="14"/>
+                                                <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="{Binding Severity, Converter={x:Static conv:InsightSeverityColorConverter.Instance}}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Description}" FontSize="13" Foreground="#CCCCEE" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
 
                 <!-- Section 3: Download vs Upload Ratio -->
                 <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">

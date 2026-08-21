@@ -22,6 +22,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly INetworkConnectionService _connectionService;
     private readonly IAnalyticsService         _analyticsService;
     private readonly ProcessNetworkMonitorWorker _processMonitorWorker;
+    private readonly IIntelligenceService      _intelligenceService;
+    private readonly IForecastService          _forecastService;
     private bool     _disposed;
     private int      _tickCount  = 4; // Start at 4 so first tick triggers details load immediately
     private DateTime _lastAnalyticsDate = DateTime.MinValue; // Track UTC date for midnight auto-refresh
@@ -92,6 +94,12 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _networkTypeText = "—";
     [ObservableProperty] private string _networkIdentityText = "—";
 
+    // ── Insights ────────────────────────────────────────────────────────────
+
+    public ObservableCollection<NetworkInsight> Insights { get; } = new();
+    
+    [ObservableProperty] private bool _hasInsights;
+
     // ── Chart ───────────────────────────────────────────────────────────────
 
     public ObservableCollection<DailyChartBarViewModel> DailyChartItems { get; } = new();
@@ -132,6 +140,36 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     public ObservableCollection<ProcessNetworkUsage> LiveProcessTraffic { get; } = new();
     public ObservableCollection<ProcessUsageRecord> TopProcesses { get; } = new();
 
+    // ── Forecast & Budget ────────────────────────────────────────────────────
+
+    public ObservableCollection<ForecastChartPointViewModel> ForecastChartItems { get; } = new();
+
+    [ObservableProperty] private bool   _hasForecast          = false;
+    [ObservableProperty] private bool   _hasBudget            = false;
+    [ObservableProperty] private string _forecastCurrentText  = "—";
+    [ObservableProperty] private string _forecastProjectedText = "—";
+    [ObservableProperty] private string _forecastRangeText    = "—";
+    [ObservableProperty] private string _forecastAvgDailyText = "—";
+    [ObservableProperty] private string _forecastConfidenceText = "—";
+    [ObservableProperty] private string _forecastInsufficientText = "Not enough historical data yet. Continue using DataSense to build a forecast baseline.";
+    [ObservableProperty] private bool   _isForecastLoading    = false;
+
+    // Budget summary
+    [ObservableProperty] private string _budgetUsedText       = "—";
+    [ObservableProperty] private string _budgetLimitText      = "—";
+    [ObservableProperty] private string _budgetRemainingText  = "—";
+    [ObservableProperty] private string _budgetUsedPctText    = "—";
+    [ObservableProperty] private string _budgetStatusText     = "—";
+    [ObservableProperty] private string _budgetStatusColor    = "#888899";
+    [ObservableProperty] private double _budgetProgressValue  = 0;
+    [ObservableProperty] private string _budgetExhaustionText = "—";
+    [ObservableProperty] private string _budgetPaceText       = "—";
+    [ObservableProperty] private bool   _hasDailyBudget       = false;
+    [ObservableProperty] private string _dailyBudgetUsedText  = "—";
+    [ObservableProperty] private string _dailyBudgetLimitText = "—";
+    [ObservableProperty] private string _dailyBudgetStatusText = "—";
+    [ObservableProperty] private string _dailyBudgetStatusColor = "#888899";
+
     // ── Chart layout constants ──────────────────────────────────────────────
 
     /// <summary>Fixed canvas height for the bar chart area in device-independent pixels.</summary>
@@ -156,13 +194,17 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         INetworkUsageRepository  repository,
         INetworkConnectionService connectionService,
         IAnalyticsService         analyticsService,
-        ProcessNetworkMonitorWorker processMonitorWorker)
+        ProcessNetworkMonitorWorker processMonitorWorker,
+        IIntelligenceService      intelligenceService,
+        IForecastService          forecastService)
     {
         _networkMonitorWorker = networkMonitorWorker ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
         _repository           = repository           ?? throw new ArgumentNullException(nameof(repository));
         _connectionService    = connectionService    ?? throw new ArgumentNullException(nameof(connectionService));
         _analyticsService     = analyticsService     ?? throw new ArgumentNullException(nameof(analyticsService));
         _processMonitorWorker = processMonitorWorker ?? throw new ArgumentNullException(nameof(processMonitorWorker));
+        _intelligenceService  = intelligenceService  ?? throw new ArgumentNullException(nameof(intelligenceService));
+        _forecastService      = forecastService      ?? throw new ArgumentNullException(nameof(forecastService));
 
         // Populate live card with current worker state immediately
         UpdateLiveValues(
@@ -205,12 +247,31 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     {
         if (string.IsNullOrWhiteSpace(processName)) return;
         
-        // Find MainWindowViewModel via DI
         var mainWindowVm = App.Services?.GetService(typeof(MainWindowViewModel)) as MainWindowViewModel;
         mainWindowVm?.NavigateToApplicationAnalytics(processName);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    [RelayCommand]
+    private void NavigateToNetworkAnalytics(string? networkName = null)
+    {
+        var mainWindowVm = App.Services?.GetService(typeof(MainWindowViewModel)) as MainWindowViewModel;
+        mainWindowVm?.NavigateToNetworkAnalytics(networkName);
+    }
+
+    [RelayCommand]
+    private void InsightTapped(NetworkInsight insight)
+    {
+        if (insight == null) return;
+        if (!string.IsNullOrEmpty(insight.ApplicationName))
+        {
+            NavigateToProcessAnalytics(insight.ApplicationName);
+        }
+        else if (!string.IsNullOrEmpty(insight.NetworkName))
+        {
+            NavigateToNetworkAnalytics(insight.NetworkName);
+        }
+    }
+
     // Chart width — called from view's SizeChanged handler
     // ────────────────────────────────────────────────────────────────────────
 
@@ -463,6 +524,29 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
             // Load period analytics
             await LoadPeriodAnalyticsAsync(showLoading);
+            
+            // Update insights with budget awareness
+            var forecast    = await _forecastService.GetForecastAsync();
+            var (mDl, mUl)  = await _repository.GetMonthSummaryAsync();
+            long monthTotal = mDl + mUl;
+            var (tDl, tUl)  = await _repository.GetTodaySummaryAsync();
+            long todayTotal = tDl + tUl;
+            long avgDailyBytes = forecast.HasSufficientData ? forecast.AverageDailyUsageBytes : 0;
+            var budgetResult   = await _forecastService.GetBudgetResultAsync(monthTotal, todayTotal, avgDailyBytes);
+
+            var insightsList = await _intelligenceService.GenerateInsightsWithBudgetAsync(
+                SelectedPeriod, ConnectionName, budgetResult, forecast.HasSufficientData ? forecast : null);
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                Insights.Clear();
+                foreach (var insight in insightsList)
+                    Insights.Add(insight);
+                HasInsights = Insights.Count > 0;
+            });
+
+            // Load forecast/budget section
+            await LoadForecastAsync(forecast, budgetResult, monthTotal, todayTotal, avgDailyBytes);
         }
         catch (Exception ex)
         {
@@ -739,6 +823,158 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             System.Diagnostics.Debug.WriteLine($"Failed to load connection details: {ex.Message}");
             Dispatcher.UIThread.Post(() => IsConnectionDetailsLoading = false);
         }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Forecast & Budget loading
+    // ────────────────────────────────────────────────────────────────────────
+
+    private async Task LoadForecastAsync(
+        UsageForecast forecast,
+        BudgetResult? budgetResult,
+        long          monthUsageBytes,
+        long          todayUsageBytes,
+        long          avgDailyBytes)
+    {
+        try
+        {
+            // Build chart items
+            var points     = await _forecastService.GetMonthForecastPointsAsync();
+            var chartItems = BuildForecastChartItems(points, ChartWidth);
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                // ── Forecast section ────────────────────────────────────────
+                HasForecast = forecast.HasSufficientData;
+
+                if (forecast.HasSufficientData)
+                {
+                    ForecastCurrentText   = ByteFormatter.FormatBytes(forecast.CurrentUsageBytes);
+                    ForecastProjectedText = ByteFormatter.FormatBytes(forecast.ProjectedMonthEndBytes);
+                    ForecastRangeText     = $"{ByteFormatter.FormatBytes(forecast.LowerBoundBytes)} – {ByteFormatter.FormatBytes(forecast.UpperBoundBytes)}";
+                    ForecastAvgDailyText  = ByteFormatter.FormatBytes(forecast.AverageDailyUsageBytes);
+                    ForecastConfidenceText = forecast.Confidence switch
+                    {
+                        ForecastConfidence.High   => "High",
+                        ForecastConfidence.Medium => "Medium",
+                        _                         => "Low"
+                    };
+                }
+
+                // Chart
+                ForecastChartItems.Clear();
+                foreach (var item in chartItems)
+                    ForecastChartItems.Add(item);
+
+                // ── Budget section ────────────────────────────────────────
+                HasBudget = budgetResult != null;
+                if (budgetResult != null)
+                {
+                    BudgetUsedText      = ByteFormatter.FormatBytes(budgetResult.UsedBytes);
+                    BudgetLimitText     = ByteFormatter.FormatBytes(budgetResult.LimitBytes);
+                    BudgetRemainingText = budgetResult.RemainingBytes >= 0
+                        ? ByteFormatter.FormatBytes(budgetResult.RemainingBytes)
+                        : $"-{ByteFormatter.FormatBytes(-budgetResult.RemainingBytes)}";
+                    BudgetUsedPctText   = $"{Math.Min(budgetResult.UsedPercent, 100):F0}%";
+                    BudgetStatusText    = budgetResult.StatusLabel;
+                    BudgetStatusColor   = budgetResult.StatusColor;
+                    BudgetProgressValue = budgetResult.ProgressValue;
+
+                    // Exhaustion date
+                    BudgetExhaustionText = budgetResult.EstimatedExhaustionDate.HasValue
+                        ? (budgetResult.Status == BudgetStatus.Exceeded
+                            ? "Already exceeded"
+                            : $"Est. limit: {budgetResult.EstimatedExhaustionDate.Value:MMM d}")
+                        : "Projected to remain within allowance";
+
+                    // Pace
+                    if (budgetResult.RequiredDailyPaceBytes.HasValue)
+                    {
+                        long req = budgetResult.RequiredDailyPaceBytes.Value;
+                        long cur = budgetResult.CurrentDailyPaceBytes;
+                        BudgetPaceText = cur > req
+                            ? $"Usage pace: {ByteFormatter.FormatBytes(cur)}/day  ·  Required: {ByteFormatter.FormatBytes(req)}/day"
+                            : $"Required pace: {ByteFormatter.FormatBytes(req)}/day  ·  Current: {ByteFormatter.FormatBytes(cur)}/day";
+                    }
+                    else
+                    {
+                        BudgetPaceText = "";
+                    }
+
+                    // Daily budget
+                    HasDailyBudget = budgetResult.HasDailyBudget;
+                    if (budgetResult.HasDailyBudget)
+                    {
+                        DailyBudgetUsedText  = ByteFormatter.FormatBytes(budgetResult.TodayUsedBytes);
+                        DailyBudgetLimitText = ByteFormatter.FormatBytes(budgetResult.DailyLimitBytes);
+                        bool dailyOk = budgetResult.TodayUsedBytes <= budgetResult.DailyLimitBytes;
+                        DailyBudgetStatusText  = dailyOk ? "✅ Within daily limit" : "❌ Daily limit exceeded";
+                        DailyBudgetStatusColor = dailyOk ? "#00E676" : "#FF5252";
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Forecast load failed: {ex.Message}");
+        }
+    }
+
+    private static List<ForecastChartPointViewModel> BuildForecastChartItems(
+        IList<DataSense.Models.ForecastPoint> points,
+        double chartWidth)
+    {
+        if (points.Count == 0) return new List<ForecastChartPointViewModel>();
+
+        // Find max bytes for scaling
+        long maxBytes = 1;
+        foreach (var p in points)
+        {
+            long val = p.IsForecast ? p.ForecastBytes : p.ActualBytes;
+            if (val > maxBytes) maxBytes = val;
+        }
+
+        int    count    = points.Count;
+        double barWidth = (chartWidth - (count - 1) * BarGap) / Math.Max(count, 1);
+        var    items    = new List<ForecastChartPointViewModel>(count);
+
+        for (int i = 0; i < count; i++)
+        {
+            var p         = points[i];
+            double barX   = i * (barWidth + BarGap);
+
+            if (!p.IsForecast)
+            {
+                double barH = (double)p.ActualBytes / maxBytes * ChartHeight;
+                items.Add(new ForecastChartPointViewModel
+                {
+                    DayLabel        = p.Label,
+                    IsForecast      = false,
+                    IsToday         = p.IsToday,
+                    BarX            = barX,
+                    BarWidth        = Math.Max(barWidth, 1),
+                    ActualBarHeight = Math.Max(barH, 0),
+                    ActualBarY      = ChartHeight - Math.Max(barH, 0),
+                    Tooltip         = p.Tooltip,
+                });
+            }
+            else
+            {
+                double barH = (double)p.ForecastBytes / maxBytes * ChartHeight;
+                items.Add(new ForecastChartPointViewModel
+                {
+                    DayLabel           = p.Label,
+                    IsForecast         = true,
+                    IsToday            = false,
+                    BarX               = barX,
+                    BarWidth           = Math.Max(barWidth, 1),
+                    ForecastBarHeight  = Math.Max(barH, 0),
+                    ForecastBarY       = ChartHeight - Math.Max(barH, 0),
+                    Tooltip            = p.Tooltip,
+                });
+            }
+        }
+        return items;
     }
 
     // ────────────────────────────────────────────────────────────────────────

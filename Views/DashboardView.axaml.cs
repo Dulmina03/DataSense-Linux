@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Input;
+using DataSense.Models;
 using DataSense.ViewModels;
 
 namespace DataSense.Views;
@@ -18,5 +20,18 @@ public partial class DashboardView : UserControl
     {
         if (DataContext is DashboardViewModel vm && e.NewSize.Width > 0)
             vm.UpdateChartWidth(e.NewSize.Width);
+    }
+
+    /// <summary>
+    /// Handles pointer press on an insight card and delegates to the VM command.
+    /// Used instead of Avalonia.Xaml.Behaviors to avoid extra package dependency.
+    /// </summary>
+    private void OnInsightCardPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is DashboardViewModel vm &&
+            (sender as Control)?.DataContext is NetworkInsight insight)
+        {
+            vm.InsightTappedCommand.Execute(insight);
+        }
     }
 }

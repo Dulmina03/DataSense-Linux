@@ -91,11 +91,33 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             ON ProcessUsageRecords(Timestamp);
             CREATE INDEX IF NOT EXISTS IX_ProcessUsageRecords_ProcessName 
             ON ProcessUsageRecords(ProcessName);
+
+            CREATE TABLE IF NOT EXISTS AppSettings (
+                Key   TEXT PRIMARY KEY,
+                Value TEXT NOT NULL
+            );
         ";
 
         using var command = connection.CreateCommand();
         command.CommandText = createTableSql;
         await command.ExecuteNonQueryAsync();
+
+        // Safe migration for SpeedTestRecords
+        try
+        {
+            using var alterCmd = connection.CreateCommand();
+            alterCmd.CommandText = "ALTER TABLE SpeedTestRecords ADD COLUMN NetworkName TEXT NOT NULL DEFAULT 'Unknown';";
+            await alterCmd.ExecuteNonQueryAsync();
+        }
+        catch (SqliteException) { /* Column already exists */ }
+
+        try
+        {
+            using var alterCmd = connection.CreateCommand();
+            alterCmd.CommandText = "ALTER TABLE SpeedTestRecords ADD COLUMN ConnectionType TEXT NOT NULL DEFAULT 'Unknown';";
+            await alterCmd.ExecuteNonQueryAsync();
+        }
+        catch (SqliteException) { /* Column already exists */ }
     }
 
     public async Task SaveUsageAsync(NetworkUsage usage)
@@ -483,38 +505,37 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         await command.ExecuteNonQueryAsync();
     }
 
-    public async Task<IEnumerable<NetworkSession>> GetSessionsAsync(DateTime start, DateTime end, string? interfaceName = null)
+    public async Task<IEnumerable<NetworkSession>> GetSessionsAsync(DateTime start, DateTime end, string? interfaceName = null, string? networkName = null)
     {
-        var sessions = new List<NetworkSession>();
+        var results = new List<NetworkSession>();
         using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
         string sql = @"
             SELECT Id, NetworkName, InterfaceName, ConnectionType, StartTime, EndTime, BytesDownloaded, BytesUploaded
             FROM NetworkSessions
-            WHERE StartTime >= @Start AND StartTime <= @End";
+            WHERE ((StartTime <= @End AND EndTime >= @Start) OR (StartTime <= @End AND EndTime IS NULL))";
 
         if (!string.IsNullOrEmpty(interfaceName))
-        {
             sql += " AND InterfaceName = @InterfaceName";
-        }
-        
+        if (!string.IsNullOrEmpty(networkName))
+            sql += " AND NetworkName = @NetworkName";
+
         sql += " ORDER BY StartTime DESC;";
 
         using var command = connection.CreateCommand();
         command.CommandText = sql;
         command.Parameters.AddWithValue("@Start", start.ToString("o"));
         command.Parameters.AddWithValue("@End", end.ToString("o"));
-        
         if (!string.IsNullOrEmpty(interfaceName))
-        {
             command.Parameters.AddWithValue("@InterfaceName", interfaceName);
-        }
+        if (!string.IsNullOrEmpty(networkName))
+            command.Parameters.AddWithValue("@NetworkName", networkName);
 
         using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
-            sessions.Add(new NetworkSession
+            results.Add(new NetworkSession
             {
                 Id = reader.GetInt64(0),
                 NetworkName = reader.GetString(1),
@@ -527,7 +548,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             });
         }
         
-        return sessions;
+        return results;
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -540,8 +561,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         await connection.OpenAsync();
 
         const string sql = @"
-            INSERT INTO SpeedTestRecords (Timestamp, DownloadSpeedMbps, UploadSpeedMbps, PingMs, JitterMs, ServerName)
-            VALUES (@Timestamp, @DownloadSpeedMbps, @UploadSpeedMbps, @PingMs, @JitterMs, @ServerName);
+            INSERT INTO SpeedTestRecords (Timestamp, DownloadSpeedMbps, UploadSpeedMbps, PingMs, JitterMs, ServerName, NetworkName, ConnectionType)
+            VALUES (@Timestamp, @DownloadSpeedMbps, @UploadSpeedMbps, @PingMs, @JitterMs, @ServerName, @NetworkName, @ConnectionType);
             SELECT last_insert_rowid();";
 
         using var command = connection.CreateCommand();
@@ -552,46 +573,51 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         command.Parameters.AddWithValue("@PingMs", record.PingMs);
         command.Parameters.AddWithValue("@JitterMs", record.JitterMs);
         command.Parameters.AddWithValue("@ServerName", record.ServerName);
+        command.Parameters.AddWithValue("@NetworkName", record.NetworkName);
+        command.Parameters.AddWithValue("@ConnectionType", record.ConnectionType);
 
-        var id = await command.ExecuteScalarAsync();
-        if (id != null)
-        {
-            record.Id = Convert.ToInt64(id);
-        }
+        record.Id = (long)(await command.ExecuteScalarAsync() ?? 0L);
     }
 
-    public async Task<IEnumerable<SpeedTestRecord>> GetSpeedTestsAsync(int count = 50)
+    public async Task<IEnumerable<SpeedTestRecord>> GetSpeedTestsAsync(int count = 50, string? networkName = null)
     {
-        var records = new List<SpeedTestRecord>();
+        var results = new List<SpeedTestRecord>();
         using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
-        const string sql = @"
-            SELECT Id, Timestamp, DownloadSpeedMbps, UploadSpeedMbps, PingMs, JitterMs, ServerName
-            FROM SpeedTestRecords
-            ORDER BY Timestamp DESC
-            LIMIT @Count;";
+        string sql = @"
+            SELECT Id, Timestamp, DownloadSpeedMbps, UploadSpeedMbps, PingMs, JitterMs, ServerName, NetworkName, ConnectionType
+            FROM SpeedTestRecords";
+        
+        if (!string.IsNullOrEmpty(networkName))
+            sql += " WHERE NetworkName = @NetworkName";
+            
+        sql += " ORDER BY Timestamp DESC LIMIT @Count;";
 
         using var command = connection.CreateCommand();
         command.CommandText = sql;
         command.Parameters.AddWithValue("@Count", count);
+        if (!string.IsNullOrEmpty(networkName))
+            command.Parameters.AddWithValue("@NetworkName", networkName);
 
         using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
-            records.Add(new SpeedTestRecord
+            results.Add(new SpeedTestRecord
             {
-                Id = reader.GetInt64(0),
-                Timestamp = DateTime.Parse(reader.GetString(1)),
+                Id                = reader.GetInt64(0),
+                Timestamp         = DateTime.Parse(reader.GetString(1)),
                 DownloadSpeedMbps = reader.GetDouble(2),
-                UploadSpeedMbps = reader.GetDouble(3),
-                PingMs = reader.GetDouble(4),
-                JitterMs = reader.GetDouble(5),
-                ServerName = reader.GetString(6)
+                UploadSpeedMbps   = reader.GetDouble(3),
+                PingMs            = reader.GetDouble(4),
+                JitterMs          = reader.GetDouble(5),
+                ServerName        = reader.GetString(6),
+                NetworkName       = reader.GetString(7),
+                ConnectionType    = reader.GetString(8)
             });
         }
 
-        return records;
+        return results;
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -729,5 +755,282 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             });
         }
         return results;
+    }
+    // ────────────────────────────────────────────────────────────────────────
+    // Network Analytics Methods
+    // ────────────────────────────────────────────────────────────────────────
+
+    public async Task<IEnumerable<string>> GetAvailableNetworksAsync()
+    {
+        var results = new List<string>();
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        const string sql = "SELECT DISTINCT NetworkName FROM NetworkSessions WHERE NetworkName != '' ORDER BY NetworkName;";
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(reader.GetString(0));
+        }
+        return results;
+    }
+
+    public async Task<NetworkAnalyticsSummary> GetNetworkSummaryAsync(string networkName, DateTime start, DateTime end)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        // 1. Get Totals
+        string sql = @"
+            SELECT 
+                COALESCE(SUM(BytesDownloaded), 0),
+                COALESCE(SUM(BytesUploaded), 0),
+                COALESCE(SUM((julianday(COALESCE(EndTime, datetime('now'))) - julianday(StartTime)) * 24 * 60 * 60), 0),
+                COUNT(*),
+                MIN(StartTime),
+                MAX(StartTime)
+            FROM NetworkSessions
+            WHERE NetworkName = @NetworkName AND StartTime >= @Start AND StartTime <= @End;";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@NetworkName", networkName);
+        command.Parameters.AddWithValue("@Start", start.ToString("o"));
+        command.Parameters.AddWithValue("@End", end.ToString("o"));
+
+        using var reader = await command.ExecuteReaderAsync();
+        if (await reader.ReadAsync())
+        {
+            long dl = reader.GetInt64(0);
+            long ul = reader.GetInt64(1);
+            double seconds = reader.GetDouble(2);
+            int count = reader.GetInt32(3);
+            DateTime? first = reader.IsDBNull(4) ? null : DateTime.Parse(reader.GetString(4));
+            DateTime? last = reader.IsDBNull(5) ? null : DateTime.Parse(reader.GetString(5));
+
+            return new NetworkAnalyticsSummary
+            {
+                TotalDownloaded = dl,
+                TotalUploaded = ul,
+                TotalConnectionTime = TimeSpan.FromSeconds(seconds),
+                TotalSessions = count,
+                FirstConnected = first,
+                LastConnected = last
+            };
+        }
+        
+        return new NetworkAnalyticsSummary();
+    }
+
+    public async Task<IEnumerable<DailyUsageRecord>> GetNetworkDailyUsageAsync(string networkName, DateTime start, DateTime end)
+    {
+        var results = new List<DailyUsageRecord>();
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT 
+                date(StartTime) AS DayStr,
+                SUM(BytesDownloaded), 
+                SUM(BytesUploaded)
+            FROM NetworkSessions
+            WHERE NetworkName = @NetworkName AND StartTime >= @Start AND StartTime <= @End
+            GROUP BY DayStr
+            ORDER BY DayStr ASC;";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@NetworkName", networkName);
+        command.Parameters.AddWithValue("@Start", start.ToString("o"));
+        command.Parameters.AddWithValue("@End", end.ToString("o"));
+
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new DailyUsageRecord
+            {
+                Day = DateTime.Parse(reader.GetString(0)),
+                BytesDownloaded = reader.GetInt64(1),
+                BytesUploaded = reader.GetInt64(2)
+            });
+        }
+        
+        // Fill gaps like we do for standard daily series
+        var dictionary = new Dictionary<DateTime, DailyUsageRecord>();
+        foreach(var r in results) dictionary[r.Day.Date] = r;
+        
+        var filled = new List<DailyUsageRecord>();
+        for (var date = start.Date; date <= end.Date; date = date.AddDays(1))
+        {
+            if (dictionary.TryGetValue(date, out var rec))
+                filled.Add(rec);
+            else
+                filled.Add(new DailyUsageRecord { Day = date });
+        }
+        return filled;
+    }
+
+    public async Task<IEnumerable<HourlyUsageRecord>> GetNetworkHourlyUsageAsync(string networkName, DateTime day)
+    {
+        var results = new List<HourlyUsageRecord>();
+        
+        var dayStart = day.Date.ToUniversalTime();
+        var dayEnd   = dayStart.AddDays(1).AddTicks(-1);
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT 
+                CAST(strftime('%H', StartTime) AS INTEGER) AS Hour,
+                SUM(BytesDownloaded), 
+                SUM(BytesUploaded)
+            FROM NetworkSessions
+            WHERE NetworkName = @NetworkName AND StartTime >= @Start AND StartTime <= @End
+            GROUP BY Hour
+            ORDER BY Hour ASC;";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@NetworkName", networkName);
+        command.Parameters.AddWithValue("@Start", dayStart.ToString("o"));
+        command.Parameters.AddWithValue("@End", dayEnd.ToString("o"));
+
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new HourlyUsageRecord
+            {
+                Hour = reader.GetInt32(0),
+                BytesDownloaded = reader.GetInt64(1),
+                BytesUploaded = reader.GetInt64(2)
+            });
+        }
+        return results;
+    }
+
+    public async Task<NetworkPerformanceSummary?> GetNetworkPerformanceAsync(string networkName)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT 
+                AVG(DownloadSpeedMbps), MAX(DownloadSpeedMbps),
+                AVG(UploadSpeedMbps), MAX(UploadSpeedMbps),
+                AVG(PingMs), MIN(PingMs),
+                COUNT(*)
+            FROM SpeedTestRecords
+            WHERE NetworkName = @NetworkName;";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@NetworkName", networkName);
+
+        using var reader = await command.ExecuteReaderAsync();
+        if (await reader.ReadAsync() && !reader.IsDBNull(0))
+        {
+            return new NetworkPerformanceSummary
+            {
+                AvgDownloadMbps = reader.GetDouble(0),
+                BestDownloadMbps = reader.GetDouble(1),
+                AvgUploadMbps = reader.GetDouble(2),
+                BestUploadMbps = reader.GetDouble(3),
+                AvgPingMs = reader.GetDouble(4),
+                BestPingMs = reader.GetDouble(5),
+                TotalTests = reader.GetInt32(6)
+            };
+        }
+        return null;
+    }
+
+    public async Task<IEnumerable<NetworkComparisonRecord>> GetNetworkComparisonAsync()
+    {
+        var results = new List<NetworkComparisonRecord>();
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        // Query session aggregates
+        string sql = @"
+            SELECT 
+                NetworkName,
+                MAX(ConnectionType) AS ConnType,
+                SUM(BytesDownloaded + BytesUploaded) AS TotalUsage,
+                SUM((julianday(COALESCE(EndTime, datetime('now'))) - julianday(StartTime)) * 24 * 60 * 60) AS ConnTime,
+                COUNT(*) AS Sessions
+            FROM NetworkSessions
+            WHERE NetworkName != ''
+            GROUP BY NetworkName
+            ORDER BY TotalUsage DESC;";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new NetworkComparisonRecord
+            {
+                NetworkName = reader.GetString(0),
+                ConnectionType = reader.GetString(1),
+                TotalUsage = reader.GetInt64(2),
+                TotalConnectionTime = TimeSpan.FromSeconds(reader.GetDouble(3)),
+                SessionsCount = reader.GetInt32(4)
+            });
+        }
+        
+        // Fetch average speeds for each network
+        foreach(var net in results)
+        {
+            string speedSql = "SELECT AVG(DownloadSpeedMbps), AVG(UploadSpeedMbps) FROM SpeedTestRecords WHERE NetworkName = @Net;";
+            using var speedCmd = connection.CreateCommand();
+            speedCmd.CommandText = speedSql;
+            speedCmd.Parameters.AddWithValue("@Net", net.NetworkName);
+            using var speedReader = await speedCmd.ExecuteReaderAsync();
+            if (await speedReader.ReadAsync() && !speedReader.IsDBNull(0))
+            {
+                net.AvgDownloadMbps = speedReader.GetDouble(0);
+                net.AvgUploadMbps = speedReader.GetDouble(1);
+            }
+        }
+        
+        return results;
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // App Settings (key-value persistence)
+    // ────────────────────────────────────────────────────────────────────────
+
+    public async Task<string?> GetSettingAsync(string key)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        const string sql = "SELECT Value FROM AppSettings WHERE Key = @Key LIMIT 1;";
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Key", key);
+
+        var result = await cmd.ExecuteScalarAsync();
+        return result is DBNull or null ? null : result.ToString();
+    }
+
+    public async Task SaveSettingAsync(string key, string value)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        // UPSERT: insert or replace the value for the given key
+        const string sql = @"
+            INSERT INTO AppSettings (Key, Value) VALUES (@Key, @Value)
+            ON CONFLICT(Key) DO UPDATE SET Value = excluded.Value;";
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Key",   key);
+        cmd.Parameters.AddWithValue("@Value", value);
+        await cmd.ExecuteNonQueryAsync();
     }
 }

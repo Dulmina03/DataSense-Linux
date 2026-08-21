@@ -16,6 +16,8 @@ public static class DependencyInjection
         // Database
         services.AddSingleton<INetworkUsageRepository, SqliteNetworkUsageRepository>();
         services.AddSingleton<IAnalyticsService, AnalyticsService>();
+        services.AddSingleton<IIntelligenceService, IntelligenceService>();
+        services.AddSingleton<IForecastService, ForecastService>();
 
         // Services
         services.AddSingleton<INetworkMonitorService, LinuxNetworkMonitorService>();
@@ -40,6 +42,7 @@ public static class DependencyInjection
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<AboutViewModel>();
         services.AddTransient<ApplicationAnalyticsViewModel>();
+        services.AddTransient<NetworkAnalyticsViewModel>();
 
 
         // Views

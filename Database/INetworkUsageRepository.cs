@@ -47,11 +47,11 @@ public interface INetworkUsageRepository
     // Network Sessions
     Task SaveSessionAsync(NetworkSession session);
     Task UpdateSessionAsync(NetworkSession session);
-    Task<IEnumerable<NetworkSession>> GetSessionsAsync(DateTime start, DateTime end, string? interfaceName = null);
+    Task<IEnumerable<NetworkSession>> GetSessionsAsync(DateTime start, DateTime end, string? interfaceName = null, string? networkName = null);
 
     // Speed Tests
     Task SaveSpeedTestAsync(SpeedTestRecord record);
-    Task<IEnumerable<SpeedTestRecord>> GetSpeedTestsAsync(int count = 50);
+    Task<IEnumerable<SpeedTestRecord>> GetSpeedTestsAsync(int count = 50, string? networkName = null);
 
     // Process Analytics
     Task SaveProcessUsageAsync(ProcessUsageRecord record);
@@ -64,4 +64,16 @@ public interface INetworkUsageRepository
     
     /// <summary>Returns top N processes by usage within the given time range.</summary>
     Task<IEnumerable<ProcessUsageRecord>> GetTopProcessesAsync(DateTime start, DateTime end, int limit);
+
+    // Network Analytics
+    Task<IEnumerable<string>> GetAvailableNetworksAsync();
+    Task<NetworkAnalyticsSummary> GetNetworkSummaryAsync(string networkName, DateTime start, DateTime end);
+    Task<IEnumerable<DailyUsageRecord>> GetNetworkDailyUsageAsync(string networkName, DateTime start, DateTime end);
+    Task<IEnumerable<HourlyUsageRecord>> GetNetworkHourlyUsageAsync(string networkName, DateTime day);
+    Task<NetworkPerformanceSummary?> GetNetworkPerformanceAsync(string networkName);
+    Task<IEnumerable<NetworkComparisonRecord>> GetNetworkComparisonAsync();
+
+    // App Settings (key-value store for persisting user preferences)
+    Task<string?> GetSettingAsync(string key);
+    Task SaveSettingAsync(string key, string value);
 }

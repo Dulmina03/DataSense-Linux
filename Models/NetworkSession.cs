@@ -12,6 +12,7 @@ public class NetworkSession
     public DateTime? EndTime { get; set; }
     public long BytesDownloaded { get; set; }
     public long BytesUploaded { get; set; }
+    public long TotalBytes => BytesDownloaded + BytesUploaded;
     
     public TimeSpan Duration => EndTime.HasValue 
         ? EndTime.Value - StartTime 

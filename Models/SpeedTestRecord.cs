@@ -11,4 +11,6 @@ public class SpeedTestRecord
     public double PingMs { get; set; }
     public double JitterMs { get; set; }
     public string ServerName { get; set; } = string.Empty;
+    public string NetworkName { get; set; } = "Unknown";
+    public string ConnectionType { get; set; } = "Unknown";
 }

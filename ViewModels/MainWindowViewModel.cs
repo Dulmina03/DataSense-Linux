@@ -75,6 +75,16 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    public void NavigateToNetworkAnalytics(string? networkName = null)
+    {
+        if (App.Services != null)
+        {
+            var vm = App.Services.GetRequiredService<NetworkAnalyticsViewModel>();
+            vm.Initialize(networkName);
+            SetCurrentPage(vm);
+        }
+    }
+
     private void SetCurrentPage(ViewModelBase page)
     {
         CurrentPage = page;

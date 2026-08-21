@@ -10,7 +10,8 @@ public enum AnalyticsPeriod
     Today,
     Last7Days,
     Last30Days,
-    ThisMonth
+    ThisMonth,
+    AllTime
 }
 
 /// <summary>Summary statistics for a given <see cref="AnalyticsPeriod"/>.</summary>
@@ -52,6 +53,18 @@ public interface IAnalyticsService
     Task<IList<DailyUsageRecord>> GetProcessDailySeriesAsync(string processName, AnalyticsPeriod period);
     Task<IList<HourlyUsageRecord>> GetProcessTodayHourlyAsync(string processName);
     Task<IEnumerable<ProcessUsageRecord>> GetTopDataConsumersAsync(AnalyticsPeriod period, int limit);
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Network Analytics
+    // ────────────────────────────────────────────────────────────────────────
+    
+    Task<IEnumerable<string>> GetAvailableNetworksAsync();
+    Task<NetworkAnalyticsSummary> GetNetworkSummaryAsync(string networkName, AnalyticsPeriod period);
+    Task<IList<DailyUsageRecord>> GetNetworkDailySeriesAsync(string networkName, AnalyticsPeriod period);
+    Task<IList<HourlyUsageRecord>> GetNetworkTodayHourlyAsync(string networkName);
+    Task<NetworkPerformanceSummary?> GetNetworkPerformanceAsync(string networkName);
+    Task<IEnumerable<NetworkComparisonRecord>> GetNetworkComparisonAsync();
+    Task<IEnumerable<NetworkSession>> GetNetworkSessionsAsync(string networkName, AnalyticsPeriod period);
 }
 
 public class ProcessAnalyticsSummary
@@ -64,3 +77,4 @@ public class ProcessAnalyticsSummary
     public DateTime? LastActive { get; init; }
     public int DaysUsed { get; init; }
 }
+

@@ -23,6 +23,9 @@
         <DataTemplate DataType="{x:Type vm:ApplicationAnalyticsViewModel}">
             <v:ApplicationAnalyticsView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:NetworkAnalyticsViewModel}">
+            <v:NetworkAnalyticsView />
+        </DataTemplate>
     </Application.DataTemplates>
 
     <Application.Styles>

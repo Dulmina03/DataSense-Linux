@@ -28,6 +28,8 @@ public class AnalyticsService : IAnalyticsService
             AnalyticsPeriod.Last30Days => (utcNow.Date.AddDays(-29), utcNow.Date.AddDays(1).AddTicks(-1)),
             AnalyticsPeriod.ThisMonth  => (new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc),
                                            utcNow.Date.AddDays(1).AddTicks(-1)),
+            AnalyticsPeriod.AllTime    => (new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                                           utcNow.Date.AddDays(1).AddTicks(-1)),
             _                         => (utcNow.Date.AddDays(-6), utcNow.Date.AddDays(1).AddTicks(-1))
         };
     }
@@ -109,5 +111,50 @@ public class AnalyticsService : IAnalyticsService
         var (start, end) = GetRange(period);
         var top = await _repository.GetTopProcessesAsync(start, end, limit);
         return top;
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Network Analytics
+    // ────────────────────────────────────────────────────────────────────────
+
+    public async Task<IEnumerable<string>> GetAvailableNetworksAsync()
+    {
+        return await _repository.GetAvailableNetworksAsync();
+    }
+
+    public async Task<NetworkAnalyticsSummary> GetNetworkSummaryAsync(string networkName, AnalyticsPeriod period)
+    {
+        var (start, end) = GetRange(period);
+        return await _repository.GetNetworkSummaryAsync(networkName, start, end);
+    }
+
+    public async Task<IList<DailyUsageRecord>> GetNetworkDailySeriesAsync(string networkName, AnalyticsPeriod period)
+    {
+        var (start, end) = GetRange(period);
+        var raw = (await _repository.GetNetworkDailyUsageAsync(networkName, start, end)).ToList();
+        raw.Reverse(); // chronological order for UI
+        return raw;
+    }
+
+    public async Task<IList<HourlyUsageRecord>> GetNetworkTodayHourlyAsync(string networkName)
+    {
+        var hourly = await _repository.GetNetworkHourlyUsageAsync(networkName, DateTime.UtcNow.Date);
+        return hourly.ToList();
+    }
+
+    public async Task<NetworkPerformanceSummary?> GetNetworkPerformanceAsync(string networkName)
+    {
+        return await _repository.GetNetworkPerformanceAsync(networkName);
+    }
+
+    public async Task<IEnumerable<NetworkComparisonRecord>> GetNetworkComparisonAsync()
+    {
+        return await _repository.GetNetworkComparisonAsync();
+    }
+
+    public async Task<IEnumerable<NetworkSession>> GetNetworkSessionsAsync(string networkName, AnalyticsPeriod period)
+    {
+        var (start, end) = GetRange(period);
+        return await _repository.GetSessionsAsync(start, end, networkName: networkName);
     }
 }

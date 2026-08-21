@@ -93,9 +93,10 @@ public class NethogsProcessNetworkMonitor : IProcessNetworkMonitor
         using var reader = process.StandardOutput;
         var currentBatch = new List<ProcessNetworkUsage>();
 
-        while (!cancellationToken.IsCancellationRequested && !reader.EndOfStream)
+        while (!cancellationToken.IsCancellationRequested)
         {
             string? line = await reader.ReadLineAsync(cancellationToken);
+            if (line == null) break; // EOF — nethogs process exited
             if (string.IsNullOrWhiteSpace(line)) continue;
 
             if (line.StartsWith("Refreshing:"))
