@@ -24,6 +24,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly ProcessNetworkMonitorWorker _processMonitorWorker;
     private readonly IIntelligenceService      _intelligenceService;
     private readonly IForecastService          _forecastService;
+    private readonly IPatternAnalysisService   _patternAnalysisService;
+    private readonly IApplicationIntelligenceService _appIntelligenceService;
+    private readonly IUnifiedIntelligenceService     _unifiedIntelligenceService;
     private bool     _disposed;
     private int      _tickCount  = 4; // Start at 4 so first tick triggers details load immediately
     private DateTime _lastAnalyticsDate = DateTime.MinValue; // Track UTC date for midnight auto-refresh
@@ -170,6 +173,28 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _dailyBudgetStatusText = "—";
     [ObservableProperty] private string _dailyBudgetStatusColor = "#888899";
 
+    // ── Usage Patterns & Anomaly Detection ──────────────────────────────────
+
+    public ObservableCollection<UsageAnomaly> DetectedAnomalies { get; } = new();
+
+    [ObservableProperty] private bool   _hasAnomalies            = false;
+    [ObservableProperty] private string _busyHoursText           = "Calculating usage baseline...";
+    [ObservableProperty] private string _busyDaysText            = "Calculating usage baseline...";
+    [ObservableProperty] private bool   _hasSufficientPatternData = false;
+
+    // ── Application Intelligence & Recommendations ──────────────────────────
+
+    public ObservableCollection<ApplicationUsageProfile> TopAppProfiles { get; } = new();
+    public ObservableCollection<ApplicationRecommendation> AppRecommendations { get; } = new();
+
+    [ObservableProperty] private bool _hasAppRecommendations = false;
+
+    // ── Unified Intelligence & System Health Observatory ────────────────────
+
+    public ObservableCollection<IntelligenceEvent> UnifiedEvents { get; } = new();
+    [ObservableProperty] private DataSenseHealthModel? _systemHealth;
+    [ObservableProperty] private bool _hasUnifiedEvents = false;
+
     // ── Chart layout constants ──────────────────────────────────────────────
 
     /// <summary>Fixed canvas height for the bar chart area in device-independent pixels.</summary>
@@ -196,15 +221,21 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         IAnalyticsService         analyticsService,
         ProcessNetworkMonitorWorker processMonitorWorker,
         IIntelligenceService      intelligenceService,
-        IForecastService          forecastService)
+        IForecastService          forecastService,
+        IPatternAnalysisService   patternAnalysisService,
+        IApplicationIntelligenceService appIntelligenceService,
+        IUnifiedIntelligenceService     unifiedIntelligenceService)
     {
-        _networkMonitorWorker = networkMonitorWorker ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
-        _repository           = repository           ?? throw new ArgumentNullException(nameof(repository));
-        _connectionService    = connectionService    ?? throw new ArgumentNullException(nameof(connectionService));
-        _analyticsService     = analyticsService     ?? throw new ArgumentNullException(nameof(analyticsService));
-        _processMonitorWorker = processMonitorWorker ?? throw new ArgumentNullException(nameof(processMonitorWorker));
-        _intelligenceService  = intelligenceService  ?? throw new ArgumentNullException(nameof(intelligenceService));
-        _forecastService      = forecastService      ?? throw new ArgumentNullException(nameof(forecastService));
+        _networkMonitorWorker   = networkMonitorWorker   ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
+        _repository             = repository             ?? throw new ArgumentNullException(nameof(repository));
+        _connectionService      = connectionService      ?? throw new ArgumentNullException(nameof(connectionService));
+        _analyticsService       = analyticsService       ?? throw new ArgumentNullException(nameof(analyticsService));
+        _processMonitorWorker   = processMonitorWorker   ?? throw new ArgumentNullException(nameof(processMonitorWorker));
+        _intelligenceService    = intelligenceService    ?? throw new ArgumentNullException(nameof(intelligenceService));
+        _forecastService        = forecastService        ?? throw new ArgumentNullException(nameof(forecastService));
+        _patternAnalysisService = patternAnalysisService ?? throw new ArgumentNullException(nameof(patternAnalysisService));
+        _appIntelligenceService = appIntelligenceService ?? throw new ArgumentNullException(nameof(appIntelligenceService));
+        _unifiedIntelligenceService = unifiedIntelligenceService ?? throw new ArgumentNullException(nameof(unifiedIntelligenceService));
 
         // Populate live card with current worker state immediately
         UpdateLiveValues(
@@ -525,17 +556,25 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             // Load period analytics
             await LoadPeriodAnalyticsAsync(showLoading);
             
-            // Update insights with budget awareness
-            var forecast    = await _forecastService.GetForecastAsync();
-            var (mDl, mUl)  = await _repository.GetMonthSummaryAsync();
-            long monthTotal = mDl + mUl;
-            var (tDl, tUl)  = await _repository.GetTodaySummaryAsync();
-            long todayTotal = tDl + tUl;
-            long avgDailyBytes = forecast.HasSufficientData ? forecast.AverageDailyUsageBytes : 0;
-            var budgetResult   = await _forecastService.GetBudgetResultAsync(monthTotal, todayTotal, avgDailyBytes);
+            // Update insights with budget and anomaly awareness
+            var forecast      = await _forecastService.GetForecastAsync();
+            long calcAvgDaily = forecast.HasSufficientData ? forecast.AverageDailyUsageBytes : 0;
+            var budgetResult  = await _forecastService.GetBudgetResultAsync(monthTotal, todayTotal, calcAvgDaily);
+
+            // Pattern Analysis & Anomaly Detection
+            var anomalies = (await _patternAnalysisService.DetectAnomaliesAsync()).ToList();
+            var (busyHoursText, busyDaysText) = await _patternAnalysisService.GetUsagePatternSummaryAsync();
 
             var insightsList = await _intelligenceService.GenerateInsightsWithBudgetAsync(
-                SelectedPeriod, ConnectionName, budgetResult, forecast.HasSufficientData ? forecast : null);
+                SelectedPeriod, ConnectionName, budgetResult, forecast.HasSufficientData ? forecast : null, anomalies);
+
+            // Application Intelligence & Recommendations
+            var topProfiles = (await _appIntelligenceService.GetTopApplicationProfilesAsync(SelectedPeriod, 5)).ToList();
+            var appRecs     = (await _appIntelligenceService.GenerateApplicationRecommendationsAsync()).ToList();
+
+            // Unified Intelligence & Health Observatory
+            var unifiedStream = (await _unifiedIntelligenceService.GetUnifiedEventsAsync(8)).ToList();
+            var healthState   = await _unifiedIntelligenceService.GetDataSenseHealthAsync();
 
             Dispatcher.UIThread.Post(() =>
             {
@@ -543,10 +582,35 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 foreach (var insight in insightsList)
                     Insights.Add(insight);
                 HasInsights = Insights.Count > 0;
+
+                DetectedAnomalies.Clear();
+                foreach (var anomaly in anomalies)
+                    DetectedAnomalies.Add(anomaly);
+                HasAnomalies = DetectedAnomalies.Count > 0;
+
+                BusyHoursText = busyHoursText;
+                BusyDaysText  = busyDaysText;
+                HasSufficientPatternData = !busyHoursText.Contains("Not enough historical data");
+
+                TopAppProfiles.Clear();
+                foreach (var profile in topProfiles)
+                    TopAppProfiles.Add(profile);
+
+                AppRecommendations.Clear();
+                foreach (var rec in appRecs)
+                    AppRecommendations.Add(rec);
+                HasAppRecommendations = AppRecommendations.Count > 0;
+
+                UnifiedEvents.Clear();
+                foreach (var evt in unifiedStream)
+                    UnifiedEvents.Add(evt);
+                HasUnifiedEvents = UnifiedEvents.Count > 0;
+
+                SystemHealth = healthState;
             });
 
             // Load forecast/budget section
-            await LoadForecastAsync(forecast, budgetResult, monthTotal, todayTotal, avgDailyBytes);
+            await LoadForecastAsync(forecast, budgetResult, monthTotal, todayTotal, calcAvgDaily);
         }
         catch (Exception ex)
         {

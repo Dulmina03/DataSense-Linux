@@ -50,36 +50,78 @@
                 </StackPanel>
             </Border>
 
-            <!-- Group 2: Monitoring thresholds -->
+            <!-- Group 2: Data Budget & Forecasting Configuration -->
             <Border Background="#1A1A1A" BorderBrush="#222222" BorderThickness="1" CornerRadius="8" Padding="20">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="Data Limits &amp; System Probes" FontSize="14" FontWeight="Bold" Foreground="#007ACC" />
+                    <TextBlock Text="Data Budget &amp; Forecasting Configuration" FontSize="14" FontWeight="Bold" Foreground="#007ACC" />
+                    <TextBlock Text="Set monthly or daily bandwidth allowances to track usage pace and receive intelligent overage warnings." FontSize="11" Foreground="#666666" />
                     <Separator Height="1" Background="#242424" />
 
-                    <!-- Data Limits -->
+                    <!-- Monthly Budget Toggle & Limit -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="Monthly Data Limit" FontSize="13" FontWeight="SemiBold" Foreground="#E0E0E0" />
-                            <TextBlock Text="Alert when compiled network packet logging exceeds threshold." FontSize="11" Foreground="#666666" />
+                            <TextBlock Text="Enable Monthly Data Budget" FontSize="13" FontWeight="SemiBold" Foreground="#E0E0E0" />
+                            <TextBlock Text="Set a target monthly data cap to monitor percentage used and projected exhaustion date." FontSize="11" Foreground="#666666" />
                         </StackPanel>
-                        <ComboBox Grid.Column="1" SelectedIndex="1" Width="160" FontSize="12">
-                            <ComboBoxItem Content="Disabled" />
-                            <ComboBoxItem Content="100 GB" />
-                            <ComboBoxItem Content="500 GB" />
-                            <ComboBoxItem Content="1 TB" />
-                        </ComboBox>
+                        <CheckBox Grid.Column="1" IsChecked="{Binding BudgetEnabled}" Content="Active" FontSize="12" Foreground="#E0E0E0" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding BudgetEnabled}">
+                        <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="Monthly Allowance (GB)" FontSize="13" FontWeight="SemiBold" Foreground="#CCCCEE" />
+                            <TextBlock Text="Total data limit allocated for the calendar month." FontSize="11" Foreground="#666666" />
+                        </StackPanel>
+                        <NumericUpDown Grid.Column="1" Value="{Binding MonthlyLimitGb}" Minimum="1" Maximum="10000" Increment="10" Width="160" FontSize="12" VerticalAlignment="Center" />
                     </Grid>
 
                     <Separator Height="1" Background="#242424" />
 
-                    <!-- Notifications Setting -->
+                    <!-- Daily Budget Toggle & Limit -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="Notification Settings" FontSize="13" FontWeight="SemiBold" Foreground="#E0E0E0" />
-                            <TextBlock Text="Receive desktop warnings when system indicators trigger." FontSize="11" Foreground="#666666" />
+                            <TextBlock Text="Enable Optional Daily Budget" FontSize="13" FontWeight="SemiBold" Foreground="#E0E0E0" />
+                            <TextBlock Text="Monitor daily usage bursts against a daily limit boundary." FontSize="11" Foreground="#666666" />
                         </StackPanel>
-                        <CheckBox Grid.Column="1" IsChecked="True" IsEnabled="False" Margin="0" />
+                        <CheckBox Grid.Column="1" IsChecked="{Binding DailyBudgetEnabled}" Content="Active" FontSize="12" Foreground="#E0E0E0" VerticalAlignment="Center"/>
                     </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding DailyBudgetEnabled}">
+                        <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="Daily Allowance (GB)" FontSize="13" FontWeight="SemiBold" Foreground="#CCCCEE" />
+                            <TextBlock Text="Maximum recommended daily download/upload total." FontSize="11" Foreground="#666666" />
+                        </StackPanel>
+                        <NumericUpDown Grid.Column="1" Value="{Binding DailyLimitGb}" Minimum="0.5" Maximum="500" Increment="1" Width="160" FontSize="12" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Separator Height="1" Background="#242424" />
+
+                    <!-- Threshold Percentages -->
+                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding BudgetEnabled}">
+                        <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="Warning Threshold (%)" FontSize="13" FontWeight="SemiBold" Foreground="#FF9800" />
+                            <TextBlock Text="Percentage of allowance at which a warning status is triggered." FontSize="11" Foreground="#666666" />
+                        </StackPanel>
+                        <NumericUpDown Grid.Column="1" Value="{Binding WarningThreshold}" Minimum="50" Maximum="95" Increment="5" Width="160" FontSize="12" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding BudgetEnabled}">
+                        <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="Critical Threshold (%)" FontSize="13" FontWeight="SemiBold" Foreground="#FF5252" />
+                            <TextBlock Text="Percentage of allowance at which critical overage alerts trigger." FontSize="11" Foreground="#666666" />
+                        </StackPanel>
+                        <NumericUpDown Grid.Column="1" Value="{Binding CriticalThreshold}" Minimum="60" Maximum="99" Increment="5" Width="160" FontSize="12" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Separator Height="1" Background="#242424" IsVisible="{Binding BudgetEnabled}" />
+
+                    <!-- Action buttons & feedback -->
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button Content="Save Budget Settings" Command="{Binding SaveBudgetCommand}" IsEnabled="{Binding !IsSaving}" Background="#007ACC" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12" Padding="14,8" />
+                            <Button Content="Disable Budget" Command="{Binding DisableBudgetCommand}" IsEnabled="{Binding !IsSaving}" Background="#2A2A2A" Foreground="#FF8888" FontSize="12" Padding="14,8" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding SaveStatusText}" Foreground="#00E676" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

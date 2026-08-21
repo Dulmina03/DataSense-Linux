@@ -17,5 +17,6 @@ public interface IIntelligenceService
         AnalyticsPeriod period,
         string?        currentNetworkName,
         BudgetResult?  budgetResult,
-        UsageForecast? forecast);
+        UsageForecast? forecast,
+        IEnumerable<UsageAnomaly>? anomalies = null);
 }

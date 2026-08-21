@@ -16,6 +16,7 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
     private bool _disposed;
 
     public string? ActiveInterface { get; private set; }
+    public bool IsRunning => _cts != null && !_cts.IsCancellationRequested;
     public double DownloadSpeed { get; private set; }
     public double UploadSpeed { get; private set; }
     public long TotalBytesDownloaded { get; private set; }

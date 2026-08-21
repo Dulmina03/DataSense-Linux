@@ -6,6 +6,7 @@ namespace DataSense.Services;
 public interface INetworkMonitorWorker
 {
     string? ActiveInterface { get; }
+    bool IsRunning { get; }
     double DownloadSpeed { get; }
     double UploadSpeed { get; }
     long TotalBytesDownloaded { get; }

@@ -13,11 +13,16 @@ public static class DependencyInjection
     {
         var services = new ServiceCollection();
 
-        // Database
+        // Database & Infrastructure
+        services.AddSingleton<IPerformanceMonitor, PerformanceMonitor>();
         services.AddSingleton<INetworkUsageRepository, SqliteNetworkUsageRepository>();
         services.AddSingleton<IAnalyticsService, AnalyticsService>();
         services.AddSingleton<IIntelligenceService, IntelligenceService>();
         services.AddSingleton<IForecastService, ForecastService>();
+        services.AddSingleton<IPatternAnalysisService, PatternAnalysisService>();
+        services.AddSingleton<IApplicationIntelligenceService, ApplicationIntelligenceService>();
+        services.AddSingleton<IUnifiedIntelligenceService, UnifiedIntelligenceService>();
+        services.AddSingleton<IHistoricalAnalyticsService, HistoricalAnalyticsService>();
 
         // Services
         services.AddSingleton<INetworkMonitorService, LinuxNetworkMonitorService>();
@@ -38,6 +43,7 @@ public static class DependencyInjection
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<TrayIconViewModel>();
         services.AddTransient<HistoryViewModel>();
+        services.AddTransient<HistoricalExplorerViewModel>();
         services.AddTransient<SpeedTestViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<AboutViewModel>();

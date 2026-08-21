@@ -29,7 +29,8 @@ public class DailyUsageViewModel
     public string UploadedText   => ByteFormatter.FormatBytes(_record.BytesUploaded);
     public string TotalText      => ByteFormatter.FormatBytes(_record.TotalBytes);
 
-    public long BytesDownloaded => _record.BytesDownloaded;
-    public long BytesUploaded   => _record.BytesUploaded;
-    public long TotalBytes      => _record.TotalBytes;
+    public long     BytesDownloaded => _record.BytesDownloaded;
+    public long     BytesUploaded   => _record.BytesUploaded;
+    public long     TotalBytes      => _record.TotalBytes;
+    public DateTime Day             => _record.Day;
 }

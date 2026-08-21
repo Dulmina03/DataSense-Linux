@@ -17,6 +17,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isHistoryActive;
 
     [ObservableProperty]
+    private bool _isExplorerActive;
+
+    [ObservableProperty]
     private bool _isSettingsActive;
 
     [ObservableProperty]
@@ -48,9 +51,15 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void NavigateToExplorer()
+    {
+        SetCurrentPage(App.Services?.GetRequiredService<HistoricalExplorerViewModel>() ?? throw new InvalidOperationException("HistoricalExplorerViewModel resolution failed"));
+    }
+
+    [RelayCommand]
     private void NavigateToSettings()
     {
-        SetCurrentPage(App.Services?.GetRequiredService<SettingsViewModel>() ?? new SettingsViewModel());
+        SetCurrentPage(App.Services?.GetRequiredService<SettingsViewModel>() ?? throw new InvalidOperationException("SettingsViewModel resolution failed"));
     }
 
     [RelayCommand]
@@ -90,9 +99,10 @@ public partial class MainWindowViewModel : ViewModelBase
         CurrentPage = page;
         
         IsDashboardActive = page is DashboardViewModel;
-        IsHistoryActive = page is HistoryViewModel;
+        IsHistoryActive    = page is HistoryViewModel;
+        IsExplorerActive   = page is HistoricalExplorerViewModel;
         IsSpeedTestActive = page is SpeedTestViewModel;
-        IsSettingsActive = page is SettingsViewModel;
-        IsAboutActive = page is AboutViewModel;
+        IsSettingsActive  = page is SettingsViewModel;
+        IsAboutActive     = page is AboutViewModel;
     }
 }

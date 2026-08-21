@@ -55,6 +55,7 @@ public interface INetworkUsageRepository
 
     // Process Analytics
     Task SaveProcessUsageAsync(ProcessUsageRecord record);
+    Task SaveProcessUsageBatchAsync(IEnumerable<ProcessUsageRecord> records);
     
     /// <summary>Returns one aggregated DailyUsageRecord per clock-hour (UTC) for a single process.</summary>
     Task<IEnumerable<HourlyUsageRecord>> GetProcessHourlyUsageAsync(string processName, DateTime day);

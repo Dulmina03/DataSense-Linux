@@ -15,6 +15,8 @@ public class ProcessNetworkMonitorWorker : IDisposable
     private CancellationTokenSource? _cts;
     private Task? _workerTask;
 
+    public bool IsRunning => _cts != null && !_cts.IsCancellationRequested;
+
     // We store the last seen usage and the timestamp to calculate elapsed time
     private readonly Dictionary<string, ProcessState> _activeProcesses = new();
     
@@ -119,6 +121,7 @@ public class ProcessNetworkMonitorWorker : IDisposable
     {
         var now = DateTime.UtcNow;
         var toFlush = _activeProcesses.ToList();
+        var recordsToSave = new List<ProcessUsageRecord>();
 
         foreach (var kvp in toFlush)
         {
@@ -127,15 +130,13 @@ public class ProcessNetworkMonitorWorker : IDisposable
 
             if (state.UnflushedDownloaded > 0 || state.UnflushedUploaded > 0)
             {
-                var record = new ProcessUsageRecord
+                recordsToSave.Add(new ProcessUsageRecord
                 {
                     ProcessName = key,
                     Timestamp = now,
                     BytesDownloaded = state.UnflushedDownloaded,
                     BytesUploaded = state.UnflushedUploaded
-                };
-
-                await _repository.SaveProcessUsageAsync(record);
+                });
 
                 state.UnflushedDownloaded = 0;
                 state.UnflushedUploaded = 0;
@@ -146,6 +147,11 @@ public class ProcessNetworkMonitorWorker : IDisposable
             {
                 _activeProcesses.Remove(key);
             }
+        }
+
+        if (recordsToSave.Count > 0)
+        {
+            await _repository.SaveProcessUsageBatchAsync(recordsToSave);
         }
     }
 

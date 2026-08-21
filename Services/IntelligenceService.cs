@@ -264,13 +264,39 @@ public class IntelligenceService : IIntelligenceService
         AnalyticsPeriod period,
         string?        currentNetworkName,
         BudgetResult?  budgetResult,
-        UsageForecast? forecast)
+        UsageForecast? forecast,
+        IEnumerable<UsageAnomaly>? anomalies = null)
     {
         // Start with all standard insights
         var insights = (await GenerateInsightsAsync(period, currentNetworkName)).ToList();
 
         try
         {
+            // ── Anomaly insights ─────────────────────────────────────────────
+            if (anomalies != null)
+            {
+                foreach (var anomaly in anomalies)
+                {
+                    insights.Add(new NetworkInsight
+                    {
+                        Type = anomaly.AnomalyType switch
+                        {
+                            "HourlySpike" => InsightType.HighUsage,
+                            "AppSpike"    => InsightType.ApplicationSpike,
+                            _             => InsightType.HighUsage
+                        },
+                        Severity = anomaly.Severity switch
+                        {
+                            AnomalySeverity.Critical => InsightSeverity.Critical,
+                            AnomalySeverity.Warning  => InsightSeverity.Warning,
+                            _                        => InsightSeverity.Info
+                        },
+                        Title       = anomaly.Title,
+                        Description = anomaly.Description,
+                        Timestamp   = anomaly.Timestamp
+                    });
+                }
+            }
             // ── Budget insights ──────────────────────────────────────────────
             if (budgetResult != null)
             {

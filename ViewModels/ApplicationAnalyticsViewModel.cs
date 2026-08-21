@@ -17,16 +17,19 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
 {
     private readonly IAnalyticsService _analyticsService;
     private readonly ProcessNetworkMonitorWorker _processMonitorWorker;
+    private readonly IApplicationIntelligenceService _appIntelligenceService;
     
     private bool _disposed;
     private string _processName = string.Empty;
 
     public ApplicationAnalyticsViewModel(
         IAnalyticsService analyticsService,
-        ProcessNetworkMonitorWorker processMonitorWorker)
+        ProcessNetworkMonitorWorker processMonitorWorker,
+        IApplicationIntelligenceService appIntelligenceService)
     {
-        _analyticsService = analyticsService ?? throw new ArgumentNullException(nameof(analyticsService));
-        _processMonitorWorker = processMonitorWorker ?? throw new ArgumentNullException(nameof(processMonitorWorker));
+        _analyticsService       = analyticsService       ?? throw new ArgumentNullException(nameof(analyticsService));
+        _processMonitorWorker   = processMonitorWorker   ?? throw new ArgumentNullException(nameof(processMonitorWorker));
+        _appIntelligenceService = appIntelligenceService ?? throw new ArgumentNullException(nameof(appIntelligenceService));
 
         _processMonitorWorker.LiveTrafficUpdated += OnLiveTrafficUpdated;
     }
@@ -88,6 +91,11 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
     // ── History Table ────────────────────────────────────────────────────────
     public ObservableCollection<DailyUsageRecord> DailyHistoryItems { get; } = new();
     [ObservableProperty] private bool _isHistoryTableEmpty = true;
+
+    // ── Application Intelligence & Smart Recommendations ────────────────────
+    [ObservableProperty] private ApplicationUsageProfile? _currentProfile;
+    public ObservableCollection<ApplicationRecommendation> ProcessRecommendations { get; } = new();
+    [ObservableProperty] private bool _hasProcessRecommendations = false;
 
     // ── Loading State ────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isLoading = false;
@@ -206,6 +214,18 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
                     DownloadColumnWidth = new GridLength(1, GridUnitType.Star);
                     UploadColumnWidth   = new GridLength(1, GridUnitType.Star);
                 }
+            });
+
+            // Application Intelligence & Smart Recommendations
+            var profile = await _appIntelligenceService.GetApplicationProfileAsync(_processName);
+            var recs    = (await _appIntelligenceService.GetProcessRecommendationsAsync(_processName)).ToList();
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                CurrentProfile = profile;
+                ProcessRecommendations.Clear();
+                foreach (var rec in recs) ProcessRecommendations.Add(rec);
+                HasProcessRecommendations = ProcessRecommendations.Count > 0;
 
                 if (showLoading) IsLoading = false;
             });

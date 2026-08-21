@@ -44,6 +44,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         const string createTableSql = @"
             PRAGMA journal_mode=WAL;
+            PRAGMA synchronous=NORMAL;
+            PRAGMA cache_size=-2000;
 
             CREATE TABLE IF NOT EXISTS NetworkUsageRecords (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,6 +60,9 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             CREATE INDEX IF NOT EXISTS IX_NetworkUsageRecords_Timestamp 
             ON NetworkUsageRecords(Timestamp);
 
+            CREATE INDEX IF NOT EXISTS IX_NetworkUsageRecords_Interface_Timestamp
+            ON NetworkUsageRecords(InterfaceName, Timestamp);
+
             CREATE TABLE IF NOT EXISTS NetworkSessions (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 NetworkName TEXT NOT NULL,
@@ -68,6 +73,12 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
                 BytesDownloaded INTEGER NOT NULL,
                 BytesUploaded INTEGER NOT NULL
             );
+
+            CREATE INDEX IF NOT EXISTS IX_NetworkSessions_StartTime
+            ON NetworkSessions(StartTime);
+
+            CREATE INDEX IF NOT EXISTS IX_NetworkSessions_NetworkName
+            ON NetworkSessions(NetworkName);
 
             CREATE TABLE IF NOT EXISTS SpeedTestRecords (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,6 +102,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             ON ProcessUsageRecords(Timestamp);
             CREATE INDEX IF NOT EXISTS IX_ProcessUsageRecords_ProcessName 
             ON ProcessUsageRecords(ProcessName);
+            CREATE INDEX IF NOT EXISTS IX_ProcessUsageRecords_Process_Time
+            ON ProcessUsageRecords(ProcessName, Timestamp);
 
             CREATE TABLE IF NOT EXISTS AppSettings (
                 Key   TEXT PRIMARY KEY,
@@ -644,6 +657,41 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         command.Parameters.AddWithValue("@BytesUploaded", record.BytesUploaded);
 
         await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task SaveProcessUsageBatchAsync(IEnumerable<ProcessUsageRecord> records)
+    {
+        var recordList = records.Where(r => !string.IsNullOrEmpty(r.ProcessName)).ToList();
+        if (recordList.Count == 0) return;
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+        using var transaction = connection.BeginTransaction();
+
+        const string sql = @"
+            INSERT INTO ProcessUsageRecords (Timestamp, ProcessName, BytesDownloaded, BytesUploaded)
+            VALUES (@Timestamp, @ProcessName, @BytesDownloaded, @BytesUploaded);
+        ";
+
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = sql;
+
+        var pTimestamp = command.Parameters.Add("@Timestamp", SqliteType.Text);
+        var pProcess   = command.Parameters.Add("@ProcessName", SqliteType.Text);
+        var pDownloaded= command.Parameters.Add("@BytesDownloaded", SqliteType.Integer);
+        var pUploaded  = command.Parameters.Add("@BytesUploaded", SqliteType.Integer);
+
+        foreach (var record in recordList)
+        {
+            pTimestamp.Value  = record.Timestamp.ToString("o");
+            pProcess.Value    = record.ProcessName;
+            pDownloaded.Value = record.BytesDownloaded;
+            pUploaded.Value   = record.BytesUploaded;
+            await command.ExecuteNonQueryAsync();
+        }
+
+        await transaction.CommitAsync();
     }
 
     public async Task<IEnumerable<HourlyUsageRecord>> GetProcessHourlyUsageAsync(string processName, DateTime day)
