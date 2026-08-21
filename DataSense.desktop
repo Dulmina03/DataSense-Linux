@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=DataSense
+Comment=Local network data usage monitor and analytics
+Exec=DataSense
+Icon=datasense
+Categories=Network;Utility;
+Terminal=false
+StartupWMClass=DataSense
+X-GNOME-Autostart-enabled=true

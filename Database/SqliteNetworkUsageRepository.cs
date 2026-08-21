@@ -77,8 +77,14 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             CREATE INDEX IF NOT EXISTS IX_NetworkSessions_StartTime
             ON NetworkSessions(StartTime);
 
+            CREATE INDEX IF NOT EXISTS IX_NetworkSessions_EndTime
+            ON NetworkSessions(EndTime);
+
             CREATE INDEX IF NOT EXISTS IX_NetworkSessions_NetworkName
             ON NetworkSessions(NetworkName);
+
+            CREATE INDEX IF NOT EXISTS IX_NetworkSessions_Interface_StartTime
+            ON NetworkSessions(InterfaceName, StartTime);
 
             CREATE TABLE IF NOT EXISTS SpeedTestRecords (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -131,6 +137,24 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             await alterCmd.ExecuteNonQueryAsync();
         }
         catch (SqliteException) { /* Column already exists */ }
+
+        // Phase 11.26: Migration for ProcessUsageRecords extended columns
+        string[] processUsageMigrations = new[]
+        {
+            "ALTER TABLE ProcessUsageRecords ADD COLUMN ExecutablePath TEXT NOT NULL DEFAULT '';" ,
+            "ALTER TABLE ProcessUsageRecords ADD COLUMN UserName TEXT NOT NULL DEFAULT '';" ,
+            "ALTER TABLE ProcessUsageRecords ADD COLUMN DataSource TEXT NOT NULL DEFAULT 'Nethogs';"
+        };
+        foreach (var migrationSql in processUsageMigrations)
+        {
+            try
+            {
+                using var migCmd = connection.CreateCommand();
+                migCmd.CommandText = migrationSql;
+                await migCmd.ExecuteNonQueryAsync();
+            }
+            catch (SqliteException) { /* Column already exists */ }
+        }
     }
 
     public async Task SaveUsageAsync(NetworkUsage usage)
@@ -645,8 +669,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         await connection.OpenAsync();
 
         const string sql = @"
-            INSERT INTO ProcessUsageRecords (Timestamp, ProcessName, BytesDownloaded, BytesUploaded)
-            VALUES (@Timestamp, @ProcessName, @BytesDownloaded, @BytesUploaded);
+            INSERT INTO ProcessUsageRecords (Timestamp, ProcessName, BytesDownloaded, BytesUploaded, ExecutablePath, UserName, DataSource)
+            VALUES (@Timestamp, @ProcessName, @BytesDownloaded, @BytesUploaded, @ExecutablePath, @UserName, @DataSource);
         ";
 
         using var command = connection.CreateCommand();
@@ -655,6 +679,9 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         command.Parameters.AddWithValue("@ProcessName", record.ProcessName);
         command.Parameters.AddWithValue("@BytesDownloaded", record.BytesDownloaded);
         command.Parameters.AddWithValue("@BytesUploaded", record.BytesUploaded);
+        command.Parameters.AddWithValue("@ExecutablePath", record.ExecutablePath ?? string.Empty);
+        command.Parameters.AddWithValue("@UserName", record.UserName ?? string.Empty);
+        command.Parameters.AddWithValue("@DataSource", record.DataSource ?? "Nethogs");
 
         await command.ExecuteNonQueryAsync();
     }
@@ -669,25 +696,31 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         using var transaction = connection.BeginTransaction();
 
         const string sql = @"
-            INSERT INTO ProcessUsageRecords (Timestamp, ProcessName, BytesDownloaded, BytesUploaded)
-            VALUES (@Timestamp, @ProcessName, @BytesDownloaded, @BytesUploaded);
+            INSERT INTO ProcessUsageRecords (Timestamp, ProcessName, BytesDownloaded, BytesUploaded, ExecutablePath, UserName, DataSource)
+            VALUES (@Timestamp, @ProcessName, @BytesDownloaded, @BytesUploaded, @ExecutablePath, @UserName, @DataSource);
         ";
 
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = sql;
 
-        var pTimestamp = command.Parameters.Add("@Timestamp", SqliteType.Text);
-        var pProcess   = command.Parameters.Add("@ProcessName", SqliteType.Text);
-        var pDownloaded= command.Parameters.Add("@BytesDownloaded", SqliteType.Integer);
-        var pUploaded  = command.Parameters.Add("@BytesUploaded", SqliteType.Integer);
+        var pTimestamp   = command.Parameters.Add("@Timestamp", SqliteType.Text);
+        var pProcess     = command.Parameters.Add("@ProcessName", SqliteType.Text);
+        var pDownloaded  = command.Parameters.Add("@BytesDownloaded", SqliteType.Integer);
+        var pUploaded    = command.Parameters.Add("@BytesUploaded", SqliteType.Integer);
+        var pExecPath    = command.Parameters.Add("@ExecutablePath", SqliteType.Text);
+        var pUserName    = command.Parameters.Add("@UserName", SqliteType.Text);
+        var pDataSource  = command.Parameters.Add("@DataSource", SqliteType.Text);
 
         foreach (var record in recordList)
         {
-            pTimestamp.Value  = record.Timestamp.ToString("o");
-            pProcess.Value    = record.ProcessName;
-            pDownloaded.Value = record.BytesDownloaded;
-            pUploaded.Value   = record.BytesUploaded;
+            pTimestamp.Value   = record.Timestamp.ToString("o");
+            pProcess.Value     = record.ProcessName;
+            pDownloaded.Value  = record.BytesDownloaded;
+            pUploaded.Value    = record.BytesUploaded;
+            pExecPath.Value    = record.ExecutablePath ?? string.Empty;
+            pUserName.Value    = record.UserName ?? string.Empty;
+            pDataSource.Value  = record.DataSource ?? "Nethogs";
             await command.ExecuteNonQueryAsync();
         }
 
@@ -779,7 +812,12 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             SELECT
                 ProcessName,
                 SUM(BytesDownloaded) AS TotalDl,
-                SUM(BytesUploaded)   AS TotalUl
+                SUM(BytesUploaded)   AS TotalUl,
+                MAX(ExecutablePath)  AS ExecPath,
+                MAX(UserName)        AS User,
+                MAX(DataSource)      AS Source,
+                MIN(Timestamp)       AS FirstSeen,
+                MAX(Timestamp)       AS LastSeen
             FROM ProcessUsageRecords
             WHERE Timestamp >= @Start AND Timestamp <= @End
             GROUP BY ProcessName
@@ -799,7 +837,11 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             {
                 ProcessName = reader.GetString(0),
                 BytesDownloaded = reader.GetInt64(1),
-                BytesUploaded = reader.GetInt64(2)
+                BytesUploaded = reader.GetInt64(2),
+                ExecutablePath = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                UserName = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                DataSource = reader.IsDBNull(5) ? "Nethogs" : reader.GetString(5),
+                Timestamp = reader.IsDBNull(7) ? DateTime.UtcNow : DateTime.Parse(reader.GetString(7))
             });
         }
         return results;

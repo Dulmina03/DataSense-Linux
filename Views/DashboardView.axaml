@@ -107,6 +107,59 @@
                 </Border>
             </Grid>
 
+            <!-- ══ Current Session Card ══ -->
+            <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
+                <StackPanel Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="⏱️" FontSize="14"/>
+                            <TextBlock Text="Current Network Session" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="View Session Timeline ➔" Classes="link-button" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center" Command="{Binding OpenTimelineCommand}"/>
+                    </Grid>
+
+                    <Border Background="#0D0D18" CornerRadius="6" Padding="20" IsVisible="{Binding !HasCurrentSession}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                            <TextBlock Text="🔌" FontSize="24" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding CurrentSessionNetwork}" Foreground="#7777AA" FontSize="13" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Grid ColumnDefinitions="*,12,*,12,*,12,*,12,*" IsVisible="{Binding HasCurrentSession}">
+                        <Border Grid.Column="0" Classes="stat-card">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Network" Foreground="#888899" FontSize="10"/>
+                                <TextBlock Text="{Binding CurrentSessionNetwork}" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Classes="stat-card">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Duration" Foreground="#888899" FontSize="10"/>
+                                <TextBlock Text="{Binding CurrentSessionDuration}" FontSize="16" FontWeight="Bold" Foreground="#E2E8F0"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="4" Classes="stat-card">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Download" Foreground="#888899" FontSize="10"/>
+                                <TextBlock Text="{Binding CurrentSessionDownload}" FontSize="16" FontWeight="Bold" Foreground="#38BDF8"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="6" Classes="stat-card">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Upload" Foreground="#888899" FontSize="10"/>
+                                <TextBlock Text="{Binding CurrentSessionUpload}" FontSize="16" FontWeight="Bold" Foreground="#C084FC"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="8" Classes="stat-card" Background="#1A1A3A" BorderBrush="#3535AA">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Total Usage" Foreground="#7777BB" FontSize="10"/>
+                                <TextBlock Text="{Binding CurrentSessionTotal}" FontSize="16" FontWeight="Bold" Foreground="#8888FF"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <!-- ══ Connection Details Panel ══ -->
             <Border Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="20">
                 <StackPanel Spacing="14">

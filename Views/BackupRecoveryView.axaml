@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DataSense.ViewModels"
+             xmlns:models="using:DataSense.Models"
+             x:Class="DataSense.Views.BackupRecoveryView"
+             x:DataType="vm:BackupRecoveryViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#181824"/>
+            <Setter Property="BorderBrush" Value="#2A2A3D"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+        </Style>
+        <Style Selector="Button.action-btn">
+            <Setter Property="Background" Value="#00E676"/>
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20" Background="#0F0F1A">
+        <StackPanel Spacing="20" MaxWidth="1100">
+            <!-- Top Banner -->
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="🛡️ Automated Backup &amp; Disaster Recovery" FontSize="20" FontWeight="Bold" Foreground="#FFFFFF"/>
+                    <TextBlock Text="Local, offline database recovery points with SHA-256 integrity validation." FontSize="12" Foreground="#8888AA"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="💾 Create Backup Now" Command="{Binding CreateBackupNowCommand}" Classes="action-btn" VerticalAlignment="Center"/>
+            </Grid>
+
+            <!-- Status Card -->
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="System Protection Status" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14"/>
+                    <TextBlock Text="{Binding StatusText}" Foreground="#00E676" FontSize="13"/>
+                    <ProgressBar IsIndeterminate="{Binding IsProcessing}" IsVisible="{Binding IsProcessing}" Height="4"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Recovery Points Table -->
+            <Border Classes="card">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Available Recovery Points" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14"/>
+                    <ItemsControl ItemsSource="{Binding RecoveryPoints}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:RecoveryPoint">
+                                <Border Background="#141422" BorderBrush="#222236" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,4">
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="{Binding FilePath}" Foreground="#FFFFFF" FontSize="12" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:u}'}" Foreground="#8888AA" FontSize="10"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding SizeBytes, StringFormat='{}{0} bytes'}" Foreground="#00D2FF" FontSize="11" Margin="0,0,20,0" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="✓ Validated" Foreground="#00E676" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

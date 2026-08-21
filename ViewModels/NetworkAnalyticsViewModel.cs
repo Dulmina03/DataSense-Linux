@@ -17,6 +17,7 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
 {
     private readonly IAnalyticsService _analyticsService;
     private readonly INetworkMonitorWorker _monitorWorker;
+    private readonly INetworkIntelligenceService _networkIntelligenceService;
 
     // ── Network Selection ─────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<string> _availableNetworks = new();
@@ -104,16 +105,32 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
     // ── Loading ───────────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isLoading        = false;
     [ObservableProperty] private bool _hasNoNetworks    = false;
+    // ── Network Intelligence ─────────────────────────────────────────────────────
+    [ObservableProperty] private ObservableCollection<NetworkProfile> _networkProfiles = new();
+    [ObservableProperty] private ObservableCollection<NetworkPerformanceProfile> _networkPerformanceProfiles = new();
+    [ObservableProperty] private NetworkProfile? _currentNetwork;
+    [ObservableProperty] private NetworkProfile? _mostUsedNetwork;
+    [ObservableProperty] private NetworkProfile? _mostConnectedNetwork;
+    [ObservableProperty] private NetworkPerformanceProfile? _bestPerformingNetwork;
+    [ObservableProperty] private NetworkPerformanceProfile? _mostReliableNetwork;
+    [ObservableProperty] private bool _isIntelligenceLoading;
+    [ObservableProperty] private bool _hasNetworkHistory;
+    [ObservableProperty] private bool _hasMultipleNetworks;
+    [ObservableProperty] private bool _hasIntelligencePerformanceData;
+    [ObservableProperty] private bool _hasComparisonData;
+    [ObservableProperty] private string _intelligenceStatusMessage = "";
 
     // Live monitoring: network name of the currently active connection
     private string? _activeNetworkName;
 
     public NetworkAnalyticsViewModel(
         IAnalyticsService analyticsService,
-        INetworkMonitorWorker monitorWorker)
+        INetworkMonitorWorker monitorWorker,
+        INetworkIntelligenceService networkIntelligenceService)
     {
         _analyticsService = analyticsService ?? throw new ArgumentNullException(nameof(analyticsService));
         _monitorWorker    = monitorWorker    ?? throw new ArgumentNullException(nameof(monitorWorker));
+        _networkIntelligenceService = networkIntelligenceService ?? throw new ArgumentNullException(nameof(networkIntelligenceService));
 
         _monitorWorker.NetworkUsageUpdated += OnNetworkUsageUpdated;
     }
@@ -303,6 +320,69 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
         {
             System.Diagnostics.Debug.WriteLine($"NetworkAnalytics load failed: {ex.Message}");
             Dispatcher.UIThread.Post(() => { if (showLoading) IsLoading = false; });
+        }
+    }
+
+    // ── Network Intelligence Loading ───────────────────────────────────────────────
+    [RelayCommand]
+    private async Task LoadNetworkIntelligenceAsync()
+    {
+        Dispatcher.UIThread.Post(() => IsIntelligenceLoading = true);
+        try
+        {
+            var profiles = await _networkIntelligenceService.GetNetworkProfilesAsync();
+            var perfProfiles = await _networkIntelligenceService.GetNetworkPerformanceProfilesAsync();
+            var current = await _networkIntelligenceService.GetCurrentNetworkAsync();
+
+            // Update collections
+            NetworkProfiles.Clear();
+            foreach (var p in profiles) NetworkProfiles.Add(p);
+            NetworkPerformanceProfiles.Clear();
+            foreach (var pp in perfProfiles) NetworkPerformanceProfiles.Add(pp);
+            CurrentNetwork = current;
+
+            // Flags
+            HasNetworkHistory = profiles.Any();
+            HasMultipleNetworks = profiles.Count() > 1;
+            HasIntelligencePerformanceData = perfProfiles.Any(pp => pp.SpeedTestCount > 0);
+            HasComparisonData = HasNetworkHistory && perfProfiles.Any();
+
+            // Rankings
+            if (profiles.Any())
+            {
+                MostUsedNetwork = profiles.OrderByDescending(p => p.TotalBytes).FirstOrDefault();
+                MostConnectedNetwork = profiles.OrderByDescending(p => p.TotalConnectionDuration).FirstOrDefault();
+            }
+            if (perfProfiles.Any())
+            {
+                // Best performing using weighted score
+                double maxDl = perfProfiles.Max(p => p.AverageDownloadSpeed);
+                double maxUl = perfProfiles.Max(p => p.AverageUploadSpeed);
+                double maxLat = perfProfiles.Max(p => p.AverageLatency);
+                double maxRel = perfProfiles.Max(p => p.ReliabilityScore);
+                foreach (var pp in perfProfiles)
+                {
+                    double dlNorm = maxDl > 0 ? pp.AverageDownloadSpeed / maxDl : 0;
+                    double ulNorm = maxUl > 0 ? pp.AverageUploadSpeed / maxUl : 0;
+                    double latNorm = maxLat > 0 ? (maxLat - pp.AverageLatency) / maxLat : 0; // lower is better
+                    double relNorm = maxRel > 0 ? pp.ReliabilityScore / maxRel : 0;
+                    double score = dlNorm * 0.40 + ulNorm * 0.25 + latNorm * 0.20 + relNorm * 0.15;
+                    // Attach a temporary property via a dictionary? For simplicity store in a variable dictionary.
+                    pp.GetType().GetProperty("PerformanceScore")?.SetValue(pp, score);
+                }
+                var bestPerf = perfProfiles.OrderByDescending(p =>
+                    ((double?)p.GetType().GetProperty("PerformanceScore")?.GetValue(p) ?? 0)).FirstOrDefault();
+                BestPerformingNetwork = bestPerf;
+                MostReliableNetwork = perfProfiles.OrderByDescending(p => p.ReliabilityScore).FirstOrDefault();
+            }
+        }
+        catch (Exception ex)
+        {
+            IntelligenceStatusMessage = $"Error loading network intelligence: {ex.Message}";
+        }
+        finally
+        {
+            Dispatcher.UIThread.Post(() => IsIntelligenceLoading = false);
         }
     }
 

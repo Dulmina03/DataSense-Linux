@@ -25,7 +25,25 @@ public partial class App : Application
     {
         Services = DependencyInjection.ConfigureServices();
 
-        // Initialize database repository asynchronously
+        // 1. Crash-safe Linux Directory Initialization & Storage Setup
+        var storageService = Services.GetService<ILinuxStorageService>();
+        if (storageService != null)
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await storageService.EnsureDirectoriesCreatedAsync();
+                    await storageService.LogAsync("DataSense application startup initialized.", "INFO");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Storage initialization warning: {ex.Message}");
+                }
+            });
+        }
+
+        // 2. Crash-safe Repository Initialization
         var repository = Services.GetRequiredService<INetworkUsageRepository>();
         Task.Run(async () =>
         {
@@ -40,20 +58,8 @@ public partial class App : Application
             }
         });
 
-        // Start background network monitoring worker
-        var worker = Services.GetRequiredService<INetworkMonitorWorker>();
-        worker.Start();
-        // Start background process network monitoring worker
-        var processWorker = Services.GetRequiredService<ProcessNetworkMonitorWorker>();
-        processWorker.Start();
-
-        // Start background network persistence service
-        var persistenceService = Services.GetRequiredService<INetworkPersistenceService>();
-        persistenceService.Start();
-
-        // Start background session manager
-        var sessionManager = Services.GetRequiredService<NetworkSessionManager>();
-        sessionManager.Start();
+        // 3. Crash-safe Background Service Launches
+        StartBackgroundWorkers();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -65,22 +71,32 @@ public partial class App : Application
             var trayIcon = new Avalonia.Controls.TrayIcon
             {
                 Command = trayViewModel.ShowAppCommand,
-                ToolTipText = trayViewModel.SpeedText,
+                ToolTipText = trayViewModel.TooltipText,
                 Menu = new Avalonia.Controls.NativeMenu
                 {
                     Items =
                     {
-                        new Avalonia.Controls.NativeMenuItem { Header = "Open DataSense", Command = trayViewModel.ShowAppCommand },
-                        new Avalonia.Controls.NativeMenuItem { Header = "Exit", Command = trayViewModel.ExitAppCommand }
+                        new Avalonia.Controls.NativeMenuItem { Header = "⚡ Open DataSense", Command = trayViewModel.ShowAppCommand },
+                        new Avalonia.Controls.NativeMenuItemSeparator(),
+                        new Avalonia.Controls.NativeMenuItem { Header = "📊 Dashboard", Command = new CommunityToolkit.Mvvm.Input.RelayCommand(() => trayViewModel.NavigateToCommand.Execute("Dashboard")) },
+                        new Avalonia.Controls.NativeMenuItem { Header = "📈 Network Analytics", Command = new CommunityToolkit.Mvvm.Input.RelayCommand(() => trayViewModel.NavigateToCommand.Execute("Performance")) },
+                        new Avalonia.Controls.NativeMenuItem { Header = "🔔 Event Center", Command = new CommunityToolkit.Mvvm.Input.RelayCommand(() => trayViewModel.NavigateToCommand.Execute("EventCenter")) },
+                        new Avalonia.Controls.NativeMenuItem { Header = "🛠️ Diagnostics", Command = new CommunityToolkit.Mvvm.Input.RelayCommand(() => trayViewModel.NavigateToCommand.Execute("Diagnostics")) },
+                        new Avalonia.Controls.NativeMenuItemSeparator(),
+                        new Avalonia.Controls.NativeMenuItem { Header = "⏯ Pause / Resume Monitoring", Command = trayViewModel.ToggleMonitoringCommand },
+                        new Avalonia.Controls.NativeMenuItemSeparator(),
+                        new Avalonia.Controls.NativeMenuItem { Header = "⚙️ Settings", Command = new CommunityToolkit.Mvvm.Input.RelayCommand(() => trayViewModel.NavigateToCommand.Execute("Settings")) },
+                        new Avalonia.Controls.NativeMenuItemSeparator(),
+                        new Avalonia.Controls.NativeMenuItem { Header = "❌ Quit DataSense", Command = trayViewModel.ExitAppCommand }
                     }
                 }
             };
             
             trayViewModel.PropertyChanged += (s, e) =>
             {
-                if (e.PropertyName == nameof(TrayIconViewModel.SpeedText))
+                if (e.PropertyName == nameof(TrayIconViewModel.TooltipText))
                 {
-                    trayIcon.ToolTipText = trayViewModel.SpeedText;
+                    trayIcon.ToolTipText = trayViewModel.TooltipText;
                 }
                 else if (e.PropertyName == nameof(TrayIconViewModel.TrayIconImage))
                 {
@@ -93,6 +109,7 @@ public partial class App : Application
 
             desktop.Exit += (sender, e) =>
             {
+                StopBackgroundWorkers();
                 if (Services is IDisposable disposable)
                 {
                     disposable.Dispose();
@@ -101,5 +118,48 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static void StartBackgroundWorkers()
+    {
+        if (Services == null) return;
+
+        try
+        {
+            var worker = Services.GetService<INetworkMonitorWorker>();
+            worker?.Start();
+        }
+        catch { }
+
+        try
+        {
+            var processWorker = Services.GetService<ProcessNetworkMonitorWorker>();
+            processWorker?.Start();
+        }
+        catch { }
+
+        try
+        {
+            var persistenceService = Services.GetService<INetworkPersistenceService>();
+            persistenceService?.Start();
+        }
+        catch { }
+
+        try
+        {
+            var sessionManager = Services.GetService<NetworkSessionManager>();
+            sessionManager?.Start();
+        }
+        catch { }
+    }
+
+    private static void StopBackgroundWorkers()
+    {
+        if (Services == null) return;
+
+        try { Services.GetService<INetworkMonitorWorker>()?.Stop(); } catch { }
+        try { Services.GetService<ProcessNetworkMonitorWorker>()?.Stop(); } catch { }
+        try { Services.GetService<INetworkPersistenceService>()?.Stop(); } catch { }
+        try { Services.GetService<NetworkSessionManager>()?.Stop(); } catch { }
     }
 }

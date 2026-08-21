@@ -65,6 +65,22 @@
                     </StackPanel>
                 </Button>
                 <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsLiveMonitoringActive}"
+                        Command="{Binding NavigateToLiveMonitoringCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="📡" Width="20" />
+                        <TextBlock Text="Live Monitor" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsTimelineActive}"
+                        Command="{Binding NavigateToTimelineCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="⏱️" Width="20" />
+                        <TextBlock Text="Timeline" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
                         Classes.active="{Binding IsHistoryActive}"
                         Command="{Binding NavigateToHistoryCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="12">
@@ -94,6 +110,62 @@
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <TextBlock Text="⚙️" Width="20" />
                         <TextBlock Text="Settings" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsPrivacyActive}"
+                        Command="{Binding NavigateToPrivacyCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="🛡️" Width="20" />
+                        <TextBlock Text="Privacy &amp; Data" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsDiagnosticsActive}"
+                        Command="{Binding NavigateToDiagnosticsCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="🛠️" Width="20" />
+                        <TextBlock Text="Diagnostics" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsPerformanceActive}"
+                        Command="{Binding NavigateToPerformanceCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="⚡" Width="20" />
+                        <TextBlock Text="Performance" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsExportActive}"
+                        Command="{Binding NavigateToExportCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="📤" Width="20" />
+                        <TextBlock Text="Export &amp; Reports" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsEventCenterActive}"
+                        Command="{Binding NavigateToEventCenterCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="🔔" Width="20" />
+                        <TextBlock Text="Event Center" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsImportRestoreActive}"
+                        Command="{Binding NavigateToImportRestoreCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="📥" Width="20" />
+                        <TextBlock Text="Import &amp; Restore" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsBackupRecoveryActive}"
+                        Command="{Binding NavigateToBackupRecoveryCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="🛡️" Width="20" />
+                        <TextBlock Text="Backup &amp; Recovery" />
                     </StackPanel>
                 </Button>
                 <Button Classes="sidebar-btn" 

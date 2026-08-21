@@ -5,29 +5,35 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using DataSense.Helpers;
 using DataSense.Models;
 
 namespace DataSense.Services;
 
 public class NethogsProcessNetworkMonitor : IProcessNetworkMonitor
 {
+    private readonly ILinuxPlatformService? _platformService;
+    private readonly ILinuxProcessResolver? _processResolver;
+
+    public NethogsProcessNetworkMonitor(
+        ILinuxPlatformService? platformService = null,
+        ILinuxProcessResolver? processResolver = null)
+    {
+        _platformService = platformService;
+        _processResolver = processResolver;
+    }
+
     public async Task<bool> IsAvailableAsync()
     {
         try
         {
-            var psi = new ProcessStartInfo
+            if (_platformService != null)
             {
-                FileName = "which",
-                Arguments = "nethogs",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using var process = Process.Start(psi);
-            if (process == null) return false;
-            await process.WaitForExitAsync();
-            return process.ExitCode == 0;
+                return _platformService.HasNethogs;
+            }
+
+            var result = await ProcessExecutionHelper.ExecuteAsync("which", new[] { "nethogs" }, timeoutMs: 1500);
+            return result.Success;
         }
         catch
         {
@@ -39,25 +45,10 @@ public class NethogsProcessNetworkMonitor : IProcessNetworkMonitor
     {
         try
         {
-            var psi = new ProcessStartInfo
-            {
-                FileName = "nethogs",
-                // -t = trace mode (machine readable)
-                // -c 1 = run for 1 cycle and exit
-                Arguments = "-t -c 1",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using var process = Process.Start(psi);
-            if (process == null) return false;
-            
-            string stderr = await process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
-            
-            // nethogs returns non-zero if it lacks cap_net_admin / cap_net_raw or root
-            if (process.ExitCode != 0 || stderr.Contains("Permission denied", StringComparison.OrdinalIgnoreCase) || stderr.Contains("root", StringComparison.OrdinalIgnoreCase))
+            string nethogsExec = _platformService?.GetExecutablePath("nethogs") ?? "nethogs";
+            var result = await ProcessExecutionHelper.ExecuteAsync(nethogsExec, new[] { "-t", "-c", "1" }, timeoutMs: 2000);
+
+            if (!result.Success || result.StandardError.Contains("Permission denied", StringComparison.OrdinalIgnoreCase) || result.StandardError.Contains("root", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
@@ -71,23 +62,27 @@ public class NethogsProcessNetworkMonitor : IProcessNetworkMonitor
 
     public async IAsyncEnumerable<IEnumerable<ProcessNetworkUsage>> StartMonitoringAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        string nethogsExec = _platformService?.GetExecutablePath("nethogs") ?? "nethogs";
+
+        // Use ProcessStartInfo.ArgumentList (no shell execution) per security policy
         var psi = new ProcessStartInfo
         {
-            FileName = "nethogs",
-            Arguments = "-t", // Trace mode: output is machine-readable
+            FileName = nethogsExec,
+            UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            UseShellExecute = false,
             CreateNoWindow = true
         };
+        // ArgumentList: machine-readable trace mode
+        psi.ArgumentList.Add("-t");
 
         using var process = Process.Start(psi);
         if (process == null) yield break;
 
         // Ensure process is killed when token is cancelled
-        using var registration = cancellationToken.Register(() => 
+        using var registration = cancellationToken.Register(() =>
         {
-            try { if (!process.HasExited) process.Kill(); } catch { }
+            try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch { }
         });
 
         using var reader = process.StandardOutput;
@@ -95,7 +90,15 @@ public class NethogsProcessNetworkMonitor : IProcessNetworkMonitor
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            string? line = await reader.ReadLineAsync(cancellationToken);
+            string? line;
+            try
+            {
+                line = await reader.ReadLineAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
             if (line == null) break; // EOF — nethogs process exited
             if (string.IsNullOrWhiteSpace(line)) continue;
 
@@ -123,15 +126,14 @@ public class NethogsProcessNetworkMonitor : IProcessNetworkMonitor
         }
     }
 
-    private ProcessNetworkUsage? ParseNethogsLine(string line)
+    /// <summary>
+    /// Parses a single nethogs trace-mode output line.
+    /// Format: /path/to/exec/PID/user\tSENT_KB/s\tRECV_KB/s
+    /// </summary>
+    public ProcessNetworkUsage? ParseNethogsLine(string line)
     {
-        // Format is typically:
-        // /path/to/executable/PID/USER/DEV SENT_KBPS RECV_KBPS
-        // OR
-        // processname/PID/USER SENT_KBPS RECV_KBPS
-
         var parts = line.Split('\t', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length < 3) 
+        if (parts.Length < 3)
         {
             parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         }
@@ -139,54 +141,63 @@ public class NethogsProcessNetworkMonitor : IProcessNetworkMonitor
         if (parts.Length < 3) return null;
 
         string identifierPart = parts[0];
-        
-        // nethogs uses '/' to separate parts in the identifier.
-        // It can be tricky because the executable path itself contains '/'.
-        // Let's split by '/' and take the last few components as DEV, USER, PID.
         var idParts = identifierPart.Split('/');
-        
-        if (idParts.Length < 4) return null; // We need at least executable, pid, user, dev
+        if (idParts.Length < 4) return null;
 
-        // The DEV part is often the last one, or sometimes it's missing.
-        // Usually: [...path...]/[executable]/[PID]/[USER]/[DEV] or similar.
-        // To be safe, we'll try to find the PID by checking which component is numeric.
-        int pidIndex = -1;
-        for (int i = idParts.Length - 1; i >= 0; i--)
-        {
-            if (int.TryParse(idParts[i], out _))
-            {
-                pidIndex = i;
-                break;
-            }
-        }
-
-        if (pidIndex == -1 || pidIndex == 0) return null;
+        // nethogs trace format is /path/to/exec/PID/USER_OR_UID
+        int pidIndex = idParts.Length - 2;
+        if (pidIndex <= 0 || !int.TryParse(idParts[pidIndex], out int pid)) return null;
 
         string executablePath = string.Join("/", idParts[0..pidIndex]);
         string processName = Path.GetFileName(executablePath);
-        
-        // Handle cases like "unknown program" or missing name
+
         if (string.IsNullOrWhiteSpace(processName) || processName == "unknown program")
         {
             processName = "unknown";
         }
 
-        int pid = int.Parse(idParts[pidIndex]);
-        string user = idParts.Length > pidIndex + 1 ? idParts[pidIndex + 1] : "unknown";
+        string user = idParts[idParts.Length - 1];
 
         if (!double.TryParse(parts[1], out double sentKbps)) return null;
         if (!double.TryParse(parts[2], out double recvKbps)) return null;
 
+        // Attempt richer identity from /proc if resolver is available
+        string identityKey = $"{processName}_{pid}_0";
+        string resolvedExePath = executablePath;
+        string resolvedUser = user;
+
+        if (_processResolver != null)
+        {
+            var identity = _processResolver.ResolveProcessIdentity(pid);
+            if (identity != null)
+            {
+                if (!string.IsNullOrEmpty(identity.ProcessName) && identity.ProcessName != $"pid_{pid}")
+                {
+                    processName = identity.ProcessName;
+                }
+                if (!string.IsNullOrEmpty(identity.ExecutablePath))
+                {
+                    resolvedExePath = identity.ExecutablePath;
+                }
+                if (!string.IsNullOrEmpty(identity.UserName) && identity.UserName != "unknown")
+                {
+                    resolvedUser = identity.UserName;
+                }
+                identityKey = identity.CompositeKey;
+            }
+        }
+
         return new ProcessNetworkUsage
         {
             ProcessIdentifier = processName,
-            ExecutablePath = executablePath,
+            ExecutablePath = resolvedExePath,
             Pid = pid,
-            User = user,
-            // Convert KB/s to Bytes/s
+            User = resolvedUser,
             UploadRateBytesPerSec = sentKbps * 1024,
             DownloadRateBytesPerSec = recvKbps * 1024,
-            Timestamp = DateTime.UtcNow
+            Timestamp = DateTime.UtcNow,
+            DataSource = "Nethogs",
+            ProcessIdentityKey = identityKey
         };
     }
 }

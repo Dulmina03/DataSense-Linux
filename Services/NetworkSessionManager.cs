@@ -13,6 +13,7 @@ public class NetworkSessionManager : IDisposable
     private readonly INetworkUsageRepository _repository;
     
     private NetworkSession? _currentSession;
+    public NetworkSession? CurrentSession => _currentSession;
     private string? _currentInterface;
     private long _sessionStartDownloaded;
     private long _sessionStartUploaded;

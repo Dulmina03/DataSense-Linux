@@ -46,6 +46,11 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty] private string _processNameText = "—";
     [ObservableProperty] private string _applicationNameText = "—";
+    [ObservableProperty] private string _executablePathText = "—";
+    [ObservableProperty] private string _userNameText = "—";
+    [ObservableProperty] private string _pidText = "—";
+    [ObservableProperty] private string _dataSourceText = "Source: Linux nethogs";
+    [ObservableProperty] private string _monitoringStateText = "Active";
     
     // ── Live Status ──────────────────────────────────────────────────────────
     [ObservableProperty] private string _liveDownloadSpeed = "—";
@@ -239,14 +244,28 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
 
     private void OnLiveTrafficUpdated(IEnumerable<ProcessNetworkUsage> currentBatch)
     {
-        var active = currentBatch.FirstOrDefault(p => p.ProcessIdentifier == _processName);
+        var active = currentBatch.FirstOrDefault(p => p.ProcessIdentifier.Equals(_processName, StringComparison.OrdinalIgnoreCase));
         Dispatcher.UIThread.Post(() =>
         {
-            if (active != null && (active.DownloadRateBytesPerSec > 0 || active.UploadRateBytesPerSec > 0))
+            if (active != null)
             {
-                IsCurrentlyActive = true;
-                LiveDownloadSpeed = ByteFormatter.FormatSpeed(active.DownloadRateBytesPerSec);
-                LiveUploadSpeed = ByteFormatter.FormatSpeed(active.UploadRateBytesPerSec);
+                if (!string.IsNullOrEmpty(active.ExecutablePath)) ExecutablePathText = active.ExecutablePath;
+                if (!string.IsNullOrEmpty(active.User)) UserNameText = active.User;
+                if (active.Pid > 0) PidText = active.Pid.ToString();
+                if (!string.IsNullOrEmpty(active.DataSource)) DataSourceText = $"Source: Linux {active.DataSource.ToLowerInvariant()}";
+
+                if (active.DownloadRateBytesPerSec > 0 || active.UploadRateBytesPerSec > 0)
+                {
+                    IsCurrentlyActive = true;
+                    LiveDownloadSpeed = ByteFormatter.FormatSpeed(active.DownloadRateBytesPerSec);
+                    LiveUploadSpeed = ByteFormatter.FormatSpeed(active.UploadRateBytesPerSec);
+                }
+                else
+                {
+                    IsCurrentlyActive = false;
+                    LiveDownloadSpeed = "—";
+                    LiveUploadSpeed = "—";
+                }
             }
             else
             {

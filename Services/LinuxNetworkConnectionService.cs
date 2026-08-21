@@ -4,12 +4,20 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using DataSense.Helpers;
 using DataSense.Models;
 
 namespace DataSense.Services;
 
 public class LinuxNetworkConnectionService : INetworkConnectionService
 {
+    private readonly ILinuxPlatformService? _platformService;
+
+    public LinuxNetworkConnectionService(ILinuxPlatformService? platformService = null)
+    {
+        _platformService = platformService;
+    }
+
     public async Task<NetworkConnectionDetails> GetConnectionDetailsAsync(string interfaceName)
     {
         var details = new NetworkConnectionDetails
@@ -24,17 +32,25 @@ public class LinuxNetworkConnectionService : INetworkConnectionService
 
         try
         {
-            // Query nmcli device details
-            string deviceShowOutput = await RunCommandAsync("nmcli", $"-t device show {interfaceName}");
-            if (string.IsNullOrEmpty(deviceShowOutput))
+            // If nmcli is not available on platform, degrade gracefully to basic sysfs/dotnet API
+            if (_platformService != null && !_platformService.HasNmcli)
             {
-                // Fallback to basic sysfs and dotnet API info if nmcli is not available
+                await PopulateBasicFallbackAsync(interfaceName, details);
+                return details;
+            }
+
+            string nmcliExec = _platformService?.GetExecutablePath("nmcli") ?? "nmcli";
+
+            // Query nmcli device details safely
+            var result = await ProcessExecutionHelper.ExecuteAsync(nmcliExec, new[] { "-t", "device", "show", interfaceName }, timeoutMs: 2000);
+            if (!result.Success || string.IsNullOrEmpty(result.StandardOutput))
+            {
                 await PopulateBasicFallbackAsync(interfaceName, details);
                 return details;
             }
 
             var dnsList = new List<string>();
-            var lines = deviceShowOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = result.StandardOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var line in lines)
             {
@@ -56,8 +72,6 @@ public class LinuxNetworkConnectionService : INetworkConnectionService
                 }
                 else if (key.StartsWith("GENERAL.STATE"))
                 {
-                    // Format is usually e.g. "100 (connected)" or "30 (disconnected)"
-                    // Extract the text inside parentheses if available, or use the raw value
                     var match = Regex.Match(value, @"\(([^)]+)\)");
                     details.ConnectionState = match.Success ? match.Groups[1].Value : value;
                 }
@@ -67,7 +81,6 @@ public class LinuxNetworkConnectionService : INetworkConnectionService
                 }
                 else if (key.StartsWith("IP4.ADDRESS"))
                 {
-                    // Clean up e.g., "192.168.1.50/24" -> "192.168.1.50"
                     details.Ipv4Address = value.Split('/')[0];
                 }
                 else if (key.StartsWith("IP4.GATEWAY"))
@@ -92,11 +105,10 @@ public class LinuxNetworkConnectionService : INetworkConnectionService
             // Wi-Fi specific details querying
             if (details.ConnectionType.Equals("wifi", StringComparison.OrdinalIgnoreCase))
             {
-                await PopulateWifiDetailsAsync(details);
+                await PopulateWifiDetailsAsync(nmcliExec, details);
             }
             else
             {
-                // Ethernet/Wired speed querying from sysfs
                 await PopulateEthernetSpeedAsync(interfaceName, details);
             }
         }
@@ -109,30 +121,23 @@ public class LinuxNetworkConnectionService : INetworkConnectionService
         return details;
     }
 
-    private async Task PopulateWifiDetailsAsync(NetworkConnectionDetails details)
+    private async Task PopulateWifiDetailsAsync(string nmcliExec, NetworkConnectionDetails details)
     {
         try
         {
-            string wifiOutput = await RunCommandAsync("nmcli", "-t -f ACTIVE,SSID,SIGNAL,RATE dev wifi");
-            if (string.IsNullOrEmpty(wifiOutput)) return;
+            var result = await ProcessExecutionHelper.ExecuteAsync(nmcliExec, new[] { "-t", "-f", "ACTIVE,SSID,SIGNAL,RATE", "dev", "wifi" }, timeoutMs: 2000);
+            if (!result.Success || string.IsNullOrEmpty(result.StandardOutput)) return;
 
-            var wifiLines = wifiOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var wifiLines = result.StandardOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var line in wifiLines)
             {
-                // Format: ACTIVE:SSID:SIGNAL:RATE
-                // Wait! SSID could contain colons. Active column is either "yes" or "no".
-                // Since ACTIVE is the first column, we check if it starts with "yes:"
                 if (line.StartsWith("yes:", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Line format: yes:SSID:SIGNAL:RATE
                     var parts = line.Split(':');
                     if (parts.Length >= 4)
                     {
-                        // The last parts are RATE and SIGNAL. Let's extract them from the end.
                         string rate = parts[^1].Trim();
                         string signalStr = parts[^2].Trim();
-                        
-                        // SSID is everything in the middle
                         string ssid = string.Join(":", parts.Skip(1).Take(parts.Length - 3)).Trim();
 
                         details.WifiSsid = ssid;
@@ -166,17 +171,13 @@ public class LinuxNetworkConnectionService : INetworkConnectionService
                 }
             }
         }
-        catch
-        {
-            // Ignore operational errors (e.g. virtual adapters return -1 or error)
-        }
+        catch { /* Ignore operational errors */ }
     }
 
     private async Task PopulateBasicFallbackAsync(string interfaceName, NetworkConnectionDetails details)
     {
         try
         {
-            // Minimal fallback parsing using /sys/class/net & .NET Interfaces
             var netInterface = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
                 .FirstOrDefault(i => i.Name == interfaceName);
 
@@ -204,7 +205,6 @@ public class LinuxNetworkConnectionService : INetworkConnectionService
                     details.DnsServers = string.Join(", ", ipProps.DnsAddresses.Select(d => d.ToString()));
                 }
 
-                // Gateway fallback by reading /proc/net/route
                 string gateway = await GetDefaultGatewayFromRouteAsync(interfaceName);
                 if (!string.IsNullOrEmpty(gateway))
                 {
@@ -237,10 +237,8 @@ public class LinuxNetworkConnectionService : INetworkConnectionService
                 var destination = parts[1];
                 var gatewayHex = parts[2];
 
-                // Default route destination is "00000000"
                 if (iface == interfaceName && destination == "00000000")
                 {
-                    // Convert Hex Gateway IP (Little Endian) to string representation
                     if (uint.TryParse(gatewayHex, System.Globalization.NumberStyles.HexNumber, null, out uint ipAddress))
                     {
                         var bytes = BitConverter.GetBytes(ipAddress);
@@ -249,36 +247,7 @@ public class LinuxNetworkConnectionService : INetworkConnectionService
                 }
             }
         }
-        catch
-        {
-            // Ignore
-        }
+        catch { }
         return string.Empty;
-    }
-
-    private async Task<string> RunCommandAsync(string command, string arguments)
-    {
-        try
-        {
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = command,
-                Arguments = arguments,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using var process = System.Diagnostics.Process.Start(psi);
-            if (process == null) return string.Empty;
-
-            string output = await process.StandardOutput.ReadToEndAsync();
-            await process.WaitForExitAsync();
-            return output;
-        }
-        catch
-        {
-            return string.Empty;
-        }
     }
 }

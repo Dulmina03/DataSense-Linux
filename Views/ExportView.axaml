@@ -1,0 +1,97 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DataSense.ViewModels"
+             xmlns:models="using:DataSense.Models"
+             x:Class="DataSense.Views.ExportView"
+             x:DataType="vm:ExportViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#181824"/>
+            <Setter Property="BorderBrush" Value="#2A2A3D"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+        <StackPanel Spacing="20" MaxWidth="1100">
+            <!-- Header -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="📤 Data Export, Reports &amp; Portability" FontSize="20" FontWeight="Bold" Foreground="#FFFFFF"/>
+                <TextBlock Text="Export your DataSense telemetry to CSV, JSON, TXT reports, or complete ZIP backups." FontSize="13" Foreground="#8888AA"/>
+            </StackPanel>
+
+            <!-- Custom Export Config Card -->
+            <Border Classes="card">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="⚙️ Custom Data Export Options" FontSize="15" FontWeight="Bold" Foreground="#00D2FF"/>
+                    <Separator Height="1" Background="#2A2A3D"/>
+
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="12" Margin="0,0,10,0">
+                            <TextBlock Text="Export Format" FontSize="12" FontWeight="Bold" Foreground="#8888AA"/>
+                            <ComboBox SelectedIndex="{Binding SelectedFormatIndex}" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="CSV (Comma Separated Values)"/>
+                                <ComboBoxItem Content="JSON (Structured Telemetry)"/>
+                                <ComboBoxItem Content="TXT (Human-Readable Summary Report)"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Spacing="12" Margin="10,0,0,0">
+                            <TextBlock Text="Data Content" FontSize="12" FontWeight="Bold" Foreground="#8888AA"/>
+                            <ComboBox SelectedIndex="{Binding SelectedDataTypeIndex}" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="Usage Telemetry History"/>
+                                <ComboBoxItem Content="Network Session Records"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <CheckBox IsChecked="{Binding AnonymizeNetworks}" Content="Anonymize Network Names (Privacy Option)" Foreground="#CCCCCC" FontSize="12"/>
+
+                    <StackPanel Spacing="10" Margin="0,8,0,0">
+                        <Button Content="🚀 Start Export" Command="{Binding StartExportCommand}" IsEnabled="{Binding !IsExporting}" Background="#00E676" Foreground="#000000" FontWeight="Bold" FontSize="13" Padding="20,10" CornerRadius="6" HorizontalAlignment="Left"/>
+                        <ProgressBar Value="{Binding ProgressValue}" Maximum="100" IsVisible="{Binding IsExporting}" Height="4" Foreground="#00E676"/>
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="#00E676" FontSize="12" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Complete Backup Card -->
+            <Border Classes="card">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="📦 Complete Data Backup (.ZIP)" FontSize="15" FontWeight="Bold" Foreground="#FF9800"/>
+                    <Separator Height="1" Background="#2A2A3D"/>
+                    <TextBlock Text="Create a full, portable .zip archive containing your local datasense.db SQLite database and backup metadata for safety or migration." Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"/>
+                    
+                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
+                        <Button Content="💾 Create Full ZIP Backup" Command="{Binding CreateBackupCommand}" Background="#FF9800" Foreground="#000000" FontWeight="Bold" FontSize="12" Padding="16,8" CornerRadius="6"/>
+                        <TextBlock Text="{Binding BackupStatusText}" Foreground="#00E676" FontSize="12" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Recent Exports Table -->
+            <Border Classes="card">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="📋 Recent Export History" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"/>
+                    <ItemsControl ItemsSource="{Binding History}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:ExportItemHistory">
+                                <Border Background="#12121E" CornerRadius="4" Padding="12,8" Margin="0,2">
+                                    <Grid ColumnDefinitions="*,100,100,100">
+                                        <TextBlock Grid.Column="0" Text="{Binding FileName}" Foreground="#FFFFFF" FontSize="12" FontWeight="SemiBold"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Type}" Foreground="#00D2FF" FontSize="11" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding SizeText}" Foreground="#8888AA" FontSize="11" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding Status}" Foreground="#00E676" FontSize="11" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

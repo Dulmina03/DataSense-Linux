@@ -12,6 +12,7 @@ using DataSense.Database;
 using DataSense.Helpers;
 using DataSense.Models;
 using DataSense.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DataSense.ViewModels;
 
@@ -27,6 +28,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IPatternAnalysisService   _patternAnalysisService;
     private readonly IApplicationIntelligenceService _appIntelligenceService;
     private readonly IUnifiedIntelligenceService     _unifiedIntelligenceService;
+    private readonly NetworkSessionManager     _sessionManager;
     private bool     _disposed;
     private int      _tickCount  = 4; // Start at 4 so first tick triggers details load immediately
     private DateTime _lastAnalyticsDate = DateTime.MinValue; // Track UTC date for midnight auto-refresh
@@ -40,6 +42,36 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _totalUploadedText   = "0 B";
     [ObservableProperty] private string _statusText          = "Standby";
     [ObservableProperty] private string _statusDotColor      = "#555566"; // grey until connected
+    [ObservableProperty] private string _topActiveProcessText = "None";
+
+    [RelayCommand]
+    private void OpenLiveMonitor()
+    {
+        if (App.Services != null)
+        {
+            var mainVm = App.Services.GetRequiredService<MainWindowViewModel>();
+            mainVm.NavigateToLiveMonitoringCommand.Execute(null);
+        }
+    }
+
+    // ── Current session properties ──────────────────────────────────────────
+
+    [ObservableProperty] private string _currentSessionNetwork = "No active session";
+    [ObservableProperty] private string _currentSessionDuration = "—";
+    [ObservableProperty] private string _currentSessionDownload = "—";
+    [ObservableProperty] private string _currentSessionUpload = "—";
+    [ObservableProperty] private string _currentSessionTotal = "—";
+    [ObservableProperty] private bool _hasCurrentSession = false;
+
+    [RelayCommand]
+    private void OpenTimeline()
+    {
+        if (App.Services != null)
+        {
+            var mainVm = App.Services.GetRequiredService<MainWindowViewModel>();
+            mainVm.NavigateToTimelineCommand.Execute(null);
+        }
+    }
 
     // ── Today summary properties ────────────────────────────────────────────
 
@@ -224,7 +256,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         IForecastService          forecastService,
         IPatternAnalysisService   patternAnalysisService,
         IApplicationIntelligenceService appIntelligenceService,
-        IUnifiedIntelligenceService     unifiedIntelligenceService)
+        IUnifiedIntelligenceService     unifiedIntelligenceService,
+        NetworkSessionManager           sessionManager)
     {
         _networkMonitorWorker   = networkMonitorWorker   ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
         _repository             = repository             ?? throw new ArgumentNullException(nameof(repository));
@@ -236,6 +269,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         _patternAnalysisService = patternAnalysisService ?? throw new ArgumentNullException(nameof(patternAnalysisService));
         _appIntelligenceService = appIntelligenceService ?? throw new ArgumentNullException(nameof(appIntelligenceService));
         _unifiedIntelligenceService = unifiedIntelligenceService ?? throw new ArgumentNullException(nameof(unifiedIntelligenceService));
+        _sessionManager         = sessionManager         ?? throw new ArgumentNullException(nameof(sessionManager));
 
         // Populate live card with current worker state immediately
         UpdateLiveValues(
@@ -414,6 +448,31 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         TotalUploadedText   = ByteFormatter.FormatBytes(bytesSent);
         StatusText          = isConnected ? "Monitoring" : "Offline";
         StatusDotColor      = isConnected ? "#00E676" : "#555566";
+
+        var current = _sessionManager.CurrentSession;
+        if (current != null)
+        {
+            HasCurrentSession = true;
+            CurrentSessionNetwork = string.IsNullOrEmpty(current.NetworkName) ? "Unknown" : current.NetworkName;
+            
+            var duration = DateTime.UtcNow - current.StartTime;
+            CurrentSessionDuration = duration.TotalHours >= 1 
+                ? $"{(int)duration.TotalHours}h {duration.Minutes}m" 
+                : $"{duration.Minutes}m {duration.Seconds}s";
+
+            CurrentSessionDownload = ByteFormatter.FormatBytes(current.BytesDownloaded);
+            CurrentSessionUpload = ByteFormatter.FormatBytes(current.BytesUploaded);
+            CurrentSessionTotal = ByteFormatter.FormatBytes(current.BytesDownloaded + current.BytesUploaded);
+        }
+        else
+        {
+            HasCurrentSession = false;
+            CurrentSessionNetwork = "No active session";
+            CurrentSessionDuration = "—";
+            CurrentSessionDownload = "—";
+            CurrentSessionUpload = "—";
+            CurrentSessionTotal = "—";
+        }
     }
 
     // ────────────────────────────────────────────────────────────────────────

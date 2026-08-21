@@ -20,6 +20,27 @@
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
             <v:SettingsView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PrivacyViewModel}">
+            <v:PrivacyView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DiagnosticsViewModel}">
+            <v:DiagnosticsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PerformanceViewModel}">
+            <v:PerformanceView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ExportViewModel}">
+            <v:ExportView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:EventCenterViewModel}">
+            <v:EventCenterView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ImportRestoreViewModel}">
+            <v:ImportRestoreView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BackupRecoveryViewModel}">
+            <v:BackupRecoveryView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:AboutViewModel}">
             <v:AboutView />
         </DataTemplate>
@@ -28,6 +49,12 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:NetworkAnalyticsViewModel}">
             <v:NetworkAnalyticsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:LiveMonitoringViewModel}">
+            <v:LiveMonitoringView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:NetworkActivityTimelineViewModel}">
+            <v:NetworkActivityTimelineView />
         </DataTemplate>
     </Application.DataTemplates>
 

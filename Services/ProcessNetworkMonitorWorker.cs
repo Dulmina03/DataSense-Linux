@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -12,26 +13,49 @@ public class ProcessNetworkMonitorWorker : IDisposable
 {
     private readonly IProcessNetworkMonitor _monitor;
     private readonly INetworkUsageRepository _repository;
+    private readonly ISystemHealthRegistry? _healthRegistry;
+    private readonly IEventService? _eventService;
     private CancellationTokenSource? _cts;
     private Task? _workerTask;
+    private bool _isPaused;
+    private bool _disposed;
 
     public bool IsRunning => _cts != null && !_cts.IsCancellationRequested;
+    public bool IsPaused => _isPaused;
+    public DateTime? LastSuccessfulSample { get; private set; }
+    public int TrackedProcessCount => _activeProcesses.Count;
+    public string MonitoringStatus { get; private set; } = "Not started";
+    public string? LastError { get; private set; }
 
-    // We store the last seen usage and the timestamp to calculate elapsed time
-    private readonly Dictionary<string, ProcessState> _activeProcesses = new();
-    
+    // Process state tracking with PID-reuse safety
+    private readonly ConcurrentDictionary<string, ProcessState> _activeProcesses = new();
+
+    // Flush interval management
+    private const int FlushIntervalSeconds = 10;
+    private const int MaxElapsedSecondsPerSample = 10;
+    private const int StaleProcessTimeoutSeconds = 120;
+
     // UI can subscribe to this for the live Process Network Traffic table
     public event Action<IEnumerable<ProcessNetworkUsage>>? LiveTrafficUpdated;
 
-    public ProcessNetworkMonitorWorker(IProcessNetworkMonitor monitor, INetworkUsageRepository repository)
+    public ProcessNetworkMonitorWorker(
+        IProcessNetworkMonitor monitor,
+        INetworkUsageRepository repository,
+        ISystemHealthRegistry? healthRegistry = null,
+        IEventService? eventService = null)
     {
         _monitor = monitor;
         _repository = repository;
+        _healthRegistry = healthRegistry;
+        _eventService = eventService;
+
+        _healthRegistry?.RegisterSubsystem("ProcessMonitor");
     }
 
     public void Start()
     {
         if (_cts != null) return;
+        _isPaused = false;
         _cts = new CancellationTokenSource();
         _workerTask = Task.Run(() => RunAsync(_cts.Token), _cts.Token);
     }
@@ -41,128 +65,291 @@ public class ProcessNetworkMonitorWorker : IDisposable
         _cts?.Cancel();
         try
         {
-            _workerTask?.Wait();
+            _workerTask?.Wait(TimeSpan.FromSeconds(5));
         }
         catch { /* ignored */ }
         _cts?.Dispose();
         _cts = null;
+        MonitoringStatus = "Stopped";
+    }
+
+    public void Pause()
+    {
+        _isPaused = true;
+        MonitoringStatus = "Paused";
+        _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Healthy, "Monitoring paused by user");
+    }
+
+    public void Resume()
+    {
+        _isPaused = false;
+        MonitoringStatus = "Running";
+        _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Healthy, "Monitoring resumed");
     }
 
     private async Task RunAsync(CancellationToken ct)
     {
-        // Gracefully fail if nethogs is not available or no permissions
-        if (!await _monitor.IsAvailableAsync() || !await _monitor.HasPermissionsAsync())
+        // Check availability
+        bool isAvailable = false;
+        try
         {
+            isAvailable = await _monitor.IsAvailableAsync();
+        }
+        catch
+        {
+            isAvailable = false;
+        }
+
+        if (!isAvailable)
+        {
+            MonitoringStatus = "Unavailable";
+            LastError = "nethogs executable not found on the system";
+            _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Unavailable, "nethogs not installed");
+            PublishProcessMonitorEvent(DataSenseEventType.ProcessMonitorUnavailable,
+                "Process Monitor Unavailable",
+                "nethogs is not installed. Install it to enable per-process network monitoring.",
+                EventSeverity.Warning);
             return;
         }
 
-        DateTime lastFlush = DateTime.UtcNow;
-
+        // Check permissions
+        bool hasPermissions = false;
         try
         {
-            await foreach (var batch in _monitor.StartMonitoringAsync(ct))
+            hasPermissions = await _monitor.HasPermissionsAsync();
+        }
+        catch
+        {
+            hasPermissions = false;
+        }
+
+        if (!hasPermissions)
+        {
+            MonitoringStatus = "Permission denied";
+            LastError = "nethogs lacks required capabilities (CAP_NET_RAW)";
+            _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Degraded,
+                "nethogs permissions insufficient. Run: sudo setcap cap_net_raw,cap_net_admin=eip $(which nethogs)");
+            PublishProcessMonitorEvent(DataSenseEventType.ProcessMonitorPermissionDenied,
+                "Process Monitor — Permission Denied",
+                "nethogs requires CAP_NET_RAW capability. Grant it via: sudo setcap cap_net_raw,cap_net_admin=eip $(which nethogs)",
+                EventSeverity.Warning);
+            return;
+        }
+
+        MonitoringStatus = "Running";
+        _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Healthy, "Monitoring active");
+        DateTime lastFlush = DateTime.UtcNow;
+        int restartAttempts = 0;
+
+        while (!ct.IsCancellationRequested && restartAttempts < 5)
+        {
+            try
             {
-                var currentTimestamp = DateTime.UtcNow;
-                var currentBatch = batch.ToList();
-
-                // Fire event for live UI
-                LiveTrafficUpdated?.Invoke(currentBatch);
-
-                // Integrate rates into bytes
-                foreach (var usage in currentBatch)
+                await foreach (var batch in _monitor.StartMonitoringAsync(ct))
                 {
-                    string key = usage.ProcessIdentifier; // Group by application identity
+                    if (ct.IsCancellationRequested) break;
 
-                    if (!_activeProcesses.TryGetValue(key, out var state))
+                    // Respect pause state
+                    if (_isPaused)
                     {
-                        state = new ProcessState
-                        {
-                            LastUpdate = currentTimestamp
-                        };
-                        _activeProcesses[key] = state;
+                        continue;
                     }
 
-                    double elapsedSeconds = (currentTimestamp - state.LastUpdate).TotalSeconds;
-                    
-                    // Prevent giant jumps if the process was paused/slept
-                    if (elapsedSeconds > 0 && elapsedSeconds < 10)
-                    {
-                        state.UnflushedDownloaded += (long)(usage.DownloadRateBytesPerSec * elapsedSeconds);
-                        state.UnflushedUploaded += (long)(usage.UploadRateBytesPerSec * elapsedSeconds);
-                    }
+                    restartAttempts = 0; // Reset on successful batch
+                    var currentTimestamp = DateTime.UtcNow;
+                    var currentBatch = batch.ToList();
 
-                    state.LastUpdate = currentTimestamp;
+                    // Fire event for live UI
+                    LiveTrafficUpdated?.Invoke(currentBatch);
+                    LastSuccessfulSample = currentTimestamp;
+
+                    // Integrate rates into bytes per sample interval
+                    IntegrateProcessUsage(currentBatch, currentTimestamp);
+
+                    // Flush to SQLite periodically
+                    if ((currentTimestamp - lastFlush).TotalSeconds >= FlushIntervalSeconds)
+                    {
+                        await FlushToDatabaseAsync();
+                        lastFlush = currentTimestamp;
+                    }
                 }
 
-                // Flush to SQLite every 5 seconds to avoid DB spam
-                if ((currentTimestamp - lastFlush).TotalSeconds >= 5)
+                // nethogs exited normally — attempt restart
+                if (!ct.IsCancellationRequested)
                 {
-                    await FlushToDatabaseAsync();
-                    lastFlush = currentTimestamp;
+                    restartAttempts++;
+                    MonitoringStatus = $"Restarting ({restartAttempts}/5)";
+                    _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Degraded, $"nethogs exited, restart attempt {restartAttempts}/5");
+
+                    if (restartAttempts == 1)
+                    {
+                        PublishProcessMonitorEvent(DataSenseEventType.ProcessMonitorBackendRestarted,
+                            "Process Monitor Backend Restarted",
+                            "nethogs process exited unexpectedly and is being restarted.",
+                            EventSeverity.Warning);
+                    }
+
+                    await Task.Delay(TimeSpan.FromSeconds(restartAttempts * 2), ct);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                break; // Normal shutdown
+            }
+            catch (Exception ex)
+            {
+                restartAttempts++;
+                LastError = ex.Message;
+                MonitoringStatus = $"Error (restart {restartAttempts}/5)";
+                _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Error, $"Error: {ex.Message}", ex);
+
+                if (!ct.IsCancellationRequested)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(restartAttempts * 2), ct);
                 }
             }
         }
-        catch (OperationCanceledException)
+
+        // Final flush on exit
+        try { await FlushToDatabaseAsync(); } catch { }
+
+        if (restartAttempts >= 5)
         {
-            // Normal exit
+            MonitoringStatus = "Failed — max restarts exceeded";
+            _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Error, "Max restart attempts exceeded");
         }
-        catch (Exception ex)
+    }
+
+    private void IntegrateProcessUsage(List<ProcessNetworkUsage> currentBatch, DateTime currentTimestamp)
+    {
+        // Mark all existing processes as potentially stale
+        var seenKeys = new HashSet<string>();
+
+        foreach (var usage in currentBatch)
         {
-            System.Diagnostics.Debug.WriteLine($"Process monitor error: {ex.Message}");
+            // Use composite identity key to handle PID reuse
+            string key = !string.IsNullOrEmpty(usage.ProcessIdentityKey)
+                ? usage.ProcessIdentityKey
+                : usage.ProcessIdentifier;
+
+            seenKeys.Add(key);
+
+            if (!_activeProcesses.TryGetValue(key, out var state))
+            {
+                state = new ProcessState
+                {
+                    ProcessName = usage.ProcessIdentifier,
+                    ExecutablePath = usage.ExecutablePath,
+                    UserName = usage.User,
+                    LastUpdate = currentTimestamp,
+                    FirstSeen = currentTimestamp
+                };
+                _activeProcesses[key] = state;
+            }
+
+            double elapsedSeconds = (currentTimestamp - state.LastUpdate).TotalSeconds;
+
+            // Prevent giant jumps if the process was paused/slept or timestamp is stale
+            if (elapsedSeconds > 0 && elapsedSeconds < MaxElapsedSecondsPerSample)
+            {
+                long dlDelta = (long)(usage.DownloadRateBytesPerSec * elapsedSeconds);
+                long ulDelta = (long)(usage.UploadRateBytesPerSec * elapsedSeconds);
+
+                // Clamp negative deltas to zero
+                state.UnflushedDownloaded += Math.Max(dlDelta, 0);
+                state.UnflushedUploaded += Math.Max(ulDelta, 0);
+            }
+
+            state.LastUpdate = currentTimestamp;
+
+            // Update metadata
+            if (!string.IsNullOrEmpty(usage.ExecutablePath))
+                state.ExecutablePath = usage.ExecutablePath;
+            if (!string.IsNullOrEmpty(usage.User) && usage.User != "unknown")
+                state.UserName = usage.User;
         }
-        finally
+
+        // Cleanup stale processes that haven't been seen
+        var staleKeys = _activeProcesses
+            .Where(kvp => (currentTimestamp - kvp.Value.LastUpdate).TotalSeconds > StaleProcessTimeoutSeconds)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var staleKey in staleKeys)
         {
-            // Flush any remaining data on exit
-            await FlushToDatabaseAsync();
+            _activeProcesses.TryRemove(staleKey, out _);
         }
     }
 
     private async Task FlushToDatabaseAsync()
     {
         var now = DateTime.UtcNow;
-        var toFlush = _activeProcesses.ToList();
         var recordsToSave = new List<ProcessUsageRecord>();
 
-        foreach (var kvp in toFlush)
+        foreach (var kvp in _activeProcesses)
         {
-            var key = kvp.Key;
             var state = kvp.Value;
 
             if (state.UnflushedDownloaded > 0 || state.UnflushedUploaded > 0)
             {
                 recordsToSave.Add(new ProcessUsageRecord
                 {
-                    ProcessName = key,
+                    ProcessName = state.ProcessName,
                     Timestamp = now,
                     BytesDownloaded = state.UnflushedDownloaded,
-                    BytesUploaded = state.UnflushedUploaded
+                    BytesUploaded = state.UnflushedUploaded,
+                    ExecutablePath = state.ExecutablePath,
+                    UserName = state.UserName,
+                    DataSource = "Nethogs"
                 });
 
                 state.UnflushedDownloaded = 0;
                 state.UnflushedUploaded = 0;
             }
-
-            // Cleanup stale processes that haven't been seen in 60 seconds
-            if ((now - state.LastUpdate).TotalSeconds > 60)
-            {
-                _activeProcesses.Remove(key);
-            }
         }
 
         if (recordsToSave.Count > 0)
         {
-            await _repository.SaveProcessUsageBatchAsync(recordsToSave);
+            try
+            {
+                await _repository.SaveProcessUsageBatchAsync(recordsToSave);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Process usage flush failed: {ex.Message}");
+            }
         }
+    }
+
+    private void PublishProcessMonitorEvent(DataSenseEventType type, string title, string description, EventSeverity severity)
+    {
+        _eventService?.PublishEvent(new DataSenseEvent
+        {
+            EventType = type,
+            Title = title,
+            Description = description,
+            Severity = severity,
+            Source = "ProcessMonitor",
+            Fingerprint = $"ProcessMonitor_{type}"
+        });
     }
 
     public void Dispose()
     {
-        Stop();
+        if (!_disposed)
+        {
+            Stop();
+            _disposed = true;
+        }
     }
 
     private class ProcessState
     {
+        public string ProcessName { get; set; } = string.Empty;
+        public string ExecutablePath { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
         public DateTime LastUpdate { get; set; }
+        public DateTime FirstSeen { get; set; }
         public long UnflushedDownloaded { get; set; }
         public long UnflushedUploaded { get; set; }
     }
