@@ -9,7 +9,7 @@ using DataSense.Models;
 
 namespace DataSense.Services;
 
-public class ApplicationAnalyticsService : IApplicationAnalyticsService
+public partial class ApplicationAnalyticsService : IApplicationAnalyticsService
 {
     private readonly INetworkUsageRepository _repository;
     private readonly ILinuxProcessResolver _processResolver;
@@ -26,6 +26,7 @@ public class ApplicationAnalyticsService : IApplicationAnalyticsService
     public async Task InvalidateCacheAsync()
     {
         _cache.Clear();
+        lock (_profileCacheLock) { _profileCache = null; }
         await Task.CompletedTask;
     }
 

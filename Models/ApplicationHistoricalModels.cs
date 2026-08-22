@@ -1,0 +1,264 @@
+using System;
+using System.Collections.Generic;
+
+namespace DataSense.Models;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 11.31A — Application Historical Intelligence Models
+// All values must originate from real SQLite telemetry.
+// Nullable properties represent genuinely unavailable data.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// <summary>
+/// Trend direction classification for a single traffic dimension.
+/// Calculated deterministically from recent vs previous 7-day windows.
+/// </summary>
+public enum AppTrendDirection
+{
+    Increasing,         // > +10 %
+    Decreasing,         // < -10 %
+    Stable,             // within ±10 %
+    InsufficientData    // previous period has no usable records
+}
+
+/// <summary>
+/// Current activity status of an application, derived from the most recent
+/// telemetry sample timestamp relative to the observation window.
+/// </summary>
+public enum AppActivityStatus
+{
+    Active,             // telemetry within the last 30 s
+    RecentlyActive,     // telemetry within the last 5 min
+    Historical,         // telemetry exists but older than 5 min
+    Unavailable         // no telemetry identity available
+}
+
+/// <summary>
+/// A single data point in a time-series chart for an application.
+/// Used for both daily and hourly chart rendering.
+/// </summary>
+public class ApplicationUsagePoint
+{
+    /// <summary>Bucket timestamp: calendar day (for daily) or hour-start (for hourly).</summary>
+    public DateTime Timestamp { get; set; }
+
+    /// <summary>Real bytes downloaded in this bucket, summed from ProcessUsageRecords.</summary>
+    public long DownloadBytes { get; set; }
+
+    /// <summary>Real bytes uploaded in this bucket, summed from ProcessUsageRecords.</summary>
+    public long UploadBytes { get; set; }
+
+    public long TotalBytes => DownloadBytes + UploadBytes;
+
+    /// <summary>
+    /// Percentage share of this bucket's usage relative to the total usage
+    /// across all buckets in the same time window. Null when total is zero.
+    /// </summary>
+    public double? SharePercentage { get; set; }
+}
+
+/// <summary>
+/// 24-hour bucket aggregation for an application.
+/// Hour 0 = midnight UTC, Hour 23 = 11 PM UTC.
+/// Only populated buckets (with real telemetry) are included;
+/// missing hours are omitted rather than fabricated.
+/// </summary>
+public class ApplicationHourlyPattern
+{
+    public string ProcessName { get; set; } = string.Empty;
+
+    /// <summary>24-element array indexed [0..23]; null element = no telemetry for that hour.</summary>
+    public long?[] HourlyDownloadBytes { get; set; } = new long?[24];
+
+    /// <summary>24-element array indexed [0..23]; null element = no telemetry for that hour.</summary>
+    public long?[] HourlyUploadBytes { get; set; } = new long?[24];
+
+    /// <summary>UTC hour (0-23) with the highest combined usage. Null if no data.</summary>
+    public int? PeakHour { get; set; }
+
+    /// <summary>Combined bytes in the peak hour. Zero if no data.</summary>
+    public long PeakHourBytes { get; set; }
+
+    /// <summary>True if at least 1 hour bucket has real data.</summary>
+    public bool HasData { get; set; }
+}
+
+/// <summary>
+/// Download vs upload breakdown for an application over a selected period.
+/// </summary>
+public class ApplicationTrafficBreakdown
+{
+    public string ProcessName { get; set; } = string.Empty;
+
+    public long DownloadBytes { get; set; }
+    public long UploadBytes { get; set; }
+    public long TotalBytes => DownloadBytes + UploadBytes;
+
+    /// <summary>
+    /// Download as a percentage of total. Null when TotalBytes == 0
+    /// (do not fabricate a 50/50 split).
+    /// </summary>
+    public double? DownloadPercentage { get; set; }
+
+    /// <summary>
+    /// Upload as a percentage of total. Null when TotalBytes == 0.
+    /// </summary>
+    public double? UploadPercentage { get; set; }
+
+    /// <summary>True when DownloadBytes and UploadBytes can be distinguished.</summary>
+    public bool CanDistinguishDirections => DownloadBytes >= 0 && UploadBytes >= 0 && TotalBytes > 0;
+}
+
+/// <summary>
+/// Deterministic trend analysis comparing recent vs previous 7-day windows.
+/// trend% = ((recent - previous) / previous) * 100
+/// Direction thresholds: >+10% = Increasing, <-10% = Decreasing, else Stable.
+/// Never calculates a trend when previous period has no real data.
+/// </summary>
+public class ApplicationTrend
+{
+    public string ProcessName { get; set; } = string.Empty;
+
+    public AppTrendDirection DownloadTrend { get; set; } = AppTrendDirection.InsufficientData;
+    public AppTrendDirection UploadTrend { get; set; } = AppTrendDirection.InsufficientData;
+    public AppTrendDirection CombinedTrend { get; set; } = AppTrendDirection.InsufficientData;
+
+    /// <summary>Null when previous period has no data (division by zero avoided).</summary>
+    public double? DownloadTrendPercentage { get; set; }
+
+    /// <summary>Null when previous period has no data.</summary>
+    public double? UploadTrendPercentage { get; set; }
+
+    /// <summary>Null when previous period has no data.</summary>
+    public double? CombinedTrendPercentage { get; set; }
+
+    /// <summary>Latest 7-day total bytes (all directions).</summary>
+    public long Recent7DayBytes { get; set; }
+
+    /// <summary>Previous 7-day total bytes (all directions). Zero = no prior data.</summary>
+    public long Previous7DayBytes { get; set; }
+}
+
+/// <summary>
+/// Full historical intelligence profile for a single application identity
+/// (ProcessName + PID + StartTimeTicks).  All aggregate values are derived
+/// from real ProcessUsageRecords rows; no fabrication or estimation.
+/// </summary>
+public class ApplicationHistoricalProfile
+{
+    // ── Identity ──────────────────────────────────────────────────────────────
+
+    public string ProcessName { get; set; } = string.Empty;
+
+    /// <summary>PID at time of capture; 0 = not available.</summary>
+    public int Pid { get; set; }
+
+    /// <summary>Process start-time ticks for PID-recycling safety; 0 = not available.</summary>
+    public long StartTimeTicks { get; set; }
+
+    /// <summary>Full path from /proc; empty string = not available.</summary>
+    public string ExecutablePath { get; set; } = string.Empty;
+
+    /// <summary>Linux username; empty string = not available.</summary>
+    public string UserName { get; set; } = string.Empty;
+
+    /// <summary>Monitoring backend (e.g. "Nethogs"); empty = not available.</summary>
+    public string DataSource { get; set; } = string.Empty;
+
+    // ── Period Aggregates ─────────────────────────────────────────────────────
+
+    /// <summary>Bytes today (UTC calendar day). 0 if no today records.</summary>
+    public long TodayBytes { get; set; }
+
+    /// <summary>Bytes yesterday (UTC calendar day). 0 if no yesterday records.</summary>
+    public long YesterdayBytes { get; set; }
+
+    /// <summary>Bytes in last 7 days (rolling). 0 if no records.</summary>
+    public long SevenDayTotalBytes { get; set; }
+
+    /// <summary>
+    /// Daily average over the days that actually had telemetry in the last 7 days.
+    /// Null if fewer than 1 active day (do not divide by zero or fabricate).
+    /// </summary>
+    public double? SevenDayAverageBytes { get; set; }
+
+    /// <summary>Bytes in last 30 days (rolling). 0 if no records.</summary>
+    public long ThirtyDayTotalBytes { get; set; }
+
+    /// <summary>
+    /// Daily average over active days in last 30 days.
+    /// Null if fewer than 1 active day.
+    /// </summary>
+    public double? ThirtyDayAverageBytes { get; set; }
+
+    /// <summary>
+    /// Projected current-month total (this-month-so-far / elapsed-days * days-in-month).
+    /// Null when insufficient month data exists (fewer than 1 day elapsed).
+    /// </summary>
+    public long? MonthlyProjectedBytes { get; set; }
+
+    // ── Download / Upload Split ───────────────────────────────────────────────
+
+    /// <summary>Total download bytes across the selected profile window (AllTime).</summary>
+    public long DownloadBytes { get; set; }
+
+    /// <summary>Total upload bytes across the selected profile window (AllTime).</summary>
+    public long UploadBytes { get; set; }
+
+    public long TotalBytes => DownloadBytes + UploadBytes;
+
+    /// <summary>
+    /// Percentage of total process traffic across all applications.
+    /// Based on the AllTime window. 0 when total system traffic is 0.
+    /// </summary>
+    public double PercentageOfTotal { get; set; }
+
+    // ── Trend ─────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Combined-traffic trend percentage (recent7 vs prev7).
+    /// Null when previous period has no data.
+    /// </summary>
+    public double? TrendPercentage { get; set; }
+
+    /// <summary>Human-readable trend label derived from TrendPercentage thresholds.</summary>
+    public string TrendState { get; set; } = "Insufficient Data";
+
+    public bool IsIncreasing => TrendState == "Increasing";
+
+    // ── Activity ──────────────────────────────────────────────────────────────
+
+    /// <summary>True when a live monitoring sample for this identity was received within 30 s.</summary>
+    public bool IsCurrentlyActive { get; set; }
+
+    /// <summary>Activity status with finer granularity for UI display.</summary>
+    public AppActivityStatus ActivityStatus { get; set; } = AppActivityStatus.Unavailable;
+
+    // ── Data Quality ──────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// True when at least 3 distinct calendar days of telemetry exist.
+    /// Averages, trends, and projections must not be computed when false.
+    /// </summary>
+    public bool HasSufficientData { get; set; }
+
+    public DateTime? FirstSeen { get; set; }
+    public DateTime? LastSeen { get; set; }
+
+    /// <summary>Number of distinct UTC calendar days with at least one record.</summary>
+    public int ActiveDays { get; set; }
+
+    // ── Peak Detection ───────────────────────────────────────────────────────
+
+    /// <summary>UTC hour (0-23) with the highest combined usage. Null if no data.</summary>
+    public int? PeakHour { get; set; }
+
+    /// <summary>Combined bytes in the peak hour.</summary>
+    public long PeakHourBytes { get; set; }
+
+    /// <summary>UTC calendar day with the highest combined usage. Null if no data.</summary>
+    public DateTime? PeakDay { get; set; }
+
+    /// <summary>Combined bytes on the peak day.</summary>
+    public long PeakDayBytes { get; set; }
+}
