@@ -556,26 +556,98 @@
                             </StackPanel>
 
                             <Grid ColumnDefinitions="*,16,*">
-                                <!-- Telemetry Profile -->
-                                <Border Grid.Column="0" Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="16,14">
-                                    <StackPanel Spacing="10">
-                                        <TextBlock Text="Application Profile Baselines" Foreground="#8888AA" FontSize="11" FontWeight="SemiBold"/>
+                                <!-- Profile Intelligence Engine (7 key areas) -->
+                                <StackPanel Grid.Column="0" Spacing="12">
+                                    <!-- 1. Behavior & Direction Classification -->
+                                    <Border Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="16,14">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="Network Traffic Direction" Foreground="#8888AA" FontSize="11" FontWeight="SemiBold"/>
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="4">
+                                                    <TextBlock Text="{Binding NetworkProfile.DirectionClassification}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14"/>
+                                                    <TextBlock Text="Based on real download/upload telemetry" Foreground="#888899" FontSize="10"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding NetworkProfile.DownloadPercentage, StringFormat='{}{0:F0}% Download'}" Foreground="#00D2FF" FontWeight="Bold" FontSize="11"/>
+                                                    <TextBlock Text="{Binding NetworkProfile.UploadPercentage, StringFormat='{}{0:F0}% Upload'}" Foreground="#00E676" FontWeight="Bold" FontSize="11"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
 
-                                        <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,8,Auto,8,Auto,8,Auto">
-                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="7-Day Avg Daily:" Foreground="#888899" FontSize="12"/>
-                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentProfile.FormattedSevenDayAvg}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12"/>
+                                    <!-- 2. Trend & Data Share Analysis -->
+                                    <Border Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="16,14">
+                                        <StackPanel Spacing="10">
+                                            <TextBlock Text="Trend &amp; Data Share Analysis" Foreground="#8888AA" FontSize="11" FontWeight="SemiBold"/>
+                                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Margin="0,4,0,0">
+                                                <!-- Trend -->
+                                                <StackPanel Grid.Column="0" Spacing="4">
+                                                    <TextBlock Text="Weekly Trend" Foreground="#888899" FontSize="11"/>
+                                                    <Border HorizontalAlignment="Left" CornerRadius="4" Padding="6,2" Background="#1D2A1D">
+                                                        <TextBlock Text="{Binding NetworkProfile.TrendState}" Foreground="#00E676" FontWeight="Bold" FontSize="11"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <!-- Data Share -->
+                                                <StackPanel Grid.Column="1" Spacing="4">
+                                                    <TextBlock Text="Consumption Share" Foreground="#888899" FontSize="11"/>
+                                                    <Border HorizontalAlignment="Left" CornerRadius="4" Padding="6,2" Background="#1D1D2C">
+                                                        <TextBlock Text="{Binding NetworkProfile.DataShareClassification}" Foreground="#8888FF" FontWeight="Bold" FontSize="11"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
 
-                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Monthly Projection:" Foreground="#888899" FontSize="12"/>
-                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CurrentProfile.FormattedMonthlyProjected}" Foreground="#00D2FF" FontWeight="Bold" FontSize="12"/>
+                                    <!-- 3. Peak Usage Analysis -->
+                                    <Border Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="16,14">
+                                        <StackPanel Spacing="10">
+                                            <TextBlock Text="Peak Usage Analysis" Foreground="#8888AA" FontSize="11" FontWeight="SemiBold"/>
+                                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,8,Auto,8,Auto" Margin="0,4,0,0">
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Peak Activity Day:" Foreground="#888899" FontSize="12"/>
+                                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding NetworkProfile.PeakDay}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12"/>
 
-                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Growth Trend:" Foreground="#888899" FontSize="12"/>
-                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CurrentProfile.FormattedTrend}" Foreground="{Binding CurrentProfile.TrendColor}" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Peak Activity Hour:" Foreground="#888899" FontSize="12"/>
+                                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NetworkProfile.PeakHour, StringFormat='{}{0}:00 UTC'}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12"/>
 
-                                            <TextBlock Grid.Row="6" Grid.Column="0" Text="System Share:" Foreground="#888899" FontSize="12"/>
-                                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding CurrentProfile.PercentageOfTotalUsage, StringFormat=\{0:F1\}%}" Foreground="#8888FF" FontWeight="Bold" FontSize="12"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
+                                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Peak Usage Period:" Foreground="#888899" FontSize="12"/>
+                                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding NetworkProfile.PeakUsagePeriod}" Foreground="#FFB300" FontWeight="Bold" FontSize="12"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- 4. Session & Observation Details -->
+                                    <Border Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="16,14">
+                                        <StackPanel Spacing="10">
+                                            <TextBlock Text="Observed Activity Telemetry" Foreground="#8888AA" FontSize="11" FontWeight="SemiBold"/>
+                                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,8,Auto,8,Auto" Margin="0,4,0,0">
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="First Observed:" Foreground="#888899" FontSize="12"/>
+                                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding NetworkProfile.FirstObserved, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Foreground="#FFFFFF" FontSize="12"/>
+
+                                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Last Observed:" Foreground="#888899" FontSize="12"/>
+                                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NetworkProfile.LastObserved, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Foreground="#FFFFFF" FontSize="12"/>
+
+                                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Telemetry Samples:" Foreground="#888899" FontSize="12"/>
+                                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding NetworkProfile.ObservedSessionsCount}" Foreground="#8888FF" FontWeight="Bold" FontSize="12"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- 5. Anomaly State -->
+                                    <Border Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="16,14">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="Anomaly Detection Engine" Foreground="#8888AA" FontSize="11" FontWeight="SemiBold"/>
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="4">
+                                                    <TextBlock Text="Statistical Anomaly State" Foreground="#888899" FontSize="11"/>
+                                                    <TextBlock Text="{Binding NetworkProfile.AnomalyState}" Foreground="#FF5252" FontWeight="Bold" FontSize="14"/>
+                                                </StackPanel>
+                                                <Border Grid.Column="1" CornerRadius="4" Padding="8,4" Background="#2C1D1D" VerticalAlignment="Center">
+                                                    <TextBlock Text="Deterministic Baseline" Foreground="#FF5252" FontSize="10" FontWeight="Bold"/>
+                                                </Border>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
 
                                 <!-- Recommendations -->
                                 <Border Grid.Column="2" Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="16,14">

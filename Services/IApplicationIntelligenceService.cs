@@ -31,4 +31,9 @@ public interface IApplicationIntelligenceService
     /// Identifies processes contributing significantly to a specific daily/hourly usage spike.
     /// </summary>
     Task<IEnumerable<ApplicationUsageProfile>> GetSpikeContributorsAsync(DateTime date);
+
+    /// <summary>
+    /// Computes a comprehensive network profile for a specific application/process.
+    /// </summary>
+    Task<ApplicationNetworkProfile?> GetApplicationNetworkProfileAsync(string processName, int pid, long startTimeTicks);
 }

@@ -177,6 +177,7 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
 
     // Application Intelligence & Smart Recommendations
     [ObservableProperty] private ApplicationUsageProfile? _currentProfile;
+    [ObservableProperty] private ApplicationNetworkProfile? _networkProfile;
     public ObservableCollection<ApplicationRecommendation> ProcessRecommendations { get; } = new();
     [ObservableProperty] private bool _hasProcessRecommendations = false;
 
@@ -476,12 +477,14 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
 
             // Application Intelligence & Smart Recommendations
             var profile = await _appIntelligenceService.GetApplicationProfileAsync(processName);
+            var netProfile = await _appIntelligenceService.GetApplicationNetworkProfileAsync(processName, pid, startTimeTicks);
             var recs    = (await _appIntelligenceService.GetProcessRecommendationsAsync(processName)).ToList();
             var processProfiles = (await _processNetworkIntelligenceService.GetProcessNetworkUsageAsync(processName, pid, startTimeTicks)).ToList();
 
             Dispatcher.UIThread.Post(() =>
             {
                 CurrentProfile = profile;
+                NetworkProfile = netProfile;
                 ProcessRecommendations.Clear();
                 foreach (var rec in recs) ProcessRecommendations.Add(rec);
                 HasProcessRecommendations = ProcessRecommendations.Count > 0;
