@@ -130,6 +130,59 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ══ Live Applications on This Network ══ -->
+                <Border IsVisible="{Binding ShowLiveApplications}" Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
+                    <StackPanel Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Ellipse Width="8" Height="8" Fill="#00E676" VerticalAlignment="Center"/>
+                            <TextBlock Text="Live Applications on This Network" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Empty state if no traffic -->
+                        <TextBlock Text="No active traffic on this network." 
+                                   Foreground="#555577" FontSize="13" 
+                                   IsVisible="{Binding !LiveApplications.Count}" 
+                                   HorizontalAlignment="Center" Margin="0,16"/>
+
+                        <StackPanel IsVisible="{Binding LiveApplications.Count}" Spacing="6">
+                            <!-- Table Header -->
+                            <Border Background="#1A1A2E" CornerRadius="6" Padding="12,8">
+                                <Grid ColumnDefinitions="*,120,120,120,100">
+                                    <TextBlock Grid.Column="0" Text="Application" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Column="1" Text="Download Rate" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
+                                    <TextBlock Grid.Column="2" Text="Upload Rate" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
+                                    <TextBlock Grid.Column="3" Text="Total Rate" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
+                                    <TextBlock Grid.Column="4" Text="Traffic Share" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Table Body -->
+                            <ItemsControl ItemsSource="{Binding LiveApplications}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="#2D2D44" BorderThickness="0,0,0,1" Padding="12,8">
+                                            <Grid ColumnDefinitions="*,120,120,120,100">
+                                                <!-- Clickable app name -->
+                                                <Button Grid.Column="0" Content="{Binding ProcessName}" 
+                                                        Command="{Binding $parent[UserControl].((vm:NetworkAnalyticsViewModel)DataContext).DrillToApplicationCommand}" 
+                                                        CommandParameter="{Binding ProcessName}"
+                                                        Classes="link-button" Foreground="#ECEFF1" 
+                                                        FontWeight="SemiBold" FontSize="12" 
+                                                        HorizontalAlignment="Left" Padding="0" VerticalAlignment="Center"/>
+                                                
+                                                <TextBlock Grid.Column="1" Text="{Binding DownloadRateText}" Foreground="#00D2FF" FontSize="12" TextAlignment="Right" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding UploadRateText}" Foreground="#00E676" FontSize="12" TextAlignment="Right" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding TotalRateText}" Foreground="#8888FF" FontWeight="Bold" FontSize="12" TextAlignment="Right" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="4" Text="{Binding Percentage, StringFormat='\{0:F1\}%'}" Foreground="#CCCCEE" FontSize="12" TextAlignment="Right" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
                 <!-- ══ Chart Area ══ -->
                 <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
                     <StackPanel Spacing="14">

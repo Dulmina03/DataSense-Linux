@@ -142,19 +142,25 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
 
     // Live monitoring: network name of the currently active connection
     private string? _activeNetworkName;
+    private readonly ILiveMonitoringEngine _liveMonitoringEngine;
+
+    [ObservableProperty] private bool _showLiveApplications = false;
+    public ObservableCollection<LiveApplicationTrafficViewModel> LiveApplications { get; } = new();
 
     public NetworkAnalyticsViewModel(
         IAnalyticsService analyticsService,
         INetworkMonitorWorker monitorWorker,
         INetworkIntelligenceService networkIntelligenceService,
         IProcessNetworkIntelligenceService processNetworkIntelligenceService,
-        IApplicationNetworkCorrelationService correlationService)
+        IApplicationNetworkCorrelationService correlationService,
+        ILiveMonitoringEngine liveMonitoringEngine)
     {
         _analyticsService = analyticsService ?? throw new ArgumentNullException(nameof(analyticsService));
         _monitorWorker    = monitorWorker    ?? throw new ArgumentNullException(nameof(monitorWorker));
         _networkIntelligenceService = networkIntelligenceService ?? throw new ArgumentNullException(nameof(networkIntelligenceService));
         _processNetworkIntelligenceService = processNetworkIntelligenceService ?? throw new ArgumentNullException(nameof(processNetworkIntelligenceService));
         _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
+        _liveMonitoringEngine = liveMonitoringEngine ?? throw new ArgumentNullException(nameof(liveMonitoringEngine));
 
         _monitorWorker.NetworkUsageUpdated += OnNetworkUsageUpdated;
     }
@@ -585,6 +591,8 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
             if (string.IsNullOrEmpty(usage.InterfaceName) || usage.InterfaceName == "None")
             {
                 IsCurrentlyConnected = false;
+                ShowLiveApplications = false;
+                LiveApplications.Clear();
                 return;
             }
 
@@ -593,6 +601,34 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
             {
                 LiveDownloadSpeed = ByteFormatter.FormatSpeed(usage.DownloadSpeed);
                 LiveUploadSpeed   = ByteFormatter.FormatSpeed(usage.UploadSpeed);
+
+                var liveApps = _liveMonitoringEngine.GetLiveApplications()
+                    .Where(a => a.IsActive && !string.IsNullOrEmpty(SelectedNetwork) && a.NetworkName.Equals(SelectedNetwork, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                double totalSpeed = liveApps.Sum(a => a.TotalBytesPerSecond);
+                
+                LiveApplications.Clear();
+                foreach (var app in liveApps.OrderByDescending(a => a.TotalBytesPerSecond))
+                {
+                    double pct = totalSpeed > 0 ? (app.TotalBytesPerSecond / totalSpeed) * 100.0 : 0.0;
+                    LiveApplications.Add(new LiveApplicationTrafficViewModel
+                    {
+                        ProcessName = app.ProcessName,
+                        Pid = app.Pid,
+                        StartTimeTicks = app.StartTime.Ticks,
+                        DownloadRateText = ByteFormatter.FormatSpeed(app.DownloadBytesPerSecond),
+                        UploadRateText = ByteFormatter.FormatSpeed(app.UploadBytesPerSecond),
+                        TotalRateText = ByteFormatter.FormatSpeed(app.TotalBytesPerSecond),
+                        Percentage = Math.Clamp(pct, 0.0, 100.0)
+                    });
+                }
+                ShowLiveApplications = true;
+            }
+            else
+            {
+                ShowLiveApplications = false;
+                LiveApplications.Clear();
             }
         });
     }
@@ -705,4 +741,15 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
         if (ts.TotalDays < 1)   return $"{(int)ts.TotalHours}h {ts.Minutes}m";
         return $"{(int)ts.TotalDays}d {ts.Hours}h {ts.Minutes}m";
     }
+}
+
+public class LiveApplicationTrafficViewModel
+{
+    public string ProcessName { get; set; } = string.Empty;
+    public int Pid { get; set; }
+    public long StartTimeTicks { get; set; }
+    public string DownloadRateText { get; set; } = "—";
+    public string UploadRateText { get; set; } = "—";
+    public string TotalRateText { get; set; } = "—";
+    public double Percentage { get; set; }
 }

@@ -68,6 +68,10 @@ public partial class App : Application
             desktop.MainWindow = mainWindow;
 
             var trayViewModel = Services.GetRequiredService<TrayIconViewModel>();
+            
+            var speedMenuItem = new Avalonia.Controls.NativeMenuItem { Header = $"Speed: {trayViewModel.SpeedText}", IsEnabled = false };
+            var topProcessMenuItem = new Avalonia.Controls.NativeMenuItem { Header = trayViewModel.TopProcessText, IsEnabled = false };
+
             var trayIcon = new Avalonia.Controls.TrayIcon
             {
                 Command = trayViewModel.ShowAppCommand,
@@ -77,6 +81,9 @@ public partial class App : Application
                     Items =
                     {
                         new Avalonia.Controls.NativeMenuItem { Header = "⚡ Open DataSense", Command = trayViewModel.ShowAppCommand },
+                        new Avalonia.Controls.NativeMenuItemSeparator(),
+                        speedMenuItem,
+                        topProcessMenuItem,
                         new Avalonia.Controls.NativeMenuItemSeparator(),
                         new Avalonia.Controls.NativeMenuItem { Header = "📊 Dashboard", Command = new CommunityToolkit.Mvvm.Input.RelayCommand(() => trayViewModel.NavigateToCommand.Execute("Dashboard")) },
                         new Avalonia.Controls.NativeMenuItem { Header = "📈 Network Analytics", Command = new CommunityToolkit.Mvvm.Input.RelayCommand(() => trayViewModel.NavigateToCommand.Execute("Performance")) },
@@ -101,6 +108,14 @@ public partial class App : Application
                 else if (e.PropertyName == nameof(TrayIconViewModel.TrayIconImage))
                 {
                     trayIcon.Icon = trayViewModel.TrayIconImage;
+                }
+                else if (e.PropertyName == nameof(TrayIconViewModel.SpeedText))
+                {
+                    speedMenuItem.Header = $"Speed: {trayViewModel.SpeedText}";
+                }
+                else if (e.PropertyName == nameof(TrayIconViewModel.TopProcessText))
+                {
+                    topProcessMenuItem.Header = trayViewModel.TopProcessText;
                 }
             };
 

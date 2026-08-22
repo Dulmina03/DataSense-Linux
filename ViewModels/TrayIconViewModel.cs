@@ -24,6 +24,7 @@ public partial class TrayIconViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _tooltipText = "DataSense — Network Monitoring";
     [ObservableProperty] private WindowIcon? _trayIconImage;
     [ObservableProperty] private bool _isMonitoring = true;
+    [ObservableProperty] private string _topProcessText = "Top Consumer: —";
 
     public TrayIconViewModel(
         INetworkMonitorWorker networkMonitorWorker,
@@ -82,8 +83,17 @@ public partial class TrayIconViewModel : ViewModelBase, IDisposable
             var top = _liveMonitoringEngine.GetRankedProcesses(ProcessSortMode.HighestTotal, ProcessRankCount.Top5).FirstOrDefault();
             if (top != null && top.CombinedRateBytesPerSec > 1024)
             {
-                topProcStr = $"\nTop: {top.ProcessName} ({top.CombinedRateText})";
+                TopProcessText = $"Top Consumer: {top.ProcessName} ({top.CombinedRateText})";
+                topProcStr = $"\n{TopProcessText}";
             }
+            else
+            {
+                TopProcessText = "Top Consumer: —";
+            }
+        }
+        else
+        {
+            TopProcessText = "Top Consumer: —";
         }
 
         TooltipText = $"DataSense\nAdapter: {activeIface}\n{SpeedText}{topProcStr}{unreadStr}";

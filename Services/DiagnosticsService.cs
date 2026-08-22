@@ -254,14 +254,31 @@ public class DiagnosticsService : IDiagnosticsService
         // 8. Live Traffic Monitoring Engine Component
         int liveSamples = _liveMonitoringEngine?.SampleCount ?? 0;
         bool livePaused = _liveMonitoringEngine?.IsPaused ?? false;
+        
+        SubsystemState liveState = SubsystemState.Healthy;
+        string liveMsg = livePaused ? "Monitoring Paused by user" : $"Active ({liveSamples} live samples in-memory)";
+        string liveDetailedMsg = "Maintains bounded in-memory rolling traffic window without writing high-frequency samples to SQLite.";
+
+        if (_liveMonitoringEngine != null)
+        {
+            var diagInfo = _liveMonitoringEngine.GetDiagnosticsInfo();
+            liveState = livePaused ? SubsystemState.Degraded : (diagInfo.MonitorState.Contains("Error") ? SubsystemState.Error : SubsystemState.Healthy);
+            liveMsg = livePaused ? "Monitoring Paused by user" : $"Active ({diagInfo.ActiveProcessCount} active apps | Stream: {diagInfo.CurrentStreamStatus})";
+            liveDetailedMsg = $"Last live sample: {(diagInfo.LastLiveSampleTimestamp.HasValue ? diagInfo.LastLiveSampleTimestamp.Value.ToLocalTime().ToString("HH:mm:ss") : "Never")} | Monitor: {diagInfo.MonitorState} | Nethogs: {diagInfo.NethogsState} | Restarts: {diagInfo.RestartCount}";
+            if (!string.IsNullOrEmpty(diagInfo.LastProcessingError))
+            {
+                liveDetailedMsg += $" | Error: {diagInfo.LastProcessingError}";
+            }
+        }
+
         components.Add(new DiagnosticComponent
         {
             Name = "LiveTrafficMonitoring",
             DisplayName = "Live Network Traffic Intelligence",
             Category = "Real-Time Engine",
-            Status = livePaused ? SubsystemState.Degraded : SubsystemState.Healthy,
-            Message = livePaused ? "Monitoring Paused by user" : $"Active ({liveSamples} live samples in-memory)",
-            DetailedMessage = $"Maintains bounded in-memory rolling traffic window without writing high-frequency samples to SQLite.",
+            Status = liveState,
+            Message = liveMsg,
+            DetailedMessage = liveDetailedMsg,
             IsRequired = false,
             CanRecoverAutomatically = true,
             RecommendedAction = livePaused ? "Resume live monitoring from header or tray control." : "No action required."

@@ -60,6 +60,17 @@ public enum GraphWindowTime
     FiveMinutes = 300
 }
 
+public class LiveMonitoringDiagnosticsInfo
+{
+    public int ActiveProcessCount { get; set; }
+    public DateTime? LastLiveSampleTimestamp { get; set; }
+    public string MonitorState { get; set; } = "Unknown";
+    public string NethogsState { get; set; } = "Unknown";
+    public int RestartCount { get; set; }
+    public string CurrentStreamStatus { get; set; } = "Unknown";
+    public string LastProcessingError { get; set; } = string.Empty;
+}
+
 public interface ILiveMonitoringEngine
 {
     void AddSample(double downloadRateBytesPerSec, double uploadRateBytesPerSec);
@@ -76,4 +87,14 @@ public interface ILiveMonitoringEngine
     void Pause();
     void Resume();
     void Clear();
+
+    // Live Application Activity Methods
+    IReadOnlyList<LiveApplicationTraffic> GetLiveApplications();
+    LiveApplicationTraffic? GetLiveApplication(string processName, int pid, long startTimeTicks);
+    IReadOnlyList<LiveTrafficSample> GetProcessSparkline(string processIdentity);
+    LiveApplicationTraffic? GetTopConsumer();
+    double TotalLiveDownloadSpeed { get; }
+    double TotalLiveUploadSpeed { get; }
+    int ActiveApplicationCount { get; }
+    LiveMonitoringDiagnosticsInfo GetDiagnosticsInfo();
 }
