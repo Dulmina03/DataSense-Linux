@@ -15,6 +15,8 @@ public class ProcessNetworkMonitorWorker : IDisposable
     private readonly INetworkUsageRepository _repository;
     private readonly ISystemHealthRegistry? _healthRegistry;
     private readonly IEventService? _eventService;
+    private readonly ILinuxProcessResolver? _processResolver;
+    private readonly IApplicationAnalyticsService? _analyticsService;
     private CancellationTokenSource? _cts;
     private Task? _workerTask;
     private bool _isPaused;
@@ -26,6 +28,8 @@ public class ProcessNetworkMonitorWorker : IDisposable
     public int TrackedProcessCount => _activeProcesses.Count;
     public string MonitoringStatus { get; private set; } = "Not started";
     public string? LastError { get; private set; }
+    public int RestartAttempts { get; private set; }
+    public IProcessNetworkMonitor Monitor => _monitor;
 
     // Process state tracking with PID-reuse safety
     private readonly ConcurrentDictionary<string, ProcessState> _activeProcesses = new();
@@ -42,12 +46,16 @@ public class ProcessNetworkMonitorWorker : IDisposable
         IProcessNetworkMonitor monitor,
         INetworkUsageRepository repository,
         ISystemHealthRegistry? healthRegistry = null,
-        IEventService? eventService = null)
+        IEventService? eventService = null,
+        ILinuxProcessResolver? processResolver = null,
+        IApplicationAnalyticsService? analyticsService = null)
     {
         _monitor = monitor;
         _repository = repository;
         _healthRegistry = healthRegistry;
         _eventService = eventService;
+        _processResolver = processResolver;
+        _analyticsService = analyticsService;
 
         _healthRegistry?.RegisterSubsystem("ProcessMonitor");
     }
@@ -85,6 +93,7 @@ public class ProcessNetworkMonitorWorker : IDisposable
         _isPaused = false;
         MonitoringStatus = "Running";
         _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Healthy, "Monitoring resumed");
+        _ = _analyticsService?.InvalidateCacheAsync();
     }
 
     private async Task RunAsync(CancellationToken ct)
@@ -139,9 +148,9 @@ public class ProcessNetworkMonitorWorker : IDisposable
         MonitoringStatus = "Running";
         _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Healthy, "Monitoring active");
         DateTime lastFlush = DateTime.UtcNow;
-        int restartAttempts = 0;
+        RestartAttempts = 0;
 
-        while (!ct.IsCancellationRequested && restartAttempts < 5)
+        while (!ct.IsCancellationRequested && RestartAttempts < 5)
         {
             try
             {
@@ -155,7 +164,7 @@ public class ProcessNetworkMonitorWorker : IDisposable
                         continue;
                     }
 
-                    restartAttempts = 0; // Reset on successful batch
+                    RestartAttempts = 0; // Reset on successful batch
                     var currentTimestamp = DateTime.UtcNow;
                     var currentBatch = batch.ToList();
 
@@ -177,11 +186,11 @@ public class ProcessNetworkMonitorWorker : IDisposable
                 // nethogs exited normally — attempt restart
                 if (!ct.IsCancellationRequested)
                 {
-                    restartAttempts++;
-                    MonitoringStatus = $"Restarting ({restartAttempts}/5)";
-                    _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Degraded, $"nethogs exited, restart attempt {restartAttempts}/5");
+                    RestartAttempts++;
+                    MonitoringStatus = $"Restarting ({RestartAttempts}/5)";
+                    _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Degraded, $"nethogs exited, restart attempt {RestartAttempts}/5");
 
-                    if (restartAttempts == 1)
+                    if (RestartAttempts == 1)
                     {
                         PublishProcessMonitorEvent(DataSenseEventType.ProcessMonitorBackendRestarted,
                             "Process Monitor Backend Restarted",
@@ -189,7 +198,7 @@ public class ProcessNetworkMonitorWorker : IDisposable
                             EventSeverity.Warning);
                     }
 
-                    await Task.Delay(TimeSpan.FromSeconds(restartAttempts * 2), ct);
+                    await Task.Delay(TimeSpan.FromSeconds(RestartAttempts * 2), ct);
                 }
             }
             catch (OperationCanceledException)
@@ -198,14 +207,14 @@ public class ProcessNetworkMonitorWorker : IDisposable
             }
             catch (Exception ex)
             {
-                restartAttempts++;
+                RestartAttempts++;
                 LastError = ex.Message;
-                MonitoringStatus = $"Error (restart {restartAttempts}/5)";
+                MonitoringStatus = $"Error (restart {RestartAttempts}/5)";
                 _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Error, $"Error: {ex.Message}", ex);
 
                 if (!ct.IsCancellationRequested)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(restartAttempts * 2), ct);
+                    await Task.Delay(TimeSpan.FromSeconds(RestartAttempts * 2), ct);
                 }
             }
         }
@@ -213,7 +222,7 @@ public class ProcessNetworkMonitorWorker : IDisposable
         // Final flush on exit
         try { await FlushToDatabaseAsync(); } catch { }
 
-        if (restartAttempts >= 5)
+        if (RestartAttempts >= 5)
         {
             MonitoringStatus = "Failed — max restarts exceeded";
             _healthRegistry?.ReportHealth("ProcessMonitor", SubsystemState.Error, "Max restart attempts exceeded");
@@ -222,15 +231,23 @@ public class ProcessNetworkMonitorWorker : IDisposable
 
     private void IntegrateProcessUsage(List<ProcessNetworkUsage> currentBatch, DateTime currentTimestamp)
     {
-        // Mark all existing processes as potentially stale
         var seenKeys = new HashSet<string>();
 
         foreach (var usage in currentBatch)
         {
+            // Validate sample
+            if (usage.Pid < 0 || usage.DownloadRateBytesPerSec < 0 || usage.UploadRateBytesPerSec < 0 ||
+                usage.DownloadBytes < 0 || usage.UploadBytes < 0 ||
+                string.IsNullOrEmpty(usage.ProcessIdentifier) || usage.Timestamp == default || string.IsNullOrEmpty(usage.DataSource))
+            {
+                System.Diagnostics.Debug.WriteLine($"Rejected invalid process telemetry sample: PID={usage.Pid}, DL={usage.DownloadRateBytesPerSec}, UL={usage.UploadRateBytesPerSec}, Name={usage.ProcessIdentifier}, TS={usage.Timestamp}, Source={usage.DataSource}");
+                continue;
+            }
+
             // Use composite identity key to handle PID reuse
             string key = !string.IsNullOrEmpty(usage.ProcessIdentityKey)
                 ? usage.ProcessIdentityKey
-                : usage.ProcessIdentifier;
+                : $"{usage.ProcessIdentifier}_{usage.Pid}_0";
 
             seenKeys.Add(key);
 
@@ -239,25 +256,95 @@ public class ProcessNetworkMonitorWorker : IDisposable
                 state = new ProcessState
                 {
                     ProcessName = usage.ProcessIdentifier,
+                    Pid = usage.Pid,
+                    StartTimeTicks = GetStartTimeTicksFromKey(key),
+                    StartTime = GetStartTimeFromTicks(GetStartTimeTicksFromKey(key)),
                     ExecutablePath = usage.ExecutablePath,
                     UserName = usage.User,
                     LastUpdate = currentTimestamp,
-                    FirstSeen = currentTimestamp
+                    FirstSeen = currentTimestamp,
+                    LastSeen = currentTimestamp,
+                    Status = "New"
                 };
+
+                // Detect PID reuse
+                foreach (var oldKvp in _activeProcesses)
+                {
+                    if (oldKvp.Value.Pid == usage.Pid && oldKvp.Key != key && oldKvp.Value.Status != "Recycled" && oldKvp.Value.Status != "Exited")
+                    {
+                        oldKvp.Value.Status = "Recycled";
+                        oldKvp.Value.LastSeen = currentTimestamp;
+                        oldKvp.Value.LastUpdate = currentTimestamp;
+                        System.Diagnostics.Debug.WriteLine($"PID reuse detected: PID {usage.Pid} reassigned from {oldKvp.Value.ProcessName} to {usage.ProcessIdentifier}");
+                    }
+                }
+
                 _activeProcesses[key] = state;
+            }
+            else
+            {
+                if (state.Status == "New")
+                {
+                    state.Status = "Existing";
+                }
+                else if (state.Status == "Exited" || state.Status == "Recycled")
+                {
+                    state.Status = "Existing";
+                }
+                state.LastSeen = currentTimestamp;
             }
 
             double elapsedSeconds = (currentTimestamp - state.LastUpdate).TotalSeconds;
 
-            // Prevent giant jumps if the process was paused/slept or timestamp is stale
-            if (elapsedSeconds > 0 && elapsedSeconds < MaxElapsedSecondsPerSample)
+            // Protect against zero/negative elapsed intervals and duplicate samples
+            if (elapsedSeconds > 0 && currentTimestamp != state.LastUpdate)
             {
-                long dlDelta = (long)(usage.DownloadRateBytesPerSec * elapsedSeconds);
-                long ulDelta = (long)(usage.UploadRateBytesPerSec * elapsedSeconds);
+                long dlDelta = 0;
+                long ulDelta = 0;
 
-                // Clamp negative deltas to zero
-                state.UnflushedDownloaded += Math.Max(dlDelta, 0);
-                state.UnflushedUploaded += Math.Max(ulDelta, 0);
+                if (usage.DownloadBytes > 0 || usage.UploadBytes > 0)
+                {
+                    if (!state.HasLastCumulative)
+                    {
+                        state.LastCumulativeDownload = usage.DownloadBytes;
+                        state.LastCumulativeUpload = usage.UploadBytes;
+                        state.HasLastCumulative = true;
+                    }
+                    else
+                    {
+                        if (usage.DownloadBytes < state.LastCumulativeDownload || usage.UploadBytes < state.LastCumulativeUpload)
+                        {
+                            // Counter reset
+                            System.Diagnostics.Debug.WriteLine($"Counter reset detected for process {usage.ProcessIdentifier}: DL {state.LastCumulativeDownload}->{usage.DownloadBytes}, UL {state.LastCumulativeUpload}->{usage.UploadBytes}");
+                            state.LastCumulativeDownload = usage.DownloadBytes;
+                            state.LastCumulativeUpload = usage.UploadBytes;
+                        }
+                        else
+                        {
+                            dlDelta = usage.DownloadBytes - state.LastCumulativeDownload;
+                            ulDelta = usage.UploadBytes - state.LastCumulativeUpload;
+                            state.LastCumulativeDownload = usage.DownloadBytes;
+                            state.LastCumulativeUpload = usage.UploadBytes;
+                        }
+                    }
+                }
+                else
+                {
+                    // Fallback to instantaneous rates
+                    dlDelta = (long)(usage.DownloadRateBytesPerSec * elapsedSeconds);
+                    ulDelta = (long)(usage.UploadRateBytesPerSec * elapsedSeconds);
+                }
+
+                // Protect against negative deltas
+                dlDelta = Math.Max(dlDelta, 0);
+                ulDelta = Math.Max(ulDelta, 0);
+
+                // Prevent giant jumps if the sample was delayed
+                if (elapsedSeconds < MaxElapsedSecondsPerSample)
+                {
+                    state.UnflushedDownloaded += dlDelta;
+                    state.UnflushedUploaded += ulDelta;
+                }
             }
 
             state.LastUpdate = currentTimestamp;
@@ -269,15 +356,82 @@ public class ProcessNetworkMonitorWorker : IDisposable
                 state.UserName = usage.User;
         }
 
-        // Cleanup stale processes that haven't been seen
+        // Detect processes that exited (not in the current batch)
+        foreach (var kvp in _activeProcesses)
+        {
+            if (!seenKeys.Contains(kvp.Key) && kvp.Value.Status != "Exited" && kvp.Value.Status != "Recycled")
+            {
+                bool isRunning = false;
+                if (kvp.Value.Pid > 0)
+                {
+                    if (_processResolver != null)
+                    {
+                        var resolved = _processResolver.ResolveProcessIdentity(kvp.Value.Pid);
+                        if (resolved != null && resolved.StartTimeTicks == kvp.Value.StartTimeTicks)
+                        {
+                            isRunning = true;
+                        }
+                    }
+                }
+
+                if (!isRunning)
+                {
+                    kvp.Value.Status = "Exited";
+                    kvp.Value.LastSeen = currentTimestamp;
+                    System.Diagnostics.Debug.WriteLine($"Process exit detected: {kvp.Value.ProcessName} (PID={kvp.Value.Pid})");
+                }
+            }
+        }
+
+        // Cleanup stale processes
         var staleKeys = _activeProcesses
-            .Where(kvp => (currentTimestamp - kvp.Value.LastUpdate).TotalSeconds > StaleProcessTimeoutSeconds)
+            .Where(kvp => (currentTimestamp - kvp.Value.LastSeen).TotalSeconds > StaleProcessTimeoutSeconds)
             .Select(kvp => kvp.Key)
             .ToList();
 
         foreach (var staleKey in staleKeys)
         {
             _activeProcesses.TryRemove(staleKey, out _);
+        }
+    }
+
+    public IEnumerable<ProcessLifecycleInfo> GetTrackedProcesses()
+    {
+        return _activeProcesses.Values.Select(state => new ProcessLifecycleInfo
+        {
+            ProcessName = state.ProcessName,
+            Pid = state.Pid,
+            StartTimeTicks = state.StartTimeTicks,
+            StartTime = state.StartTime,
+            ExecutablePath = state.ExecutablePath,
+            UserName = state.UserName,
+            FirstSeen = state.FirstSeen,
+            LastSeen = state.LastSeen,
+            Status = state.Status,
+            IdentityKey = $"{state.ProcessName}_{state.Pid}_{state.StartTimeTicks}"
+        }).ToList();
+    }
+
+    private static long GetStartTimeTicksFromKey(string key)
+    {
+        var parts = key.Split('_');
+        if (parts.Length >= 3 && long.TryParse(parts[2], out long ticks))
+        {
+            return ticks;
+        }
+        return 0;
+    }
+
+    private static DateTime GetStartTimeFromTicks(long ticks)
+    {
+        if (ticks <= 0) return DateTime.MinValue;
+        try
+        {
+            return new DateTime(ticks, DateTimeKind.Utc);
+        }
+        catch
+        {
+            return DateTime.MinValue;
         }
     }
 
@@ -300,7 +454,9 @@ public class ProcessNetworkMonitorWorker : IDisposable
                     BytesUploaded = state.UnflushedUploaded,
                     ExecutablePath = state.ExecutablePath,
                     UserName = state.UserName,
-                    DataSource = "Nethogs"
+                    DataSource = "Nethogs",
+                    Pid = state.Pid,
+                    StartTimeTicks = state.StartTimeTicks
                 });
 
                 state.UnflushedDownloaded = 0;
@@ -313,6 +469,10 @@ public class ProcessNetworkMonitorWorker : IDisposable
             try
             {
                 await _repository.SaveProcessUsageBatchAsync(recordsToSave);
+                if (_analyticsService != null)
+                {
+                    await _analyticsService.InvalidateCacheAsync();
+                }
             }
             catch (Exception ex)
             {
@@ -346,11 +506,34 @@ public class ProcessNetworkMonitorWorker : IDisposable
     private class ProcessState
     {
         public string ProcessName { get; set; } = string.Empty;
+        public int Pid { get; set; }
+        public long StartTimeTicks { get; set; }
+        public DateTime StartTime { get; set; }
         public string ExecutablePath { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public DateTime LastUpdate { get; set; }
         public DateTime FirstSeen { get; set; }
+        public DateTime LastSeen { get; set; }
+        public string Status { get; set; } = "New";
         public long UnflushedDownloaded { get; set; }
         public long UnflushedUploaded { get; set; }
+
+        public long LastCumulativeDownload { get; set; }
+        public long LastCumulativeUpload { get; set; }
+        public bool HasLastCumulative { get; set; }
     }
+}
+
+public class ProcessLifecycleInfo
+{
+    public string ProcessName { get; set; } = string.Empty;
+    public int Pid { get; set; }
+    public long StartTimeTicks { get; set; }
+    public DateTime StartTime { get; set; }
+    public string ExecutablePath { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public DateTime FirstSeen { get; set; }
+    public DateTime LastSeen { get; set; }
+    public string Status { get; set; } = "New"; // "New", "Existing", "Exited", "Recycled"
+    public string IdentityKey { get; set; } = string.Empty;
 }

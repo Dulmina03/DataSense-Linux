@@ -23,6 +23,8 @@ public class NethogsProcessNetworkMonitor : IProcessNetworkMonitor
         _processResolver = processResolver;
     }
 
+    public string NethogsPath => _platformService?.GetExecutablePath("nethogs") ?? "nethogs";
+
     public async Task<bool> IsAvailableAsync()
     {
         try

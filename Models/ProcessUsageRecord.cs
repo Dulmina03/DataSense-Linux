@@ -25,4 +25,12 @@ public class ProcessUsageRecord
 
     /// <summary>Backend that produced this record (e.g., "Nethogs")</summary>
     public string DataSource { get; set; } = "Nethogs";
+
+    /// <summary>Percentage share of total top process usage</summary>
+    public double PercentageShare { get; set; }
+
+    public int Pid { get; set; }
+    public long StartTimeTicks { get; set; }
+    public DateTime? FirstSeen { get; set; }
+    public DateTime? LastSeen { get; set; }
 }

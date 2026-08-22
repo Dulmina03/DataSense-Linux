@@ -66,6 +66,10 @@ public interface INetworkUsageRepository
     /// <summary>Returns top N processes by usage within the given time range.</summary>
     Task<IEnumerable<ProcessUsageRecord>> GetTopProcessesAsync(DateTime start, DateTime end, int limit);
 
+    Task<IEnumerable<ProcessUsageRecord>> GetProcessUsageIdentitiesAsync(DateTime start, DateTime end);
+    Task<IEnumerable<HourlyUsageRecord>> GetProcessIdentityHourlyUsageAsync(string processName, int pid, long startTimeTicks, DateTime day);
+    Task<IEnumerable<DailyUsageRecord>> GetProcessIdentityDailyUsageAsync(string processName, int pid, long startTimeTicks, DateTime start, DateTime end);
+
     // Network Analytics
     Task<IEnumerable<string>> GetAvailableNetworksAsync();
     Task<NetworkAnalyticsSummary> GetNetworkSummaryAsync(string networkName, DateTime start, DateTime end);

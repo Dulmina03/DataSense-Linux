@@ -18,6 +18,16 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
     private readonly IAnalyticsService _analyticsService;
     private readonly INetworkMonitorWorker _monitorWorker;
     private readonly INetworkIntelligenceService _networkIntelligenceService;
+    private readonly IProcessNetworkIntelligenceService _processNetworkIntelligenceService;
+
+    // ── Application Usage & Behavior by Network ────────────────────────────────
+    public ObservableCollection<ProcessNetworkUsageSummary> NetworkProcessUsage { get; } = new();
+    public ObservableCollection<ProcessNetworkInsight> BehaviorInsights { get; } = new();
+    public ObservableCollection<ProcessNetworkAnomaly> ProcessAnomalies { get; } = new();
+
+    [ObservableProperty] private bool _isNetworkProcessUsageEmpty = true;
+    [ObservableProperty] private bool _isBehaviorInsightsEmpty = true;
+    [ObservableProperty] private bool _isProcessAnomaliesEmpty = true;
 
     // ── Network Selection ─────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<string> _availableNetworks = new();
@@ -126,11 +136,13 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
     public NetworkAnalyticsViewModel(
         IAnalyticsService analyticsService,
         INetworkMonitorWorker monitorWorker,
-        INetworkIntelligenceService networkIntelligenceService)
+        INetworkIntelligenceService networkIntelligenceService,
+        IProcessNetworkIntelligenceService processNetworkIntelligenceService)
     {
         _analyticsService = analyticsService ?? throw new ArgumentNullException(nameof(analyticsService));
         _monitorWorker    = monitorWorker    ?? throw new ArgumentNullException(nameof(monitorWorker));
         _networkIntelligenceService = networkIntelligenceService ?? throw new ArgumentNullException(nameof(networkIntelligenceService));
+        _processNetworkIntelligenceService = processNetworkIntelligenceService ?? throw new ArgumentNullException(nameof(processNetworkIntelligenceService));
 
         _monitorWorker.NetworkUsageUpdated += OnNetworkUsageUpdated;
     }
@@ -220,17 +232,28 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
             // Sessions
             var sessionsTask = _analyticsService.GetNetworkSessionsAsync(network, SelectedPeriod);
 
+            // Process-network intelligence queries
+            var networkProcessUsageTask = _processNetworkIntelligenceService.GetNetworkProcessUsageAsync(network);
+            var behaviorInsightsTask = _processNetworkIntelligenceService.GetNetworkSpecificBehaviorInsightsAsync();
+            var anomaliesTask = _processNetworkIntelligenceService.GetProcessNetworkAnomaliesAsync();
+
             await Task.WhenAll(
                 summaryTask,
                 performanceTask,
                 (Task)(dailyTask ?? (Task)Task.CompletedTask),
                 (Task)(hourlyTask ?? (Task)Task.CompletedTask),
-                (Task)sessionsTask
+                (Task)sessionsTask,
+                networkProcessUsageTask,
+                behaviorInsightsTask,
+                anomaliesTask
             );
 
             var summary     = summaryTask.Result;
             var performance = performanceTask.Result;
             var sessions    = sessionsTask.Result.ToList();
+            var processUsageList = networkProcessUsageTask.Result.ToList();
+            var allInsights      = behaviorInsightsTask.Result.ToList();
+            var allAnomalies     = anomaliesTask.Result.ToList();
 
             // Build chart items off-thread
             List<DailyChartBarViewModel>?  dailyChartItems  = null;
@@ -312,6 +335,27 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
                 {
                     HasPerformanceData = false;
                 }
+
+                // Process network usage list
+                NetworkProcessUsage.Clear();
+                foreach (var pu in processUsageList) NetworkProcessUsage.Add(pu);
+                IsNetworkProcessUsageEmpty = NetworkProcessUsage.Count == 0;
+
+                // Behavior Insights
+                BehaviorInsights.Clear();
+                foreach (var ins in allInsights.Where(x => x.NetworkName.Equals(network, StringComparison.OrdinalIgnoreCase) || x.NetworkName.Equals("All Networks", StringComparison.OrdinalIgnoreCase)))
+                {
+                    BehaviorInsights.Add(ins);
+                }
+                IsBehaviorInsightsEmpty = BehaviorInsights.Count == 0;
+
+                // Anomalies
+                ProcessAnomalies.Clear();
+                foreach (var anom in allAnomalies.Where(x => x.NetworkName.Equals(network, StringComparison.OrdinalIgnoreCase)))
+                {
+                    ProcessAnomalies.Add(anom);
+                }
+                IsProcessAnomaliesEmpty = ProcessAnomalies.Count == 0;
 
                 if (showLoading) IsLoading = false;
             });

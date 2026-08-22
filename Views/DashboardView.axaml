@@ -1068,6 +1068,18 @@
                                 <TextBlock Text="👑" FontSize="14"/>
                                 <TextBlock Text="Top Data Consumers" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
                             </StackPanel>
+
+                            <!-- Download/Upload Heavy stats -->
+                            <Grid ColumnDefinitions="*,*" Margin="0,0,0,4" IsVisible="{Binding HasTopProcesses}">
+                                <StackPanel Grid.Column="0" Spacing="2">
+                                    <TextBlock Text="Download-Heavy" Foreground="#888899" FontSize="10"/>
+                                    <TextBlock Text="{Binding DownloadHeavyProcessText}" Foreground="#00D2FF" FontSize="11" FontWeight="Bold"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <TextBlock Text="Upload-Heavy" Foreground="#888899" FontSize="10"/>
+                                    <TextBlock Text="{Binding UploadHeavyProcessText}" Foreground="#00E676" FontSize="11" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Grid>
                             
                             <ItemsControl ItemsSource="{Binding TopProcesses}">
                                 <ItemsControl.ItemTemplate>
@@ -1075,8 +1087,12 @@
                                         <Border Background="#1A1A2E" CornerRadius="6" Padding="12" Margin="0,0,0,8">
                                             <Grid ColumnDefinitions="*,Auto,Auto">
                                                 <!-- Process Name -->
-                                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding ProcessName}" FontWeight="SemiBold" Foreground="#CCCCEE" VerticalAlignment="Center"/>
+                                                    <!-- Percentage Share Badge -->
+                                                    <Border Background="#21213D" CornerRadius="4" Padding="4,2">
+                                                        <TextBlock Text="{Binding PercentageShare, StringFormat='{}{0:F1}%'}" Foreground="#8888FF" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                    </Border>
                                                 </StackPanel>
                                                 
                                                 <!-- Total bytes -->
@@ -1105,7 +1121,7 @@
                             </ItemsControl>
                             
                             <!-- Empty State -->
-                            <TextBlock Text="No processes found for this period." 
+                            <TextBlock Text="{Binding TopProcessesBaselineText}" 
                                        Foreground="#555577" FontSize="13" 
                                        IsVisible="{Binding !TopProcesses.Count}" 
                                        HorizontalAlignment="Center" Margin="0,16"/>

@@ -175,6 +175,11 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     public ObservableCollection<ProcessNetworkUsage> LiveProcessTraffic { get; } = new();
     public ObservableCollection<ProcessUsageRecord> TopProcesses { get; } = new();
 
+    [ObservableProperty] private string _downloadHeavyProcessText = "—";
+    [ObservableProperty] private string _uploadHeavyProcessText = "—";
+    [ObservableProperty] private string _topProcessesBaselineText = "Collecting process usage baseline...";
+    [ObservableProperty] private bool _hasTopProcesses = false;
+
     // ── Forecast & Budget ────────────────────────────────────────────────────
 
     public ObservableCollection<ForecastChartPointViewModel> ForecastChartItems { get; } = new();
@@ -740,14 +745,49 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             });
 
             // Load Top Processes
-            var topProcesses = await _analyticsService.GetTopDataConsumersAsync(SelectedPeriod, 5);
+            var topProcessesList = (await _analyticsService.GetTopDataConsumersAsync(SelectedPeriod, 5)).ToList();
+            
+            long totalProcessBytes = topProcessesList.Sum(p => p.TotalBytes);
+            if (totalProcessBytes > 0)
+            {
+                foreach (var p in topProcessesList)
+                {
+                    p.PercentageShare = (double)p.TotalBytes / totalProcessBytes * 100.0;
+                }
+            }
+
+            var dlHeavy = topProcessesList.Count > 0 ? topProcessesList.MaxBy(p => p.BytesDownloaded) : null;
+            var ulHeavy = topProcessesList.Count > 0 ? topProcessesList.MaxBy(p => p.BytesUploaded) : null;
+
             Dispatcher.UIThread.Post(() =>
             {
                 TopProcesses.Clear();
-                foreach (var process in topProcesses)
+                foreach (var process in topProcessesList)
                 {
                     TopProcesses.Add(process);
                 }
+
+                HasTopProcesses = TopProcesses.Count > 0;
+                
+                if (dlHeavy != null && dlHeavy.BytesDownloaded > 0)
+                {
+                    DownloadHeavyProcessText = $"{dlHeavy.ProcessName} ({ByteFormatter.FormatBytes(dlHeavy.BytesDownloaded)})";
+                }
+                else
+                {
+                    DownloadHeavyProcessText = "—";
+                }
+
+                if (ulHeavy != null && ulHeavy.BytesUploaded > 0)
+                {
+                    UploadHeavyProcessText = $"{ulHeavy.ProcessName} ({ByteFormatter.FormatBytes(ulHeavy.BytesUploaded)})";
+                }
+                else
+                {
+                    UploadHeavyProcessText = "—";
+                }
+
+                TopProcessesBaselineText = HasTopProcesses ? "" : "Collecting process usage baseline...";
             });
         }
         catch (Exception ex)

@@ -79,7 +79,7 @@ public class DiagnosticsService : IDiagnosticsService
             RecommendedAction = netReport?.State == SubsystemState.Error ? "Check Linux kernel network interface permissions." : "No action required."
         });
 
-        // 3. Process Monitor Component (nethogs) — Phase 11.26 enhanced
+        // 3. Process Monitor Component (nethogs) — Phase 11.27 enhanced
         var procReport = reports.GetValueOrDefault("ProcessMonitor");
         string procMessage = procReport?.Message ?? "Operational";
         string procDetailedMessage = "Per-process network traffic monitoring via nethogs.";
@@ -87,37 +87,55 @@ public class DiagnosticsService : IDiagnosticsService
 
         if (_processMonitorWorker != null)
         {
+            var monitor = _processMonitorWorker.Monitor;
+            string nethogsPath = monitor.NethogsPath;
+            bool isAvailable = await monitor.IsAvailableAsync();
+            bool hasPermissions = await monitor.HasPermissionsAsync();
+            int activeCount = _processMonitorWorker.TrackedProcessCount;
+            int restarts = _processMonitorWorker.RestartAttempts;
+
             procMessage = $"{_processMonitorWorker.MonitoringStatus}";
-            if (_processMonitorWorker.TrackedProcessCount > 0)
+            if (activeCount > 0)
             {
-                procMessage += $" | Tracking {_processMonitorWorker.TrackedProcessCount} processes";
+                procMessage += $" | Tracking {activeCount} processes";
             }
+
+            procDetailedMessage = $"Executable: {nethogsPath} | Available: {isAvailable} | Permissions: {hasPermissions} | Restarts: {restarts}";
             if (_processMonitorWorker.LastSuccessfulSample.HasValue)
             {
-                procDetailedMessage = $"Backend: Linux nethogs | Last sample: {_processMonitorWorker.LastSuccessfulSample.Value:HH:mm:ss} UTC";
+                procDetailedMessage += $" | Last sample: {_processMonitorWorker.LastSuccessfulSample.Value:HH:mm:ss} UTC";
             }
             if (!string.IsNullOrEmpty(_processMonitorWorker.LastError))
             {
                 procDetailedMessage += $" | Last error: {_processMonitorWorker.LastError}";
             }
 
-            SubsystemState workerState = _processMonitorWorker.MonitoringStatus switch
+            SubsystemState workerState = SubsystemState.Healthy;
+            if (!isAvailable)
             {
-                "Running" => SubsystemState.Healthy,
-                "Paused" => SubsystemState.Healthy,
-                "Unavailable" => SubsystemState.Unavailable,
-                "Permission denied" => SubsystemState.Degraded,
-                _ when _processMonitorWorker.MonitoringStatus.Contains("Error") => SubsystemState.Error,
-                _ when _processMonitorWorker.MonitoringStatus.Contains("Restarting") => SubsystemState.Degraded,
-                _ => procReport?.State ?? SubsystemState.Healthy
-            };
-
-            if (workerState == SubsystemState.Unavailable)
+                workerState = SubsystemState.Unavailable;
                 procRecommendedAction = "Install nethogs: sudo apt install nethogs";
-            else if (workerState == SubsystemState.Degraded)
+            }
+            else if (!hasPermissions)
+            {
+                workerState = SubsystemState.Degraded;
                 procRecommendedAction = "Grant capabilities: sudo setcap cap_net_raw,cap_net_admin=eip $(which nethogs)";
-            else if (workerState == SubsystemState.Error)
+            }
+            else if (_processMonitorWorker.MonitoringStatus.Contains("Error"))
+            {
+                workerState = SubsystemState.Error;
                 procRecommendedAction = "Restart the application or check nethogs installation.";
+            }
+            else if (_processMonitorWorker.MonitoringStatus.Contains("Restarting"))
+            {
+                workerState = SubsystemState.Degraded;
+                procRecommendedAction = "The nethogs backend is restarting. Check syslog for details.";
+            }
+            else if (_processMonitorWorker.MonitoringStatus == "Paused")
+            {
+                workerState = SubsystemState.Healthy;
+                procRecommendedAction = "Resume monitoring to start capturing process usage.";
+            }
 
             components.Add(new DiagnosticComponent
             {
@@ -129,7 +147,8 @@ public class DiagnosticsService : IDiagnosticsService
                 DetailedMessage = procDetailedMessage,
                 IsRequired = false,
                 CanRecoverAutomatically = true,
-                RecommendedAction = procRecommendedAction
+                RecommendedAction = procRecommendedAction,
+                LastHealthyAt = workerState == SubsystemState.Healthy ? DateTime.UtcNow : (procReport != null && procReport.State == SubsystemState.Healthy ? procReport.LastStatusUpdate : null)
             });
         }
         else
@@ -146,7 +165,8 @@ public class DiagnosticsService : IDiagnosticsService
                 CanRecoverAutomatically = true,
                 RecommendedAction = procReport?.State != SubsystemState.Healthy
                     ? "Grant CAP_NET_RAW capabilities or run nethogs with sudo permissions."
-                    : "No action required."
+                    : "No action required.",
+                LastHealthyAt = procReport?.State == SubsystemState.Healthy ? procReport.LastStatusUpdate : null
             });
         }
 

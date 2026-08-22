@@ -258,6 +258,7 @@ public class ProcessNetworkMonitoringTests : IDisposable
 
         public Task<bool> IsAvailableAsync() => Task.FromResult(_available);
         public Task<bool> HasPermissionsAsync() => Task.FromResult(_permissions);
+        public string NethogsPath => "nethogs";
 
         public async IAsyncEnumerable<IEnumerable<ProcessNetworkUsage>> StartMonitoringAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
@@ -277,6 +278,276 @@ public class ProcessNetworkMonitoringTests : IDisposable
                 }
             };
             await Task.CompletedTask;
+        }
+    }
+
+    [Fact]
+    public async Task ProcessMonitorWorker_IntegrateProcessUsage_HandlesPidRecycling()
+    {
+        // Arrange
+        var mockMonitor = new CustomizableMockProcessNetworkMonitor();
+        using var worker = new ProcessNetworkMonitorWorker(mockMonitor, _repository);
+
+        var batch1 = new List<ProcessNetworkUsage>
+        {
+            new ProcessNetworkUsage
+            {
+                ProcessIdentifier = "chrome",
+                ExecutablePath = "/usr/bin/chrome",
+                Pid = 1234,
+                User = "dulmina",
+                DownloadRateBytesPerSec = 1000,
+                UploadRateBytesPerSec = 500,
+                Timestamp = DateTime.UtcNow,
+                DataSource = "Nethogs",
+                ProcessIdentityKey = "chrome_1234_1000"
+            }
+        };
+
+        var batch2 = new List<ProcessNetworkUsage>
+        {
+            new ProcessNetworkUsage
+            {
+                ProcessIdentifier = "firefox",
+                ExecutablePath = "/usr/bin/firefox",
+                Pid = 1234, // Reused PID
+                User = "dulmina",
+                DownloadRateBytesPerSec = 2000,
+                UploadRateBytesPerSec = 1000,
+                Timestamp = DateTime.UtcNow,
+                DataSource = "Nethogs",
+                ProcessIdentityKey = "firefox_1234_2000" // New StartTimeTicks
+            }
+        };
+
+        mockMonitor.Batches.Enqueue(batch1);
+        mockMonitor.Batches.Enqueue(batch2);
+
+        // Act
+        worker.Start();
+        await Task.Delay(150); // Let worker process the batches
+        worker.Stop();
+
+        // Assert
+        var tracked = worker.GetTrackedProcesses().ToList();
+        Assert.Equal(2, tracked.Count);
+
+        var oldProc = tracked.FirstOrDefault(p => p.ProcessName == "chrome");
+        var newProc = tracked.FirstOrDefault(p => p.ProcessName == "firefox");
+
+        Assert.NotNull(oldProc);
+        Assert.NotNull(newProc);
+        Assert.Equal("Recycled", oldProc!.Status);
+        Assert.Equal("New", newProc!.Status);
+    }
+
+    [Fact]
+    public async Task ProcessMonitorWorker_IntegrateProcessUsage_HandlesCounterResets()
+    {
+        // Arrange
+        var mockMonitor = new CustomizableMockProcessNetworkMonitor();
+        using var worker = new ProcessNetworkMonitorWorker(mockMonitor, _repository);
+
+        var batch1 = new List<ProcessNetworkUsage>
+        {
+            new ProcessNetworkUsage
+            {
+                ProcessIdentifier = "chrome",
+                Pid = 1234,
+                DownloadBytes = 5000,
+                UploadBytes = 2500,
+                Timestamp = DateTime.UtcNow,
+                DataSource = "Nethogs",
+                ProcessIdentityKey = "chrome_1234_1000"
+            }
+        };
+
+        // Next sample has lower cumulative bytes (counter reset)
+        var batch2 = new List<ProcessNetworkUsage>
+        {
+            new ProcessNetworkUsage
+            {
+                ProcessIdentifier = "chrome",
+                Pid = 1234,
+                DownloadBytes = 1000, // Reset!
+                UploadBytes = 500,    // Reset!
+                Timestamp = DateTime.UtcNow,
+                DataSource = "Nethogs",
+                ProcessIdentityKey = "chrome_1234_1000"
+            }
+        };
+
+        // Next sample has incremented bytes
+        var batch3 = new List<ProcessNetworkUsage>
+        {
+            new ProcessNetworkUsage
+            {
+                ProcessIdentifier = "chrome",
+                Pid = 1234,
+                DownloadBytes = 1500, // +500
+                UploadBytes = 800,    // +300
+                Timestamp = DateTime.UtcNow,
+                DataSource = "Nethogs",
+                ProcessIdentityKey = "chrome_1234_1000"
+            }
+        };
+
+        mockMonitor.Batches.Enqueue(batch1);
+        mockMonitor.Batches.Enqueue(batch2);
+        mockMonitor.Batches.Enqueue(batch3);
+
+        // Act
+        worker.Start();
+        await Task.Delay(200);
+        worker.Stop();
+
+        // Assert
+        var tracked = worker.GetTrackedProcesses().ToList();
+        Assert.Single(tracked);
+    }
+
+    [Fact]
+    public async Task ProcessMonitorWorker_IntegrateProcessUsage_HandlesVaryingTimeDeltas()
+    {
+        // Arrange
+        var mockMonitor = new CustomizableMockProcessNetworkMonitor();
+        using var worker = new ProcessNetworkMonitorWorker(mockMonitor, _repository);
+
+        var now = DateTime.UtcNow;
+
+        var batch1 = new List<ProcessNetworkUsage>
+        {
+            new ProcessNetworkUsage
+            {
+                ProcessIdentifier = "chrome",
+                Pid = 1234,
+                DownloadRateBytesPerSec = 1000,
+                UploadRateBytesPerSec = 500,
+                Timestamp = now,
+                DataSource = "Nethogs",
+                ProcessIdentityKey = "chrome_1234_1000"
+            }
+        };
+
+        // Duplicate or zero elapsed interval (timestamp doesn't change)
+        var batch2 = new List<ProcessNetworkUsage>
+        {
+            new ProcessNetworkUsage
+            {
+                ProcessIdentifier = "chrome",
+                Pid = 1234,
+                DownloadRateBytesPerSec = 1000,
+                UploadRateBytesPerSec = 500,
+                Timestamp = now,
+                DataSource = "Nethogs",
+                ProcessIdentityKey = "chrome_1234_1000"
+            }
+        };
+
+        // Negative elapsed interval (timestamp is in the past)
+        var batch3 = new List<ProcessNetworkUsage>
+        {
+            new ProcessNetworkUsage
+            {
+                ProcessIdentifier = "chrome",
+                Pid = 1234,
+                DownloadRateBytesPerSec = 1000,
+                UploadRateBytesPerSec = 500,
+                Timestamp = now.AddSeconds(-5),
+                DataSource = "Nethogs",
+                ProcessIdentityKey = "chrome_1234_1000"
+            }
+        };
+
+        mockMonitor.Batches.Enqueue(batch1);
+        mockMonitor.Batches.Enqueue(batch2);
+        mockMonitor.Batches.Enqueue(batch3);
+
+        // Act
+        worker.Start();
+        await Task.Delay(200);
+        worker.Stop();
+
+        // Assert
+        var tracked = worker.GetTrackedProcesses().ToList();
+        Assert.Single(tracked);
+    }
+
+    [Fact]
+    public async Task DiagnosticsService_ReportsCorrectStatus_WhenProcessMonitorUnavailable()
+    {
+        // Arrange
+        var mockMonitor = new CustomizableMockProcessNetworkMonitor { Available = false };
+        using var worker = new ProcessNetworkMonitorWorker(mockMonitor, _repository);
+        var healthRegistry = new SystemHealthRegistry();
+        
+        var diagnosticsService = new DiagnosticsService(
+            healthRegistry,
+            _repository,
+            null,
+            null,
+            worker);
+
+        // Act
+        worker.Start();
+        await Task.Delay(100);
+        var diagnostics = (await diagnosticsService.GetDiagnosticsAsync()).ToList();
+        worker.Stop();
+
+        // Assert
+        var procComp = diagnostics.FirstOrDefault(c => c.Name == "ProcessMonitor");
+        Assert.NotNull(procComp);
+        Assert.Equal(SubsystemState.Unavailable, procComp!.Status);
+        Assert.Contains("Install nethogs", procComp.RecommendedAction);
+    }
+
+    [Fact]
+    public async Task DiagnosticsService_ReportsCorrectStatus_WhenProcessMonitorPermissionDenied()
+    {
+        // Arrange
+        var mockMonitor = new CustomizableMockProcessNetworkMonitor { Available = true, Permissions = false };
+        using var worker = new ProcessNetworkMonitorWorker(mockMonitor, _repository);
+        var healthRegistry = new SystemHealthRegistry();
+        
+        var diagnosticsService = new DiagnosticsService(
+            healthRegistry,
+            _repository,
+            null,
+            null,
+            worker);
+
+        // Act
+        worker.Start();
+        await Task.Delay(100);
+        var diagnostics = (await diagnosticsService.GetDiagnosticsAsync()).ToList();
+        worker.Stop();
+
+        // Assert
+        var procComp = diagnostics.FirstOrDefault(c => c.Name == "ProcessMonitor");
+        Assert.NotNull(procComp);
+        Assert.Equal(SubsystemState.Degraded, procComp!.Status);
+        Assert.Contains("Grant capabilities", procComp.RecommendedAction);
+    }
+
+    private class CustomizableMockProcessNetworkMonitor : IProcessNetworkMonitor
+    {
+        public bool Available { get; set; } = true;
+        public bool Permissions { get; set; } = true;
+        public string NethogsPath => "nethogs";
+
+        public Queue<List<ProcessNetworkUsage>> Batches { get; } = new();
+
+        public Task<bool> IsAvailableAsync() => Task.FromResult(Available);
+        public Task<bool> HasPermissionsAsync() => Task.FromResult(Permissions);
+
+        public async IAsyncEnumerable<IEnumerable<ProcessNetworkUsage>> StartMonitoringAsync(
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            while (Batches.Count > 0 && !cancellationToken.IsCancellationRequested)
+            {
+                yield return Batches.Dequeue();
+                await Task.Delay(10);
+            }
         }
     }
 }

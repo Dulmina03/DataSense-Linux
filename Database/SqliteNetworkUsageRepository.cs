@@ -10,6 +10,7 @@ namespace DataSense.Database;
 public class SqliteNetworkUsageRepository : INetworkUsageRepository
 {
     private readonly string _connectionString;
+    public string ConnectionString => _connectionString;
 
     public SqliteNetworkUsageRepository()
     {
@@ -101,7 +102,12 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
                 Timestamp TEXT NOT NULL,
                 ProcessName TEXT NOT NULL,
                 BytesDownloaded INTEGER NOT NULL,
-                BytesUploaded INTEGER NOT NULL
+                BytesUploaded INTEGER NOT NULL,
+                ExecutablePath TEXT NOT NULL DEFAULT '',
+                UserName TEXT NOT NULL DEFAULT '',
+                DataSource TEXT NOT NULL DEFAULT 'Nethogs',
+                Pid INTEGER NOT NULL DEFAULT 0,
+                StartTimeTicks INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE INDEX IF NOT EXISTS IX_ProcessUsageRecords_Timestamp 
@@ -143,7 +149,9 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         {
             "ALTER TABLE ProcessUsageRecords ADD COLUMN ExecutablePath TEXT NOT NULL DEFAULT '';" ,
             "ALTER TABLE ProcessUsageRecords ADD COLUMN UserName TEXT NOT NULL DEFAULT '';" ,
-            "ALTER TABLE ProcessUsageRecords ADD COLUMN DataSource TEXT NOT NULL DEFAULT 'Nethogs';"
+            "ALTER TABLE ProcessUsageRecords ADD COLUMN DataSource TEXT NOT NULL DEFAULT 'Nethogs';" ,
+            "ALTER TABLE ProcessUsageRecords ADD COLUMN Pid INTEGER NOT NULL DEFAULT 0;" ,
+            "ALTER TABLE ProcessUsageRecords ADD COLUMN StartTimeTicks INTEGER NOT NULL DEFAULT 0;"
         };
         foreach (var migrationSql in processUsageMigrations)
         {
@@ -663,14 +671,31 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
     public async Task SaveProcessUsageAsync(ProcessUsageRecord record)
     {
+        if (record == null) return;
         if (string.IsNullOrEmpty(record.ProcessName)) return;
+
+        if (record.BytesDownloaded < 0 || record.BytesUploaded < 0)
+        {
+            System.Diagnostics.Debug.WriteLine($"Rejected invalid process usage record: Negative bytes (DL={record.BytesDownloaded}, UL={record.BytesUploaded}) for process {record.ProcessName}");
+            return;
+        }
+        if (record.Timestamp == default || record.Timestamp.Year < 2000)
+        {
+            System.Diagnostics.Debug.WriteLine($"Rejected invalid process usage record: Invalid timestamp {record.Timestamp} for process {record.ProcessName}");
+            return;
+        }
+        if (string.IsNullOrEmpty(record.DataSource))
+        {
+            System.Diagnostics.Debug.WriteLine($"Rejected invalid process usage record: Data source is empty for process {record.ProcessName}");
+            return;
+        }
 
         using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
         const string sql = @"
-            INSERT INTO ProcessUsageRecords (Timestamp, ProcessName, BytesDownloaded, BytesUploaded, ExecutablePath, UserName, DataSource)
-            VALUES (@Timestamp, @ProcessName, @BytesDownloaded, @BytesUploaded, @ExecutablePath, @UserName, @DataSource);
+            INSERT INTO ProcessUsageRecords (Timestamp, ProcessName, BytesDownloaded, BytesUploaded, ExecutablePath, UserName, DataSource, Pid, StartTimeTicks)
+            VALUES (@Timestamp, @ProcessName, @BytesDownloaded, @BytesUploaded, @ExecutablePath, @UserName, @DataSource, @Pid, @StartTimeTicks);
         ";
 
         using var command = connection.CreateCommand();
@@ -682,13 +707,37 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         command.Parameters.AddWithValue("@ExecutablePath", record.ExecutablePath ?? string.Empty);
         command.Parameters.AddWithValue("@UserName", record.UserName ?? string.Empty);
         command.Parameters.AddWithValue("@DataSource", record.DataSource ?? "Nethogs");
+        command.Parameters.AddWithValue("@Pid", record.Pid);
+        command.Parameters.AddWithValue("@StartTimeTicks", record.StartTimeTicks);
 
         await command.ExecuteNonQueryAsync();
     }
 
     public async Task SaveProcessUsageBatchAsync(IEnumerable<ProcessUsageRecord> records)
     {
-        var recordList = records.Where(r => !string.IsNullOrEmpty(r.ProcessName)).ToList();
+        var recordList = new List<ProcessUsageRecord>();
+        foreach (var record in records)
+        {
+            if (record == null) continue;
+            if (string.IsNullOrEmpty(record.ProcessName)) continue;
+            if (record.BytesDownloaded < 0 || record.BytesUploaded < 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"Rejected invalid process usage record: Negative bytes (DL={record.BytesDownloaded}, UL={record.BytesUploaded}) for process {record.ProcessName}");
+                continue;
+            }
+            if (record.Timestamp == default || record.Timestamp.Year < 2000)
+            {
+                System.Diagnostics.Debug.WriteLine($"Rejected invalid process usage record: Invalid timestamp {record.Timestamp} for process {record.ProcessName}");
+                continue;
+            }
+            if (string.IsNullOrEmpty(record.DataSource))
+            {
+                System.Diagnostics.Debug.WriteLine($"Rejected invalid process usage record: Data source is empty for process {record.ProcessName}");
+                continue;
+            }
+            recordList.Add(record);
+        }
+
         if (recordList.Count == 0) return;
 
         using var connection = new SqliteConnection(_connectionString);
@@ -696,8 +745,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         using var transaction = connection.BeginTransaction();
 
         const string sql = @"
-            INSERT INTO ProcessUsageRecords (Timestamp, ProcessName, BytesDownloaded, BytesUploaded, ExecutablePath, UserName, DataSource)
-            VALUES (@Timestamp, @ProcessName, @BytesDownloaded, @BytesUploaded, @ExecutablePath, @UserName, @DataSource);
+            INSERT INTO ProcessUsageRecords (Timestamp, ProcessName, BytesDownloaded, BytesUploaded, ExecutablePath, UserName, DataSource, Pid, StartTimeTicks)
+            VALUES (@Timestamp, @ProcessName, @BytesDownloaded, @BytesUploaded, @ExecutablePath, @UserName, @DataSource, @Pid, @StartTimeTicks);
         ";
 
         using var command = connection.CreateCommand();
@@ -711,6 +760,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         var pExecPath    = command.Parameters.Add("@ExecutablePath", SqliteType.Text);
         var pUserName    = command.Parameters.Add("@UserName", SqliteType.Text);
         var pDataSource  = command.Parameters.Add("@DataSource", SqliteType.Text);
+        var pPid         = command.Parameters.Add("@Pid", SqliteType.Integer);
+        var pStartTime   = command.Parameters.Add("@StartTimeTicks", SqliteType.Integer);
 
         foreach (var record in recordList)
         {
@@ -721,6 +772,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             pExecPath.Value    = record.ExecutablePath ?? string.Empty;
             pUserName.Value    = record.UserName ?? string.Empty;
             pDataSource.Value  = record.DataSource ?? "Nethogs";
+            pPid.Value         = record.Pid;
+            pStartTime.Value   = record.StartTimeTicks;
             await command.ExecuteNonQueryAsync();
         }
 
@@ -1122,5 +1175,135 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         cmd.Parameters.AddWithValue("@Key",   key);
         cmd.Parameters.AddWithValue("@Value", value);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<IEnumerable<ProcessUsageRecord>> GetProcessUsageIdentitiesAsync(DateTime start, DateTime end)
+    {
+        var results = new List<ProcessUsageRecord>();
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        const string sql = @"
+            SELECT
+                ProcessName,
+                Pid,
+                StartTimeTicks,
+                SUM(BytesDownloaded) AS DownloadBytes,
+                SUM(BytesUploaded) AS UploadBytes,
+                MAX(ExecutablePath) AS ExecutablePath,
+                MAX(UserName) AS UserName,
+                MAX(DataSource) AS DataSource,
+                MIN(Timestamp) AS FirstSeen,
+                MAX(Timestamp) AS LastSeen
+            FROM ProcessUsageRecords
+            WHERE Timestamp >= @Start AND Timestamp <= @End
+            GROUP BY ProcessName, Pid, StartTimeTicks;";
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
+        cmd.Parameters.AddWithValue("@End", end.ToString("o"));
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new ProcessUsageRecord
+            {
+                ProcessName = reader.GetString(0),
+                Pid = reader.GetInt32(1),
+                StartTimeTicks = reader.GetInt64(2),
+                BytesDownloaded = reader.GetInt64(3),
+                BytesUploaded = reader.GetInt64(4),
+                ExecutablePath = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                UserName = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                DataSource = reader.IsDBNull(7) ? "Nethogs" : reader.GetString(7),
+                FirstSeen = reader.IsDBNull(8) ? DateTime.UtcNow : DateTime.Parse(reader.GetString(8)),
+                LastSeen = reader.IsDBNull(9) ? DateTime.UtcNow : DateTime.Parse(reader.GetString(9)),
+                Timestamp = reader.IsDBNull(8) ? DateTime.UtcNow : DateTime.Parse(reader.GetString(8))
+            });
+        }
+        return results;
+    }
+
+    public async Task<IEnumerable<HourlyUsageRecord>> GetProcessIdentityHourlyUsageAsync(string processName, int pid, long startTimeTicks, DateTime day)
+    {
+        var results = new List<HourlyUsageRecord>();
+        var dayStart = day.Date.ToUniversalTime();
+        var dayEnd   = dayStart.AddDays(1).AddTicks(-1);
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT
+                CAST(strftime('%H', Timestamp) AS INTEGER) AS Hour,
+                SUM(BytesDownloaded) AS TotalDl,
+                SUM(BytesUploaded)   AS TotalUl
+            FROM ProcessUsageRecords
+            WHERE Timestamp >= @Start AND Timestamp <= @End 
+              AND ProcessName = @ProcessName 
+              AND Pid = @Pid 
+              AND StartTimeTicks = @StartTimeTicks
+            GROUP BY Hour ORDER BY Hour ASC;";
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Start", dayStart.ToString("o"));
+        cmd.Parameters.AddWithValue("@End", dayEnd.ToString("o"));
+        cmd.Parameters.AddWithValue("@ProcessName", processName);
+        cmd.Parameters.AddWithValue("@Pid", pid);
+        cmd.Parameters.AddWithValue("@StartTimeTicks", startTimeTicks);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new HourlyUsageRecord
+            {
+                Hour = reader.GetInt32(0),
+                BytesDownloaded = reader.GetInt64(1),
+                BytesUploaded = reader.GetInt64(2)
+            });
+        }
+        return results;
+    }
+
+    public async Task<IEnumerable<DailyUsageRecord>> GetProcessIdentityDailyUsageAsync(string processName, int pid, long startTimeTicks, DateTime start, DateTime end)
+    {
+        var results = new List<DailyUsageRecord>();
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT
+                date(Timestamp) AS Day,
+                SUM(BytesDownloaded) AS TotalDl,
+                SUM(BytesUploaded)   AS TotalUl
+            FROM ProcessUsageRecords
+            WHERE Timestamp >= @Start AND Timestamp <= @End 
+              AND ProcessName = @ProcessName 
+              AND Pid = @Pid 
+              AND StartTimeTicks = @StartTimeTicks
+            GROUP BY Day ORDER BY Day ASC;";
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
+        cmd.Parameters.AddWithValue("@End", end.ToString("o"));
+        cmd.Parameters.AddWithValue("@ProcessName", processName);
+        cmd.Parameters.AddWithValue("@Pid", pid);
+        cmd.Parameters.AddWithValue("@StartTimeTicks", startTimeTicks);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new DailyUsageRecord
+            {
+                Day = DateTime.Parse(reader.GetString(0)),
+                BytesDownloaded = reader.GetInt64(1),
+                BytesUploaded = reader.GetInt64(2)
+            });
+        }
+        return results;
     }
 }

@@ -28,4 +28,9 @@ public interface IProcessNetworkMonitor
     /// </summary>
     IAsyncEnumerable<IEnumerable<ProcessNetworkUsage>> StartMonitoringAsync(
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Gets the path to the executable being used.
+    /// </summary>
+    string NethogsPath { get; }
 }
