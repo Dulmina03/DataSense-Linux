@@ -20,8 +20,8 @@ public class ViewModelTests
         var connService = new MockNetworkConnectionService();
         var intelService = new NetworkIntelligenceService(analytics, connService);
         var procIntelService = new ProcessNetworkIntelligenceService(context.Repository, new Moq.Mock<ILinuxProcessResolver>().Object);
-
-        var vm = new NetworkAnalyticsViewModel(analytics, monitor, intelService, procIntelService);
+        var correlationService = new Moq.Mock<IApplicationNetworkCorrelationService>().Object;
+        var vm = new NetworkAnalyticsViewModel(analytics, monitor, intelService, procIntelService, correlationService);
 
         Assert.Equal(AnalyticsPeriod.Last7Days, vm.SelectedPeriod);
         Assert.False(vm.IsCurrentlyConnected);

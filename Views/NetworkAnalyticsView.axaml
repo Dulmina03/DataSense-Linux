@@ -333,104 +333,231 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ══ Application Usage by Network ══ -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                    <StackPanel Spacing="14">
-                        <TextBlock Text="Application Usage on Selected Network" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
-                        
-                        <TextBlock Text="No application usage telemetry recorded on this network." 
-                                   Foreground="#555577" FontSize="13" 
-                                   IsVisible="{Binding IsNetworkProcessUsageEmpty}" 
-                                   HorizontalAlignment="Center" Margin="0,16"/>
-                        
-                        <StackPanel IsVisible="{Binding !IsNetworkProcessUsageEmpty}" Spacing="4">
-                            <!-- Table Header -->
-                            <Border Background="#1A1A2E" CornerRadius="6" Padding="12,8">
-                                <Grid ColumnDefinitions="50,*,120,100,150">
-                                    <TextBlock Grid.Column="0" Text="Rank" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Column="1" Text="Process Name" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Column="2" Text="Total Usage" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Column="3" Text="Share" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Column="4" Text="Down / Up" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold"/>
-                                </Grid>
-                            </Border>
+                <!-- ══ Application Network Correlation Dashboard ══ -->
+                <Grid ColumnDefinitions="*,16,320" RowDefinitions="Auto,Auto">
+                    <!-- Left Side: Interactive Process Breakdown Table -->
+                    <StackPanel Grid.Column="0" Grid.Row="0" Spacing="16">
+                        <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
+                            <StackPanel Spacing="14">
+                                <TextBlock Text="Application Network Attribution &amp; Breakdown" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                
+                                <!-- Attribution Statistics Banner -->
+                                <Border Background="#1A1A2E" BorderBrush="#2D2D44" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                                    <Grid ColumnDefinitions="*,*,*,*">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="Attributed Traffic" FontSize="11" Foreground="#888899"/>
+                                            <TextBlock Text="{Binding NetworkBreakdown.TotalAttributedTraffic, Converter={x:Static conv:ByteFormatConverter.Instance}}" FontSize="14" FontWeight="Bold" Foreground="#8888FF"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="2">
+                                            <TextBlock Text="Attribution Rate" FontSize="11" Foreground="#888899"/>
+                                            <TextBlock Text="{Binding NetworkBreakdown.AttributionPercentage, StringFormat='\{0:F1\}%'}" FontSize="14" FontWeight="Bold" Foreground="#00E676"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="2">
+                                            <TextBlock Text="Top Application" FontSize="11" Foreground="#888899"/>
+                                            <TextBlock Text="{Binding NetworkBreakdown.TopApplication}" FontSize="13" FontWeight="SemiBold" Foreground="#FFB300" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="3" Spacing="2">
+                                            <TextBlock Text="Download Heavy" FontSize="11" Foreground="#888899"/>
+                                            <TextBlock Text="{Binding NetworkBreakdown.DownloadHeavyApplication}" FontSize="13" FontWeight="SemiBold" Foreground="#00D2FF" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
 
-                            <ScrollViewer Height="200" VerticalScrollBarVisibility="Auto">
-                                <ItemsControl ItemsSource="{Binding NetworkProcessUsage}">
+                                <TextBlock Text="No application usage telemetry recorded on this network." 
+                                           Foreground="#555577" FontSize="13" 
+                                           IsVisible="{Binding !NetworkBreakdown.HasProfiles}" 
+                                           HorizontalAlignment="Center" Margin="0,16"/>
+                                
+                                <StackPanel IsVisible="{Binding NetworkBreakdown.HasProfiles}" Spacing="6">
+                                    <!-- Table Header -->
+                                    <Border Background="#1A1A2E" CornerRadius="6" Padding="12,8">
+                                        <Grid ColumnDefinitions="*,60,70,80,90,90,90,75,75,90">
+                                            <TextBlock Grid.Column="0" Text="Application" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold"/>
+                                            <TextBlock Grid.Column="1" Text="PID" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
+                                            <TextBlock Grid.Column="2" Text="User" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" Margin="8,0,0,0"/>
+                                            <TextBlock Grid.Column="3" Text="Source" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold"/>
+                                            <TextBlock Grid.Column="4" Text="Download" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
+                                            <TextBlock Grid.Column="5" Text="Upload" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
+                                            <TextBlock Grid.Column="6" Text="Total" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
+                                            <TextBlock Grid.Column="7" Text="Net Share" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
+                                            <TextBlock Grid.Column="8" Text="App Share" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
+                                            <TextBlock Grid.Column="9" Text="Action" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold" TextAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Table Body -->
+                                    <ScrollViewer Height="260" VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl ItemsSource="{Binding NetworkBreakdown.Profiles}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="#2D2D44" BorderThickness="0,0,0,1" Padding="12,8">
+                                                        <Grid ColumnDefinitions="*,60,70,80,90,90,90,75,75,90">
+                                                            <!-- App Name (Clickable) -->
+                                                            <Button Grid.Column="0" Content="{Binding ProcessName}" 
+                                                                    Command="{Binding $parent[UserControl].((vm:NetworkAnalyticsViewModel)DataContext).DrillToApplicationCommand}" 
+                                                                    CommandParameter="{Binding}"
+                                                                    Classes="link-button" Foreground="#ECEFF1" 
+                                                                    FontWeight="SemiBold" FontSize="12" 
+                                                                    HorizontalAlignment="Left" Padding="0" VerticalAlignment="Center"/>
+                                                            
+                                                            <TextBlock Grid.Column="1" Text="{Binding Pid}" Foreground="#AAAAAA" FontSize="11" TextAlignment="Right" VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="2" Text="{Binding Username}" Foreground="#AAAAAA" FontSize="11" Margin="8,0,0,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="3" Text="{Binding DataSource}" Foreground="#888899" FontSize="11" VerticalAlignment="Center"/>
+                                                            
+                                                            <TextBlock Grid.Column="4" Text="{Binding DownloadBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Foreground="#00D2FF" FontSize="11" TextAlignment="Right" VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="5" Text="{Binding UploadBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Foreground="#00E676" FontSize="11" TextAlignment="Right" VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="6" Text="{Binding TotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Foreground="#8888FF" FontWeight="Bold" FontSize="11" TextAlignment="Right" VerticalAlignment="Center"/>
+                                                            
+                                                            <TextBlock Grid.Column="7" Text="{Binding PercentageOfNetworkUsage, StringFormat='\{0:F1\}%'}" Foreground="#CCCCEE" FontSize="11" TextAlignment="Right" VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="8" Text="{Binding PercentageOfApplicationUsage, StringFormat='\{0:F1\}%'}" Foreground="#AAAAAA" FontSize="11" TextAlignment="Right" VerticalAlignment="Center"/>
+                                                            
+                                                            <!-- Drill Button -->
+                                                            <Button Grid.Column="9" Content="View Detail" 
+                                                                    Command="{Binding $parent[UserControl].((vm:NetworkAnalyticsViewModel)DataContext).DrillToApplicationCommand}" 
+                                                                    CommandParameter="{Binding}"
+                                                                    Background="#1E1E38" BorderBrush="#35356E" BorderThickness="1"
+                                                                    Foreground="#A8A8D8" FontSize="10" Padding="6,3" 
+                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Performance Correlation Profile -->
+                        <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="Network Speed &amp; Application Traffic Correlation" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                <ItemsControl ItemsSource="{Binding PerformanceCorrelations}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border BorderBrush="#2D2D44" BorderThickness="0,0,0,1" Padding="12,8">
-                                                <Grid ColumnDefinitions="50,*,120,100,150">
-                                                    <TextBlock Grid.Column="0" Text="{Binding Rank, StringFormat='#\{0\}'}" Foreground="#FFB300" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding ProcessName}" Foreground="#E0E0E0" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="2" Text="{Binding TotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Foreground="#8888FF" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="3" Text="{Binding PercentageOfTotal, StringFormat='\{0:F1\}%'}" Foreground="#CCCCEE" FontSize="12" VerticalAlignment="Center"/>
-                                                    <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                        <TextBlock Text="⬇" Foreground="#00D2FF" FontSize="10" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding DownloadBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Foreground="#00D2FF" FontSize="11" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="⬆" Foreground="#00E676" FontSize="10" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding UploadBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Foreground="#00E676" FontSize="11" VerticalAlignment="Center"/>
+                                            <Border Background="#1A1A2E" BorderBrush="#2D2D44" BorderThickness="1" CornerRadius="8" Padding="14,12">
+                                                <Grid ColumnDefinitions="*,*,*,*">
+                                                    <StackPanel Grid.Column="0" Spacing="2">
+                                                        <TextBlock Text="Avg Speed Test DL" FontSize="11" Foreground="#888899"/>
+                                                        <TextBlock Text="{Binding AvgDownloadSpeed, StringFormat='\{0:F1\} Mbps'}" FontSize="13" FontWeight="Bold" Foreground="#00D2FF"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" Spacing="2">
+                                                        <TextBlock Text="Avg Speed Test UL" FontSize="11" Foreground="#888899"/>
+                                                        <TextBlock Text="{Binding AvgUploadSpeed, StringFormat='\{0:F1\} Mbps'}" FontSize="13" FontWeight="Bold" Foreground="#00E676"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2" Spacing="2">
+                                                        <TextBlock Text="Avg Latency" FontSize="11" Foreground="#888899"/>
+                                                        <TextBlock Text="{Binding Latency, StringFormat='\{0:F0\} ms'}" FontSize="13" FontWeight="Bold" Foreground="#FFB300"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="3" Spacing="2">
+                                                        <TextBlock Text="Total App Volume" FontSize="11" Foreground="#888899"/>
+                                                        <TextBlock Text="{Binding ApplicationTrafficVolume, Converter={x:Static conv:ByteFormatConverter.Instance}}" FontSize="13" FontWeight="Bold" Foreground="#8888FF"/>
                                                     </StackPanel>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                            </ScrollViewer>
-                        </StackPanel>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                </Border>
 
-                <!-- ══ Network Application Behavior & Insights ══ -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                    <StackPanel Spacing="14">
-                        <TextBlock Text="Network Application Behavior &amp; Insights" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
-                        
-                        <TextBlock Text="Insufficient cross-network history to display behavioral insights." 
-                                   Foreground="#555577" FontSize="13" 
-                                   IsVisible="{Binding IsBehaviorInsightsEmpty}" 
-                                   HorizontalAlignment="Center" Margin="0,16"/>
-                        
-                        <!-- Insights List -->
-                        <ItemsControl ItemsSource="{Binding BehaviorInsights}" IsVisible="{Binding !IsBehaviorInsightsEmpty}" Margin="0,0,0,8">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="#1E1E2F" BorderBrush="#2D2D44" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
-                                        <Grid ColumnDefinitions="Auto,*">
-                                            <TextBlock Grid.Column="0" Text="💡" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Top"/>
-                                            <StackPanel Grid.Column="1" Spacing="4">
-                                                <TextBlock Text="{Binding Title}" Foreground="#00D2FF" FontWeight="Bold" FontSize="13"/>
-                                                <TextBlock Text="{Binding Description}" Foreground="#CCCCEE" FontSize="12" TextWrapping="Wrap"/>
-                                                <TextBlock Text="{Binding ActionableStep}" Foreground="#888899" FontSize="11" FontStyle="Italic"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                    <!-- Right Side: Intelligence, Budget, Hotspot, Anomalies -->
+                    <StackPanel Grid.Column="2" Grid.Row="0" Spacing="16">
+                        <!-- Hotspot & Mobile Data Intelligence -->
+                        <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16" IsVisible="{Binding HotspotIntelligence.IsHotspot}">
+                            <StackPanel Spacing="12">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="🚨" FontSize="16"/>
+                                    <TextBlock Text="Hotspot / Mobile Connection" FontSize="13" FontWeight="Bold" Foreground="#FFA726" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Text="This network has been detected as a mobile data hotspot connection. Background synchronization or large updates should be minimized." 
+                                           Foreground="#CCCCEE" FontSize="11" TextWrapping="Wrap"/>
+                                
+                                <TextBlock Text="Top Hotspot Data Consumers:" FontSize="11" FontWeight="Bold" Foreground="#E0E0E0" Margin="0,4,0,0"/>
+                                <ItemsControl ItemsSource="{Binding HotspotIntelligence.TopHotspotConsumers}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" Foreground="#FFA726" FontSize="11" Margin="12,0,0,4"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
-                        <!-- Anomalies Title -->
-                        <TextBlock Text="Unusual Process Network Activity" FontSize="13" FontWeight="Bold" Foreground="#FFA726" IsVisible="{Binding !IsProcessAnomaliesEmpty}"/>
-                        
-                        <!-- Anomalies List -->
-                        <ItemsControl ItemsSource="{Binding ProcessAnomalies}" IsVisible="{Binding !IsProcessAnomaliesEmpty}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="#2C1A1A" BorderBrush="#FF5252" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
-                                        <Grid ColumnDefinitions="Auto,*">
-                                            <TextBlock Grid.Column="0" Text="⚠️" FontSize="16" Margin="0,0,12,0" VerticalAlignment="Top"/>
-                                            <StackPanel Grid.Column="1" Spacing="4">
-                                                <TextBlock Text="{Binding ProcessName, StringFormat='Unusual traffic pattern: \{0\}'}" Foreground="#FF5252" FontWeight="Bold" FontSize="13"/>
-                                                <TextBlock Text="{Binding Description}" Foreground="#CCCCEE" FontSize="12" TextWrapping="Wrap"/>
-                                                <TextBlock Text="{Binding Timestamp, StringFormat='Detected: \{0:MMM d, HH:mm\}'}" Foreground="#888899" FontSize="11"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                <TextBlock Text="Concentration (Top 3 Apps Share):" FontSize="11" Foreground="#888899" Margin="0,4,0,0"/>
+                                <TextBlock Text="{Binding HotspotIntelligence.ConcentrationPercentage, StringFormat='\{0:F1\}% of total session'}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Budget Correlation Info -->
+                        <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16" IsVisible="{Binding BudgetCorrelation.HasOverageRisk}">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="Data Budget Correlation" FontSize="13" FontWeight="Bold" Foreground="#8888FF"/>
+                                <TextBlock Text="{Binding BudgetCorrelation.ProjectedApplicationContribution}" Foreground="#CCCCEE" FontSize="11" TextWrapping="Wrap"/>
+                                
+                                <TextBlock Text="Drivers of Overage Risk (>20% budget):" FontSize="11" FontWeight="Bold" Foreground="#E0E0E0" Margin="0,4,0,0"/>
+                                <ItemsControl ItemsSource="{Binding BudgetCorrelation.OveruseDrivers}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" Foreground="#FF5252" FontSize="11" Margin="12,0,0,4"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Network-Specific Behavioral Insights -->
+                        <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="Behavioral Correlation Insights" FontSize="13" FontWeight="Bold" Foreground="#E0E0E0"/>
+                                
+                                <TextBlock Text="Insufficient data to compute correlation insights." 
+                                           Foreground="#555577" FontSize="12" 
+                                           IsVisible="{Binding !NetworkInsights.Count}" 
+                                           HorizontalAlignment="Center" Margin="0,8"/>
+
+                                <ItemsControl ItemsSource="{Binding NetworkInsights}" IsVisible="{Binding NetworkInsights.Count}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#1A1A2E" BorderBrush="#2D2D44" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,6">
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <TextBlock Grid.Column="0" Text="💡" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Top"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding}" Foreground="#CCCCEE" FontSize="11" TextWrapping="Wrap"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Local Anomaly Spike Warnings -->
+                        <Border Background="#2C1A1A" BorderBrush="#FF5252" BorderThickness="1" CornerRadius="10" Padding="20,16" IsVisible="{Binding HasCorrelatedAnomalies}">
+                            <StackPanel Spacing="12">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="⚠️" FontSize="15" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Unusual Network Usage Spikes" FontSize="13" FontWeight="Bold" Foreground="#FF5252" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding CorrelatedAnomalies}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="#4C2D2D" BorderThickness="0,0,0,1" Padding="0,4,0,8" Margin="0,0,0,4">
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="{Binding ProcessName}" Foreground="#ECEFF1" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Text="{Binding Description}" Foreground="#CCCCEE" FontSize="11" TextWrapping="Wrap"/>
+                                                    <Button Content="Investigate Process" 
+                                                            Command="{Binding $parent[UserControl].((vm:NetworkAnalyticsViewModel)DataContext).DrillToApplicationCommand}" 
+                                                            CommandParameter="{Binding}"
+                                                            Background="#3F1F1F" BorderBrush="#FF5252" BorderThickness="1"
+                                                            Foreground="#FFA8A8" FontSize="10" Padding="8,4" HorizontalAlignment="Left" Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                </Border>
+                </Grid>
 
             </StackPanel>
         </StackPanel>

@@ -155,12 +155,15 @@ public partial class MainWindowViewModel : ViewModelBase
         SetCurrentPage(App.Services?.GetRequiredService<NetworkActivityTimelineViewModel>() ?? throw new InvalidOperationException("NetworkActivityTimelineViewModel resolution failed"));
     }
 
-    public void NavigateToApplicationAnalytics(string processName)
+    public void NavigateToApplicationAnalytics(string processName, int pid = 0, long startTimeTicks = 0)
     {
         if (App.Services != null)
         {
             var vm = App.Services.GetRequiredService<ApplicationAnalyticsViewModel>();
-            vm.Initialize(processName);
+            if (pid > 0 && startTimeTicks > 0)
+                vm.Initialize(processName, pid, startTimeTicks);
+            else
+                vm.Initialize(processName);
             SetCurrentPage(vm);
         }
     }

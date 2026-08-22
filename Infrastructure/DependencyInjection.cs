@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddSingleton<IHistoricalAnalyticsService, HistoricalAnalyticsService>();
         services.AddSingleton<IApplicationAnalyticsService, ApplicationAnalyticsService>();
         services.AddSingleton<IProcessNetworkIntelligenceService, ProcessNetworkIntelligenceService>();
+        services.AddSingleton<IApplicationNetworkCorrelationService, ApplicationNetworkCorrelationService>();
 
         // Monitoring Services
         services.AddSingleton<INetworkMonitorService, LinuxNetworkMonitorService>();

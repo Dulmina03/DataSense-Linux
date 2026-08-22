@@ -19,6 +19,7 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
     private readonly INetworkMonitorWorker _monitorWorker;
     private readonly INetworkIntelligenceService _networkIntelligenceService;
     private readonly IProcessNetworkIntelligenceService _processNetworkIntelligenceService;
+    private readonly IApplicationNetworkCorrelationService _correlationService;
 
     // ── Application Usage & Behavior by Network ────────────────────────────────
     public ObservableCollection<ProcessNetworkUsageSummary> NetworkProcessUsage { get; } = new();
@@ -130,6 +131,15 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
     [ObservableProperty] private bool _hasComparisonData;
     [ObservableProperty] private string _intelligenceStatusMessage = "";
 
+    // ── Application Network Correlation ──────────────────────────────────────────
+    [ObservableProperty] private NetworkApplicationBreakdown? _networkBreakdown;
+    [ObservableProperty] private HotspotIntelligenceInfo? _hotspotIntelligence;
+    [ObservableProperty] private BudgetCorrelationInfo? _budgetCorrelation;
+    [ObservableProperty] private ObservableCollection<NetworkPerformanceCorrelation> _performanceCorrelations = new();
+    [ObservableProperty] private ObservableCollection<string> _networkInsights = new();
+    [ObservableProperty] private ObservableCollection<ProcessNetworkAnomaly> _correlatedAnomalies = new();
+    [ObservableProperty] private bool _hasCorrelatedAnomalies = false;
+
     // Live monitoring: network name of the currently active connection
     private string? _activeNetworkName;
 
@@ -137,12 +147,14 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
         IAnalyticsService analyticsService,
         INetworkMonitorWorker monitorWorker,
         INetworkIntelligenceService networkIntelligenceService,
-        IProcessNetworkIntelligenceService processNetworkIntelligenceService)
+        IProcessNetworkIntelligenceService processNetworkIntelligenceService,
+        IApplicationNetworkCorrelationService correlationService)
     {
         _analyticsService = analyticsService ?? throw new ArgumentNullException(nameof(analyticsService));
         _monitorWorker    = monitorWorker    ?? throw new ArgumentNullException(nameof(monitorWorker));
         _networkIntelligenceService = networkIntelligenceService ?? throw new ArgumentNullException(nameof(networkIntelligenceService));
         _processNetworkIntelligenceService = processNetworkIntelligenceService ?? throw new ArgumentNullException(nameof(processNetworkIntelligenceService));
+        _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
 
         _monitorWorker.NetworkUsageUpdated += OnNetworkUsageUpdated;
     }
@@ -182,6 +194,21 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
     {
         var mainVm = App.Services?.GetService(typeof(MainWindowViewModel)) as MainWindowViewModel;
         mainVm?.NavigateToDashboardCommand.Execute(null);
+    }
+
+    [RelayCommand]
+    private void DrillToApplication(object? param)
+    {
+        if (param is ApplicationNetworkProfile profile)
+        {
+            var mainVm = App.Services?.GetService(typeof(MainWindowViewModel)) as MainWindowViewModel;
+            mainVm?.NavigateToApplicationAnalytics(profile.ProcessName, profile.Pid, profile.StartTimeTicks);
+        }
+        else if (param is string processName)
+        {
+            var mainVm = App.Services?.GetService(typeof(MainWindowViewModel)) as MainWindowViewModel;
+            mainVm?.NavigateToApplicationAnalytics(processName);
+        }
     }
 
     [RelayCommand]
@@ -237,6 +264,14 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
             var behaviorInsightsTask = _processNetworkIntelligenceService.GetNetworkSpecificBehaviorInsightsAsync();
             var anomaliesTask = _processNetworkIntelligenceService.GetProcessNetworkAnomaliesAsync();
 
+            // Correlation engine queries
+            var breakdownTask = _correlationService.GetNetworkApplicationBreakdownAsync(network, SelectedPeriod);
+            var hotspotTask = _correlationService.GetHotspotIntelligenceAsync(network);
+            var budgetTask = _correlationService.GetBudgetCorrelationAsync();
+            var perfCorrTask = _correlationService.GetPerformanceCorrelationAsync(network);
+            var insightsCorrTask = _correlationService.GetNetworkSpecificInsightsAsync(network);
+            var anomaliesCorrTask = _correlationService.GetNetworkSpecificAnomaliesAsync();
+
             await Task.WhenAll(
                 summaryTask,
                 performanceTask,
@@ -245,7 +280,13 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
                 (Task)sessionsTask,
                 networkProcessUsageTask,
                 behaviorInsightsTask,
-                anomaliesTask
+                anomaliesTask,
+                breakdownTask,
+                hotspotTask,
+                budgetTask,
+                perfCorrTask,
+                insightsCorrTask,
+                anomaliesCorrTask
             );
 
             var summary     = summaryTask.Result;
@@ -356,6 +397,31 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
                     ProcessAnomalies.Add(anom);
                 }
                 IsProcessAnomaliesEmpty = ProcessAnomalies.Count == 0;
+
+                // Correlation properties
+                NetworkBreakdown = breakdownTask.Result;
+                HotspotIntelligence = hotspotTask.Result;
+                BudgetCorrelation = budgetTask.Result;
+
+                PerformanceCorrelations.Clear();
+                foreach (var pc in perfCorrTask.Result)
+                {
+                    PerformanceCorrelations.Add(pc);
+                }
+
+                NetworkInsights.Clear();
+                foreach (var insight in insightsCorrTask.Result)
+                {
+                    NetworkInsights.Add(insight);
+                }
+
+                CorrelatedAnomalies.Clear();
+                var currentNetAnoms = anomaliesCorrTask.Result.Where(x => x.NetworkName.Equals(network, StringComparison.OrdinalIgnoreCase)).ToList();
+                foreach (var anom in currentNetAnoms)
+                {
+                    CorrelatedAnomalies.Add(anom);
+                }
+                HasCorrelatedAnomalies = CorrelatedAnomalies.Count > 0;
 
                 if (showLoading) IsLoading = false;
             });
