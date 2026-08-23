@@ -151,6 +151,10 @@ public partial class ApplicationAnalyticsService
         }
 
         var result = profiles.AsReadOnly();
+
+        // Enrich with surge detection using the prev7 window data fetched above
+        EnrichWithSurgeDetection(profiles, prev7Data, SubsystemState.Healthy);
+
         lock (_profileCacheLock)
         {
             _profileCache = new CacheEntry<IReadOnlyList<ApplicationHistoricalProfile>>(

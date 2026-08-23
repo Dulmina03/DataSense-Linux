@@ -90,4 +90,12 @@ public interface IApplicationAnalyticsService
     /// </summary>
     Task<IEnumerable<ApplicationHistoricalProfile>> GetTopApplicationsAsync(
         int limit = 10, bool byDownload = false, bool byUpload = false);
+
+    /// <summary>
+    /// Returns a standalone trend comparison (recent 7 days vs previous 7 days)
+    /// for one application identity. Never divides by zero; returns
+    /// TrendState = "Insufficient Data" when previous period has no records.
+    /// </summary>
+    Task<ApplicationTrendComparison> GetApplicationTrendAsync(
+        string processName, int pid, long startTimeTicks);
 }

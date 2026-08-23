@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DataSense.Services;
 
 namespace DataSense.Models;
 
@@ -261,4 +262,55 @@ public class ApplicationHistoricalProfile
 
     /// <summary>Combined bytes on the peak day.</summary>
     public long PeakDayBytes { get; set; }
+
+    // ── Surge Detection ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// True when recent7DayAverage > previous7DayAverage × 1.5
+    /// AND HasSufficientData is true AND previous period has real data.
+    /// Never set when previous period has no records.
+    /// </summary>
+    public bool IsUsageSurging { get; set; }
+
+    /// <summary>
+    /// ((recent7DayAverage - previous7DayAverage) / previous7DayAverage) × 100.
+    /// Null when previous period has no usable data (no division by zero).
+    /// </summary>
+    public double? SurgePercentage { get; set; }
+
+    // ── Health ────────────────────────────────────────────────────────────────
+
+    /// <summary>Health state of the analytics service at the time this profile was built.</summary>
+    public SubsystemState AnalyticsHealth { get; set; } = SubsystemState.Healthy;
+}
+
+/// <summary>
+/// Standalone trend comparison result for a single application identity.
+/// Returned by GetApplicationTrendAsync so callers do not need to parse the full profile.
+/// </summary>
+public class ApplicationTrendComparison
+{
+    public string ProcessName { get; set; } = string.Empty;
+    public int Pid { get; set; }
+    public long StartTimeTicks { get; set; }
+
+    /// <summary>Recent 7-day total bytes.</summary>
+    public long RecentPeriodBytes { get; set; }
+
+    /// <summary>Previous 7-day total bytes. 0 = no prior data.</summary>
+    public long PreviousPeriodBytes { get; set; }
+
+    /// <summary>
+    /// ((recent - previous) / previous) × 100.
+    /// Null when previous == 0 (never divides by zero).
+    /// </summary>
+    public double? PercentageChange { get; set; }
+
+    /// <summary>"Increasing", "Decreasing", "Stable", or "Insufficient Data".</summary>
+    public string TrendState { get; set; } = "Insufficient Data";
+
+    /// <summary>True when previous period has real data and calculation is valid.</summary>
+    public bool HasSufficientData { get; set; }
+
+    public AppTrendDirection TrendDirection { get; set; } = AppTrendDirection.InsufficientData;
 }
