@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddSingleton<IApplicationAnalyticsService, ApplicationAnalyticsService>();
         services.AddSingleton<IProcessNetworkIntelligenceService, ProcessNetworkIntelligenceService>();
         services.AddSingleton<IApplicationNetworkCorrelationService, ApplicationNetworkCorrelationService>();
+        services.AddSingleton<IApplicationSessionService, ApplicationSessionService>();
         services.AddSingleton<IUnifiedAnalyticsIntelligenceService, UnifiedAnalyticsIntelligenceService>();
 
         // Monitoring Services
