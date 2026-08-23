@@ -5,62 +5,54 @@
              x:Class="DataSense.Views.DiagnosticsView"
              x:DataType="vm:DiagnosticsViewModel">
 
-    <UserControl.Styles>
-        <Style Selector="Border.card">
-            <Setter Property="Background" Value="#181824"/>
-            <Setter Property="BorderBrush" Value="#2A2A3D"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="16"/>
-        </Style>
-    </UserControl.Styles>
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
-        <StackPanel Spacing="20" MaxWidth="1200">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
+        <StackPanel Spacing="{DynamicResource Spacing.XL}">
             <!-- Header Toolbar -->
-            <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Grid.Column="0" Spacing="4">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="🛠️ Diagnostics &amp; Troubleshooting Center" FontSize="20" FontWeight="Bold" Foreground="#FFFFFF"/>
-                        <Border Background="#1E1E32" CornerRadius="12" Padding="10,4" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding OverallStatusText}" Foreground="{Binding OverallStatusColor}" FontSize="12" FontWeight="Bold"/>
-                        </Border>
+            <Border Classes="CardElevated">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.SM}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="🛠️ Diagnostics &amp; Troubleshooting Center" Classes="PageTitle"/>
+                            <Border Classes="Badge">
+                                <TextBlock Text="{Binding OverallStatusText}" Foreground="{Binding OverallStatusColor}" Classes="Body" FontWeight="Bold"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Inspect component operational states, capability diagnostics, and recovery recommendations." Classes="BodySecondary"/>
                     </StackPanel>
-                    <TextBlock Text="Inspect component operational states, capability diagnostics, and recovery recommendations." FontSize="12" Foreground="#8888AA"/>
-                </StackPanel>
-                <Button Grid.Column="1" Content="🔄 Refresh Diagnostics" Command="{Binding RefreshDiagnosticsCommand}" Background="#222238" Foreground="#FFFFFF" Padding="12,8" CornerRadius="6" VerticalAlignment="Center"/>
-            </Grid>
+                    <Button Grid.Column="1" Content="🔄 Refresh Diagnostics" Command="{Binding RefreshDiagnosticsCommand}" Classes="Secondary" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
 
             <!-- Components List -->
             <ItemsControl ItemsSource="{Binding Components}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="models:DiagnosticComponent">
-                        <Border Classes="card" Margin="0,0,0,12">
+                        <Border Classes="Card" Margin="0,0,0,16">
                             <Grid RowDefinitions="Auto,Auto,Auto">
                                 <!-- Row 0: Name, Category, Status Badge -->
                                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding DisplayName}" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                        <Border Background="#2A2A40" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Category}" FontSize="10" Foreground="#AAAACC"/>
+                                        <TextBlock Text="{Binding DisplayName}" Classes="SectionTitle"/>
+                                        <Border Classes="Badge">
+                                            <TextBlock Text="{Binding Category}" />
                                         </Border>
                                     </StackPanel>
-                                    <Border Grid.Column="1" Background="#222234" CornerRadius="6" Padding="10,4">
-                                        <TextBlock Text="{Binding Status}" Foreground="#00E676" FontSize="12" FontWeight="Bold"/>
+                                    <Border Grid.Column="1" Classes="Badge">
+                                        <TextBlock Text="{Binding Status}" Foreground="{DynamicResource Brush.Success}" Classes="Body" FontWeight="Bold"/>
                                     </Border>
                                 </Grid>
 
                                 <!-- Row 1: Message & Details -->
-                                <StackPanel Grid.Row="1" Spacing="4">
-                                    <TextBlock Text="{Binding Message}" Foreground="#E0E0E0" FontSize="13" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding DetailedMessage}" Foreground="#8888AA" FontSize="11" TextWrapping="Wrap"/>
+                                <StackPanel Grid.Row="1" Spacing="4" Margin="0,12">
+                                    <TextBlock Text="{Binding Message}" Classes="Body" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding DetailedMessage}" Classes="Caption" TextWrapping="Wrap"/>
                                 </StackPanel>
 
                                 <!-- Row 2: Recommended Action Banner -->
-                                <Border Grid.Row="2" Background="#12121E" CornerRadius="6" Padding="12,8" Margin="0,4,0,0">
+                                <Border Grid.Row="2" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="12,8">
                                     <Grid ColumnDefinitions="Auto,*">
-                                        <TextBlock Grid.Column="0" Text="💡 Recommended Action:" Foreground="#FF9800" FontSize="11" FontWeight="Bold" Margin="0,0,8,0"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding RecommendedAction}" Foreground="#CCCCCC" FontSize="11" TextWrapping="Wrap"/>
+                                        <TextBlock Grid.Column="0" Text="💡 Recommended Action:" Foreground="{DynamicResource Brush.Warning}" Classes="Caption" FontWeight="Bold" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding RecommendedAction}" Classes="Caption" TextWrapping="Wrap"/>
                                     </Grid>
                                 </Border>
                             </Grid>

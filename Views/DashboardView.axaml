@@ -1,778 +1,149 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DataSense.ViewModels"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:conv="using:DataSense.Converters"
-
-             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="900"
-             x:Class="DataSense.Views.DashboardView"
              xmlns:m="using:DataSense.Models"
+             xmlns:conv="using:DataSense.Converters"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
-             x:DataType="vm:DashboardViewModel">
-
-    <UserControl.Styles>
-        <Style Selector="Border.stat-card">
-            <Setter Property="Background"      Value="#1A1A2E"/>
-            <Setter Property="BorderBrush"     Value="#2D2D44"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius"    Value="10"/>
-            <Setter Property="Padding"         Value="14,12"/>
-            <Setter Property="MinWidth"        Value="110"/>
-        </Style>
-        <Style Selector="TextBlock.section-label">
-            <Setter Property="FontSize"   Value="11"/>
-            <Setter Property="Foreground" Value="#555577"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-        </Style>
-        <Style Selector="TextBlock.insight-label">
-            <Setter Property="FontSize"   Value="11"/>
-            <Setter Property="Foreground" Value="#444466"/>
-        </Style>
-        <Style Selector="TextBlock.insight-value">
-            <Setter Property="FontSize"   Value="15"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="#CCCCEE"/>
-        </Style>
-    </UserControl.Styles>
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="16" Margin="16">
-
-            <!-- ══ Top Status Banner ══ -->
-            <Border Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="20,14">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                        <TextBlock Text="Network Interface Telemetry" FontSize="17" FontWeight="Bold" Foreground="#FFFFFF"/>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="Active Adapter:" Foreground="#888899" FontSize="13"/>
-                            <TextBlock Text="{Binding ActiveInterface}" Foreground="#00D2FF" FontWeight="SemiBold" FontSize="13"/>
-                        </StackPanel>
-                    </StackPanel>
-                    <!-- Download speed inline -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="0,0,20,0" VerticalAlignment="Center">
-                        <TextBlock Text="⬇" Foreground="#00D2FF" FontSize="13" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding DownloadSpeedText}" Foreground="#00D2FF" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <!-- Upload speed inline -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" Margin="0,0,20,0" VerticalAlignment="Center">
-                        <TextBlock Text="⬆" Foreground="#00E676" FontSize="13" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding UploadSpeedText}" Foreground="#00E676" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <!-- Status badge -->
-                    <Border Grid.Column="3" Background="#1A1A28" BorderBrush="#2D2D44" BorderThickness="1" CornerRadius="20" Padding="14,6" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Ellipse Width="9" Height="9" Fill="{Binding StatusDotColor}" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding StatusText}" Foreground="#E0E0E0" FontWeight="SemiBold" FontSize="13"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
-
-            <!-- ══ Live Metric Cards ══ -->
-            <WrapPanel Margin="-6">
-                <!-- Network Info -->
-                <Border Margin="6" MinWidth="180" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
-                    <StackPanel Spacing="10">
-                        <TextBlock Text="{Binding NetworkTypeText}" FontSize="12" Foreground="#888899"/>
-                        <TextBlock Text="{Binding NetworkIdentityText}" FontSize="18" FontWeight="Bold" Foreground="#CCCCEE" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
-                </Border>
-                <!-- Download Speed -->
-                <Border Margin="6" MinWidth="180" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
-                    <StackPanel Spacing="10">
-                        <TextBlock Text="Download Speed" FontSize="12" Foreground="#888899"/>
-                        <TextBlock Text="{Binding DownloadSpeedText}" FontSize="18" FontWeight="Bold" Foreground="#00D2FF"/>
-                    </StackPanel>
-                </Border>
-                <!-- Upload Speed -->
-                <Border Margin="6" MinWidth="180" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
-                    <StackPanel Spacing="10">
-                        <TextBlock Text="Upload Speed" FontSize="12" Foreground="#888899"/>
-                        <TextBlock Text="{Binding UploadSpeedText}" FontSize="18" FontWeight="Bold" Foreground="#00E676"/>
-                    </StackPanel>
-                </Border>
-                <!-- Total Downloaded -->
-                <Border Margin="6" MinWidth="180" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
-                    <StackPanel Spacing="10">
-                        <TextBlock Text="Total Downloaded" FontSize="12" Foreground="#888899"/>
-                        <TextBlock Text="{Binding TotalDownloadedText}" FontSize="18" FontWeight="Bold" Foreground="#AB47BC"/>
-                    </StackPanel>
-                </Border>
-                <!-- Total Uploaded -->
-                <Border Margin="6" MinWidth="180" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
-                    <StackPanel Spacing="10">
-                        <TextBlock Text="Total Uploaded" FontSize="12" Foreground="#888899"/>
-                        <TextBlock Text="{Binding TotalUploadedText}" FontSize="18" FontWeight="Bold" Foreground="#FF9800"/>
-                    </StackPanel>
-                </Border>
-            </WrapPanel>
-
-            <!-- ══ Current Session Card ══ -->
-            <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                <StackPanel Spacing="14">
+             x:DataType="vm:DashboardViewModel"
+             x:Class="DataSense.Views.DashboardView">
+             
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
+        <StackPanel Spacing="{DynamicResource Spacing.XL}">
+            
+            <!-- LEVEL 1: HERO & TODAY -->
+            <Grid ColumnDefinitions="*,300">
+                <!-- Live Network Hero -->
+                <Border Grid.Column="0" Classes="CardElevated" Margin="0,0,16,0">
                     <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <TextBlock Text="⏱️" FontSize="14"/>
-                            <TextBlock Text="Current Network Session" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
-                        </StackPanel>
-                        <Button Grid.Column="1" Content="View Session Timeline ➔" Classes="link-button" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center" Command="{Binding OpenTimelineCommand}"/>
-                    </Grid>
-
-                    <Border Background="#0D0D18" CornerRadius="6" Padding="20" IsVisible="{Binding !HasCurrentSession}">
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                            <TextBlock Text="🔌" FontSize="24" HorizontalAlignment="Center"/>
-                            <TextBlock Text="{Binding CurrentSessionNetwork}" Foreground="#7777AA" FontSize="13" HorizontalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-
-                    <WrapPanel Margin="-4" IsVisible="{Binding HasCurrentSession}">
-                        <Border Margin="4" MinWidth="130" Classes="stat-card">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="Network" Foreground="#888899" FontSize="10"/>
-                                <TextBlock Text="{Binding CurrentSessionNetwork}" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+                        <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.SM}" VerticalAlignment="Center">
+                            <TextBlock Text="Good afternoon" Classes="PageTitle" />
+                            <TextBlock Text="Here's your network activity at a glance." Classes="BodySecondary" />
+                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}" Margin="0,16,0,0">
+                                <Border Classes="Badge">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="8" Height="8" Fill="{Binding StatusDotColor}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Brush.TextPrimary}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Classes="Badge">
+                                    <TextBlock Text="{Binding NetworkIdentityText}" Foreground="{DynamicResource Brush.TextSecondary}" />
+                                </Border>
                             </StackPanel>
-                        </Border>
-                        <Border Margin="4" MinWidth="130" Classes="stat-card">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="Duration" Foreground="#888899" FontSize="10"/>
-                                <TextBlock Text="{Binding CurrentSessionDuration}" FontSize="16" FontWeight="Bold" Foreground="#E2E8F0"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Margin="4" MinWidth="130" Classes="stat-card">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="Download" Foreground="#888899" FontSize="10"/>
-                                <TextBlock Text="{Binding CurrentSessionDownload}" FontSize="16" FontWeight="Bold" Foreground="#38BDF8"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Margin="4" MinWidth="130" Classes="stat-card">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="Upload" Foreground="#888899" FontSize="10"/>
-                                <TextBlock Text="{Binding CurrentSessionUpload}" FontSize="16" FontWeight="Bold" Foreground="#C084FC"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Margin="4" MinWidth="130" Classes="stat-card" Background="#1A1A3A" BorderBrush="#3535AA">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="Total Usage" Foreground="#7777BB" FontSize="10"/>
-                                <TextBlock Text="{Binding CurrentSessionTotal}" FontSize="16" FontWeight="Bold" Foreground="#8888FF"/>
-                            </StackPanel>
-                        </Border>
-                    </WrapPanel>
-                </StackPanel>
-            </Border>
-
-            <!-- ══ Unified Intelligence ══ -->
-            <Border Background="#1A1A2E" BorderBrush="#3D3D5C" BorderThickness="1" CornerRadius="10" Padding="20">
-                <StackPanel Spacing="14">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <TextBlock Text="🧠" FontSize="14"/>
-                            <TextBlock Text="Unified Intelligence" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
                         </StackPanel>
-                        <Button Grid.Column="1" Content="View Details ➔" Classes="link-button" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center" Command="{Binding NavigateToUnifiedIntelligenceCommand}"/>
-                    </Grid>
-                    
-                    <Border Background="#232338" CornerRadius="8" Padding="16" IsVisible="{Binding HasUnifiedInsights}">
-                        <StackPanel Spacing="8">
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <Border Width="4" CornerRadius="2" Background="{Binding PrimaryUnifiedInsight.Severity, Converter={x:Static conv:UnifiedInsightSeverityColorConverter.Instance}}"/>
-                                <TextBlock Text="{Binding PrimaryUnifiedInsight.Title}" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.MD}" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="⬇" Foreground="{DynamicResource Brush.Download}" Classes="MetricSmall" />
+                                <TextBlock Text="{Binding DownloadSpeedText}" Foreground="{DynamicResource Brush.Download}" Classes="MetricLarge" />
                             </StackPanel>
-                            <TextBlock Text="{Binding PrimaryUnifiedInsight.Description}" FontSize="13" Foreground="#CCCCEE" TextWrapping="Wrap" Margin="16,0,0,0"/>
-                        </StackPanel>
-                    </Border>
-                    
-                    <Border Background="#232338" CornerRadius="8" Padding="16" IsVisible="{Binding !HasUnifiedInsights}">
-                        <StackPanel Spacing="8" HorizontalAlignment="Center">
-                            <TextBlock Text="ℹ️ Collecting baseline" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
-                            <TextBlock Text="More historical data is required before reliable cross-domain insights can be generated." FontSize="13" Foreground="#8888AA" TextWrapping="Wrap" HorizontalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Border>
-
-            <!-- ══ Connection Details Panel ══ -->
-            <Border Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="20">
-                <StackPanel Spacing="14">
-                    <Grid ColumnDefinitions="*,Auto,Auto">
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="⚙️" FontSize="14" VerticalAlignment="Center"/>
-                            <TextBlock Text="Network Connection Details" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <ProgressBar Grid.Column="1" IsIndeterminate="True" Height="4" Width="50" IsVisible="{Binding IsConnectionDetailsLoading}"/>
-                        <Button Grid.Column="2" Content="Analytics ➔" Classes="link-button" Foreground="#8888FF" FontSize="12" Margin="16,0,0,0" VerticalAlignment="Center" Command="{Binding NavigateToNetworkAnalyticsCommand}" CommandParameter="{Binding ConnectionName}"/>
-                    </Grid>
-                    <Grid ColumnDefinitions="*,24,*">
-                        <!-- Left column -->
-                        <StackPanel Grid.Column="0" Spacing="10">
-                            <Grid ColumnDefinitions="140,*">
-                                <TextBlock Grid.Column="0" Text="Interface:"       Foreground="#888899" FontSize="13"/>
-                                <TextBlock Grid.Column="1" Text="{Binding ActiveInterface}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="140,*">
-                                <TextBlock Grid.Column="0" Text="Connection Type:" Foreground="#888899" FontSize="13"/>
-                                <TextBlock Grid.Column="1" Text="{Binding ConnectionType}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="140,*">
-                                <TextBlock Grid.Column="0" Text="Profile Name:"   Foreground="#888899" FontSize="13"/>
-                                <TextBlock Grid.Column="1" Text="{Binding ConnectionName}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="140,*">
-                                <TextBlock Grid.Column="0" Text="Status State:"   Foreground="#888899" FontSize="13"/>
-                                <TextBlock Grid.Column="1" Text="{Binding ConnectionState}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="140,*">
-                                <TextBlock Grid.Column="0" Text="MAC Address:"    Foreground="#888899" FontSize="13"/>
-                                <TextBlock Grid.Column="1" Text="{Binding MacAddress}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="140,*" IsVisible="{Binding HasWifi}">
-                                <TextBlock Grid.Column="0" Text="Wi-Fi SSID:"     Foreground="#888899" FontSize="13"/>
-                                <TextBlock Grid.Column="1" Text="{Binding WifiSsid}" Foreground="#00D2FF" FontWeight="SemiBold" FontSize="13"/>
-                            </Grid>
-                        </StackPanel>
-                        <!-- Right column -->
-                        <StackPanel Grid.Column="2" Spacing="10">
-                            <Grid ColumnDefinitions="140,*">
-                                <TextBlock Grid.Column="0" Text="IPv4 Address:"   Foreground="#888899" FontSize="13"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Ipv4Address}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="140,*">
-                                <TextBlock Grid.Column="0" Text="IPv6 Address:"   Foreground="#888899" FontSize="13"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Ipv6Address}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="140,*">
-                                <TextBlock Grid.Column="0" Text="Default Gateway:" Foreground="#888899" FontSize="13"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Gateway}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="140,*">
-                                <TextBlock Grid.Column="0" Text="DNS Server(s):"  Foreground="#888899" FontSize="13"/>
-                                <TextBlock Grid.Column="1" Text="{Binding DnsServers}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="140,*">
-                                <TextBlock Grid.Column="0" Text="Link Speed:"     Foreground="#888899" FontSize="13"/>
-                                <TextBlock Grid.Column="1" Text="{Binding LinkSpeed}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="13"/>
-                            </Grid>
-                            <Grid ColumnDefinitions="140,*" IsVisible="{Binding HasWifi}">
-                                <TextBlock Grid.Column="0" Text="Signal Strength:" Foreground="#888899" FontSize="13"/>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="{Binding WifiSignalStrengthText}" Foreground="#00E676" FontWeight="SemiBold" FontSize="13"/>
-                                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding WifiSignalStrength}"
-                                                 Width="80" Height="8" Background="#262636" Foreground="#00E676"
-                                                 BorderThickness="0" CornerRadius="4" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Grid>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="⬆" Foreground="{DynamicResource Brush.Upload}" Classes="MetricSmall" />
+                                <TextBlock Text="{Binding UploadSpeedText}" Foreground="{DynamicResource Brush.Upload}" Classes="MetricLarge" />
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
-                </StackPanel>
-            </Border>
-
-            <!-- ══ Analytics Loading ══ -->
-            <Border IsVisible="{Binding IsAnalyticsLoading}"
-                    Background="#13131F" BorderBrush="#2D2D44" BorderThickness="1" CornerRadius="8" Padding="16,12">
-                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
-                    <ProgressBar IsIndeterminate="True" Width="120" Height="4"/>
-                    <TextBlock Text="Loading analytics…" Foreground="#7777AA" FontSize="13" VerticalAlignment="Center"/>
-                </StackPanel>
-            </Border>
-
-            <!-- ══ Analytics Error ══ -->
-            <Border IsVisible="{Binding AnalyticsError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                    Background="#1A0A0A" BorderBrush="#551111" BorderThickness="1" CornerRadius="8" Padding="14,10">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock Text="⚠️" FontSize="13"/>
-                    <TextBlock Text="{Binding AnalyticsError}" Foreground="#FF6666" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                </StackPanel>
-            </Border>
-
-            <!-- ══ Analytics Sections ══ -->
-            <StackPanel Spacing="16" IsVisible="{Binding !IsAnalyticsLoading}">
-
-                <!-- Section 1: Today & This Month -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                    <StackPanel Spacing="14">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="📊" FontSize="14"/>
-                                <TextBlock Text="Usage Summary" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <Grid ColumnDefinitions="*,16,*">
-                            <!-- TODAY column -->
-                            <StackPanel Grid.Column="0" Spacing="10">
-                                <TextBlock Text="TODAY" Classes="section-label"/>
-                                <Grid ColumnDefinitions="*,8,*,8,*">
-                                    <Border Grid.Column="0" Classes="stat-card">
-                                        <StackPanel Spacing="4">
-                                            <TextBlock Text="⬇  Downloaded" Foreground="#336688" FontSize="10"/>
-                                            <TextBlock Text="{Binding TodayDownloadedText}" FontSize="16" FontWeight="Bold" Foreground="#00D2FF"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Column="2" Classes="stat-card">
-                                        <StackPanel Spacing="4">
-                                            <TextBlock Text="⬆  Uploaded" Foreground="#226633" FontSize="10"/>
-                                            <TextBlock Text="{Binding TodayUploadedText}" FontSize="16" FontWeight="Bold" Foreground="#00E676"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Column="4" Classes="stat-card" Background="#1A1A3A" BorderBrush="#3535AA">
-                                        <StackPanel Spacing="4">
-                                            <TextBlock Text="∑  Total" Foreground="#7777BB" FontSize="10"/>
-                                            <TextBlock Text="{Binding TodayTotalText}" FontSize="16" FontWeight="Bold" Foreground="#8888FF"/>
-                                            <!-- Delta vs yesterday -->
-                                            <TextBlock Text="{Binding TodayVsYesterdayText}"
-                                                       FontSize="10" FontWeight="SemiBold"
-                                                       Foreground="{Binding TodayDeltaColor}"
-                                                       IsVisible="{Binding HasTodayDelta}"
-                                                       TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
-                                <!-- Yesterday reference -->
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="Yesterday:" Classes="insight-label"/>
-                                    <TextBlock Text="{Binding YesterdayTotalText}" FontSize="11" Foreground="#888899"/>
-                                </StackPanel>
-                            </StackPanel>
-
-                            <Rectangle Grid.Column="1" Width="1" Fill="#2D2D44" VerticalAlignment="Stretch"/>
-
-                            <!-- THIS MONTH column -->
-                            <StackPanel Grid.Column="2" Spacing="10">
-                                <TextBlock Text="THIS MONTH" Classes="section-label"/>
-                                <Grid ColumnDefinitions="*,8,*,8,*">
-                                    <Border Grid.Column="0" Classes="stat-card">
-                                        <StackPanel Spacing="4">
-                                            <TextBlock Text="⬇  Downloaded" Foreground="#336688" FontSize="10"/>
-                                            <TextBlock Text="{Binding MonthDownloadedText}" FontSize="16" FontWeight="Bold" Foreground="#00D2FF"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Column="2" Classes="stat-card">
-                                        <StackPanel Spacing="4">
-                                            <TextBlock Text="⬆  Uploaded" Foreground="#226633" FontSize="10"/>
-                                            <TextBlock Text="{Binding MonthUploadedText}" FontSize="16" FontWeight="Bold" Foreground="#00E676"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Column="4" Classes="stat-card" Background="#1A1A3A" BorderBrush="#3535AA">
-                                        <StackPanel Spacing="4">
-                                            <TextBlock Text="∑  Total" Foreground="#7777BB" FontSize="10"/>
-                                            <TextBlock Text="{Binding MonthTotalText}" FontSize="16" FontWeight="Bold" Foreground="#8888FF"/>
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
                 </Border>
 
-                <!-- Section: Data Budget Summary (Only visible when budget is enabled) -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16" IsVisible="{Binding HasBudget}">
-                    <StackPanel Spacing="14">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <TextBlock Text="🎯" FontSize="14"/>
-                                <TextBlock Text="Data Budget Tracking" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
+                <!-- Today's Primary Metrics -->
+                <Border Grid.Column="1" Classes="Card">
+                    <StackPanel Spacing="{DynamicResource Spacing.SM}">
+                        <TextBlock Text="Today's Usage" Classes="SectionTitle" />
+                        <Grid ColumnDefinitions="*,*">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Downloaded" Classes="Caption" />
+                                <TextBlock Text="{Binding TodayDownloadedText}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Download}" />
                             </StackPanel>
-                            <Border Grid.Column="1" Background="#1A1A28" BorderBrush="{Binding BudgetStatusColor}" BorderThickness="1" CornerRadius="14" Padding="12,4" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding BudgetStatusText}" Foreground="{Binding BudgetStatusColor}" FontWeight="Bold" FontSize="12"/>
-                            </Border>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="Uploaded" Classes="Caption" />
+                                <TextBlock Text="{Binding TodayUploadedText}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Upload}" />
+                            </StackPanel>
                         </Grid>
-
-                        <Grid ColumnDefinitions="*,12,*,12,*,12,*">
-                            <Border Grid.Column="0" Classes="stat-card">
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Used Allowance" Foreground="#888899" FontSize="10"/>
-                                    <TextBlock Text="{Binding BudgetUsedText}" FontSize="16" FontWeight="Bold" Foreground="#00D2FF"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Column="2" Classes="stat-card">
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Total Limit" Foreground="#888899" FontSize="10"/>
-                                    <TextBlock Text="{Binding BudgetLimitText}" FontSize="16" FontWeight="Bold" Foreground="#CCCCEE"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Column="4" Classes="stat-card">
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Remaining" Foreground="#888899" FontSize="10"/>
-                                    <TextBlock Text="{Binding BudgetRemainingText}" FontSize="16" FontWeight="Bold" Foreground="#00E676"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Column="6" Classes="stat-card">
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Percentage Used" Foreground="#888899" FontSize="10"/>
-                                    <TextBlock Text="{Binding BudgetUsedPctText}" FontSize="16" FontWeight="Bold" Foreground="#8888FF"/>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-
-                        <!-- Progress Bar -->
-                        <StackPanel Spacing="6">
-                            <ProgressBar Value="{Binding BudgetProgressValue}" Minimum="0" Maximum="100" Height="10" Background="#0D0D18" Foreground="{Binding BudgetStatusColor}" CornerRadius="5" BorderThickness="0"/>
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Grid.Column="0" Text="{Binding BudgetPaceText}" Foreground="#8888AA" FontSize="11"/>
-                                <TextBlock Grid.Column="1" Text="{Binding BudgetExhaustionText}" Foreground="#FFB300" FontWeight="SemiBold" FontSize="11"/>
-                            </Grid>
+                        <StackPanel Spacing="4" Margin="0,8,0,0">
+                            <TextBlock Text="Total" Classes="Caption" />
+                            <TextBlock Text="{Binding TodayTotalText}" Classes="Metric" Foreground="{DynamicResource Brush.Accent}" />
+                            <TextBlock Text="{Binding TodayVsYesterdayText}" Classes="Caption" IsVisible="{Binding HasTodayDelta}" />
                         </StackPanel>
-
-                        <!-- Daily Budget Section (if enabled) -->
-                        <Border IsVisible="{Binding HasDailyBudget}" Background="#1A1A2E" BorderBrush="#2D2D44" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,4,0,0">
-                            <Grid ColumnDefinitions="*,Auto,Auto">
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                    <TextBlock Text="📅" FontSize="12"/>
-                                    <TextBlock Text="Daily Limit Status:" Foreground="#888899" FontSize="12"/>
-                                    <TextBlock Text="{Binding DailyBudgetUsedText}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12"/>
-                                    <TextBlock Text="/" Foreground="#666688" FontSize="12"/>
-                                    <TextBlock Text="{Binding DailyBudgetLimitText}" Foreground="#888899" FontSize="12"/>
-                                </StackPanel>
-                                <TextBlock Grid.Column="2" Text="{Binding DailyBudgetStatusText}" Foreground="{Binding DailyBudgetStatusColor}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
-                            </Grid>
-                        </Border>
                     </StackPanel>
                 </Border>
+            </Grid>
 
-                <!-- Section: Data Usage Forecast -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                    <StackPanel Spacing="14">
+            <!-- LEVEL 2: TREND & CONSUMERS -->
+            <Grid ColumnDefinitions="*,400">
+                <!-- Usage Trend Chart -->
+                <Border Grid.Column="0" Classes="Card" Margin="0,0,16,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
                         <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <TextBlock Text="🔮" FontSize="14"/>
-                                <TextBlock Text="Usage Forecast &amp; Month-End Projection" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasForecast}">
-                                <TextBlock Text="Confidence:" Foreground="#888899" FontSize="11" VerticalAlignment="Center"/>
-                                <Border Background="#1A1A3A" BorderBrush="#3535AA" BorderThickness="1" CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding ForecastConfidenceText}" Foreground="#8888FF" FontWeight="Bold" FontSize="11"/>
-                                </Border>
+                            <TextBlock Grid.Column="0" Text="Usage Trend" Classes="SectionTitle" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <Button Content="Today" Command="{Binding SelectPeriodCommand}" CommandParameter="Today" Classes="Icon"/>
+                                <Button Content="7 Days" Command="{Binding SelectPeriodCommand}" CommandParameter="Last7Days" Classes="Icon"/>
+                                <Button Content="30 Days" Command="{Binding SelectPeriodCommand}" CommandParameter="Last30Days" Classes="Icon"/>
                             </StackPanel>
                         </Grid>
+                        
+                        <!-- Empty / Loading States -->
+                        <StackPanel Classes="EmptyState" IsVisible="{Binding IsChartEmpty}">
+                            <TextBlock Text="📈" Classes="EmptyStateIcon" />
+                            <TextBlock Text="No usage data available" Classes="EmptyStateTitle" />
+                        </StackPanel>
+                        <Border Classes="SkeletonBlock" Height="200" IsVisible="{Binding IsAnalyticsLoading}" />
 
-                        <!-- Insufficient Data State -->
-                        <Border IsVisible="{Binding !HasForecast}" Background="#0D0D18" CornerRadius="6" Padding="20">
-                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                                <TextBlock Text="📊" FontSize="32" HorizontalAlignment="Center"/>
-                                <TextBlock Text="{Binding ForecastInsufficientText}" Foreground="#7777AA" FontSize="13" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Active Forecast Layout -->
-                        <StackPanel IsVisible="{Binding HasForecast}" Spacing="14">
-                            <!-- Metrics Cards Grid -->
-                            <Grid ColumnDefinitions="*,12,*,12,*,12,*">
-                                <Border Grid.Column="0" Classes="stat-card">
-                                    <StackPanel Spacing="4">
-                                        <TextBlock Text="Current Usage" Foreground="#888899" FontSize="10"/>
-                                        <TextBlock Text="{Binding ForecastCurrentText}" FontSize="16" FontWeight="Bold" Foreground="#00D2FF"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Grid.Column="2" Classes="stat-card" Background="#1A1A3A" BorderBrush="#7C4DFF">
-                                    <StackPanel Spacing="4">
-                                        <TextBlock Text="Projected Month-End" Foreground="#B388FF" FontSize="10"/>
-                                        <TextBlock Text="{Binding ForecastProjectedText}" FontSize="16" FontWeight="Bold" Foreground="#7C4DFF"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Grid.Column="4" Classes="stat-card">
-                                    <StackPanel Spacing="4">
-                                        <TextBlock Text="Forecast Range (1.5σ)" Foreground="#888899" FontSize="10"/>
-                                        <TextBlock Text="{Binding ForecastRangeText}" FontSize="13" FontWeight="Bold" Foreground="#CCCCEE"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Grid.Column="6" Classes="stat-card">
-                                    <StackPanel Spacing="4">
-                                        <TextBlock Text="Avg Daily Pace" Foreground="#888899" FontSize="10"/>
-                                        <TextBlock Text="{Binding ForecastAvgDailyText}" FontSize="16" FontWeight="Bold" Foreground="#00E676"/>
-                                    </StackPanel>
-                                </Border>
-                            </Grid>
-
-                            <!-- Legend -->
-                            <StackPanel Orientation="Horizontal" Spacing="20" HorizontalAlignment="Left">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Rectangle Width="12" Height="12" Fill="#00D2FF" RadiusX="2" RadiusY="2" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Actual Historical Usage" Foreground="#888899" FontSize="11" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Rectangle Width="12" Height="12" Fill="#7C4DFF" Opacity="0.8" RadiusX="2" RadiusY="2" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Projected Usage" Foreground="#888899" FontSize="11" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Rectangle Width="2" Height="12" Fill="#FFD700" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Today" Foreground="#FFD700" FontSize="11" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </StackPanel>
-
-                            <!-- Combined Forecast Chart Canvas -->
-                            <StackPanel Spacing="0">
-                                <Grid Height="160" SizeChanged="ChartContainer_SizeChanged">
-                                    <Canvas>
-                                        <Line StartPoint="0,0"   EndPoint="2000,0"   Stroke="#1E1E30" StrokeThickness="1" Opacity="0.6"/>
-                                        <Line StartPoint="0,40"  EndPoint="2000,40"  Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
-                                        <Line StartPoint="0,80"  EndPoint="2000,80"  Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
-                                        <Line StartPoint="0,120" EndPoint="2000,120" Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
-                                        <Line StartPoint="0,160" EndPoint="2000,160" Stroke="#1E1E30" StrokeThickness="1" Opacity="0.6"/>
-                                    </Canvas>
-                                    <ItemsControl ItemsSource="{Binding ForecastChartItems}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <Canvas Height="160"/>
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="vm:ForecastChartPointViewModel">
-                                                <Canvas>
-                                                    <!-- Actual solid bar -->
-                                                    <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding ActualBarY}"
-                                                               Width="{Binding BarWidth}" Height="{Binding ActualBarHeight}"
-                                                               Fill="#00D2FF" Opacity="0.85" RadiusX="2" RadiusY="2"
-                                                               IsVisible="{Binding HasActual}"
-                                                               ToolTip.Tip="{Binding Tooltip}"/>
-                                                    <!-- Forecast translucent bar -->
-                                                    <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding ForecastBarY}"
-                                                               Width="{Binding BarWidth}" Height="{Binding ForecastBarHeight}"
-                                                               Fill="#7C4DFF" Opacity="0.75" RadiusX="2" RadiusY="2"
-                                                               IsVisible="{Binding HasForecast}"
-                                                               ToolTip.Tip="{Binding Tooltip}"/>
-                                                    <!-- Today marker line -->
-                                                    <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="0"
-                                                               Width="2" Height="160"
-                                                               Fill="#FFD700" Opacity="0.9"
-                                                               IsVisible="{Binding IsToday}"/>
-                                                </Canvas>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </Grid>
-                                <!-- Chart Labels -->
-                                <ItemsControl ItemsSource="{Binding ForecastChartItems}">
+                        <!-- Chart Canvas container matching previous implementation logic -->
+                        <StackPanel IsVisible="{Binding !IsChartEmpty}" Spacing="0">
+                            <Grid Height="160" SizeChanged="ChartContainer_SizeChanged">
+                                <Canvas>
+                                    <Line StartPoint="0,0"   EndPoint="2000,0"   Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.6"/>
+                                    <Line StartPoint="0,40"  EndPoint="2000,40"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.4"/>
+                                    <Line StartPoint="0,80"  EndPoint="2000,80"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.4"/>
+                                    <Line StartPoint="0,120" EndPoint="2000,120" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.4"/>
+                                    <Line StartPoint="0,160" EndPoint="2000,160" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.6"/>
+                                </Canvas>
+                                <ItemsControl ItemsSource="{Binding DailyChartItems}">
                                     <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <Canvas Height="28"/>
-                                        </ItemsPanelTemplate>
+                                        <ItemsPanelTemplate><Canvas Height="160"/></ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="vm:ForecastChartPointViewModel">
-                                            <TextBlock Canvas.Left="{Binding BarX}" Canvas.Top="4"
-                                                       Text="{Binding DayLabel}"
-                                                       FontSize="9" Foreground="#7777AA"
-                                                       Width="{Binding BarWidth}" TextAlignment="Center"/>
+                                        <DataTemplate DataType="vm:DailyChartBarViewModel">
+                                            <Canvas>
+                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}" Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}" Fill="{DynamicResource Brush.Upload}" Opacity="0.85" RadiusX="2" RadiusY="2" ToolTip.Tip="{Binding Tooltip}"/>
+                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}" Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}" Fill="{DynamicResource Brush.Download}" Opacity="0.85" ToolTip.Tip="{Binding Tooltip}"/>
+                                            </Canvas>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                            </StackPanel>
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding DailyChartItems}">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="28"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:DailyChartBarViewModel">
+                                        <TextBlock Canvas.Left="{Binding BarX}" Canvas.Top="4" Text="{Binding DayLabel}" Classes="Caption" Width="{Binding BarWidth}" TextAlignment="Center"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </StackPanel>
                 </Border>
-
-                <!-- Section: Usage Patterns & Anomaly Detection -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                    <StackPanel Spacing="14">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <TextBlock Text="⚡" FontSize="14"/>
-                                <TextBlock Text="Usage Patterns &amp; Anomaly Detection" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
-                            </StackPanel>
-                            <Border Grid.Column="1" Background="#1A1A28" BorderBrush="#3535AA" BorderThickness="1" CornerRadius="14" Padding="12,4" VerticalAlignment="Center" IsVisible="{Binding HasAnomalies}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Ellipse Width="8" Height="8" Fill="#FF9800" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Anomalies Flagged" Foreground="#FF9800" FontWeight="Bold" FontSize="11"/>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-
-                        <!-- Insufficient Pattern Data State -->
-                        <Border IsVisible="{Binding !HasSufficientPatternData}" Background="#0D0D18" CornerRadius="6" Padding="16">
-                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
-                                <TextBlock Text="📈" FontSize="24" HorizontalAlignment="Center"/>
-                                <TextBlock Text="Not enough historical data to identify a reliable usage pattern yet." Foreground="#7777AA" FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
-                                <TextBlock Text="DataSense is establishing your normal hourly and day-of-week baselines." Foreground="#555577" FontSize="11" HorizontalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Active Pattern Summary -->
-                        <StackPanel IsVisible="{Binding HasSufficientPatternData}" Spacing="12">
-                            <Grid ColumnDefinitions="*,12,*">
-                                <Border Grid.Column="0" Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="14,10">
-                                    <StackPanel Spacing="4">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="🕒" FontSize="12"/>
-                                            <TextBlock Text="Peak Usage Hours" Foreground="#8888AA" FontSize="11" FontWeight="SemiBold"/>
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding BusyHoursText}" Foreground="#CCCCEE" FontSize="12" FontWeight="Bold" TextWrapping="Wrap"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Grid.Column="2" Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="14,10">
-                                    <StackPanel Spacing="4">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="📅" FontSize="12"/>
-                                            <TextBlock Text="Weekly Pattern" Foreground="#8888AA" FontSize="11" FontWeight="SemiBold"/>
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding BusyDaysText}" Foreground="#CCCCEE" FontSize="12" FontWeight="Bold" TextWrapping="Wrap"/>
-                                    </StackPanel>
-                                </Border>
-                            </Grid>
-
-                            <!-- Anomalies List -->
-                            <StackPanel IsVisible="{Binding HasAnomalies}" Spacing="8">
-                                <TextBlock Text="Detected Statistical Anomalies:" Foreground="#FFB300" FontSize="12" FontWeight="Bold"/>
-                                <ItemsControl ItemsSource="{Binding DetectedAnomalies}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="m:UsageAnomaly">
-                                            <Border Background="#1A1524" BorderBrush="{Binding SeverityColor}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,2">
-                                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                                    <Border Grid.Column="0" Background="#261C33" CornerRadius="4" Padding="6,2" VerticalAlignment="Top" Margin="0,0,10,0">
-                                                        <TextBlock Text="{Binding SeverityLabel}" Foreground="{Binding SeverityColor}" FontSize="10" FontWeight="Bold"/>
-                                                    </Border>
-                                                    <StackPanel Grid.Column="1" Spacing="4">
-                                                        <TextBlock Text="{Binding Title}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12"/>
-                                                        <TextBlock Text="{Binding Description}" Foreground="#BBBBDD" FontSize="11" TextWrapping="Wrap"/>
-                                                    </StackPanel>
-                                                    <TextBlock Grid.Column="2" Text="{Binding Timestamp, StringFormat='{}{0:HH:mm}'}" Foreground="#666688" FontSize="10" VerticalAlignment="Top"/>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-
-                            <!-- Normal Pattern State when no anomalies flagged -->
-                            <Border IsVisible="{Binding !HasAnomalies}" Background="#0E1A16" BorderBrush="#1C382B" BorderThickness="1" CornerRadius="6" Padding="12,8">
-                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                    <TextBlock Text="✅" FontSize="12"/>
-                                    <TextBlock Text="All system activity, hourly traffic, and application behavior are within your normal statistical range." Foreground="#00E676" FontSize="11" FontWeight="SemiBold"/>
-                                </StackPanel>
-                            </Border>
+                
+                <!-- Top Consumers -->
+                <Border Grid.Column="1" Classes="Card">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                        <TextBlock Text="Top Data Consumers" Classes="SectionTitle" />
+                        
+                        <StackPanel Classes="EmptyState" IsVisible="{Binding !HasTopProcesses}">
+                            <TextBlock Text="📱" Classes="EmptyStateIcon" />
+                            <TextBlock Text="No application traffic available" Classes="EmptyStateTitle" />
                         </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Section: Application Intelligence & Smart Recommendations -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                    <StackPanel Spacing="14">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <TextBlock Text="💡" FontSize="14"/>
-                                <TextBlock Text="Application Intelligence &amp; Smart Recommendations" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <Grid ColumnDefinitions="*,16,*">
-                            <!-- Top Applications & Trend Share -->
-                            <Border Grid.Column="0" Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="16,14">
-                                <StackPanel Spacing="12">
-                                    <TextBlock Text="Top Application Consumers (Today)" Foreground="#8888AA" FontSize="11" FontWeight="SemiBold"/>
-                                    
-                                    <ItemsControl ItemsSource="{Binding TopAppProfiles}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="m:ApplicationUsageProfile">
-                                                <Grid ColumnDefinitions="110,*,90" Margin="0,4">
-                                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                        <TextBlock Text="📱" FontSize="12" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding DisplayName}" Foreground="#E0E0E0" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                                    </StackPanel>
-
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
-                                                        <ProgressBar Value="{Binding PercentageOfTotalUsage}" Maximum="100" Height="6" Background="#0D0D18" Foreground="#00D2FF"/>
-                                                    </StackPanel>
-
-                                                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding FormattedToday}" Foreground="#CCCCEE" FontSize="11" FontWeight="Bold"/>
-                                                        <TextBlock Text="{Binding FormattedTrend}" Foreground="{Binding TrendColor}" FontSize="10" FontWeight="Bold"/>
-                                                    </StackPanel>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Smart Recommendations List -->
-                            <Border Grid.Column="2" Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="16,14">
-                                <StackPanel Spacing="12">
-                                    <TextBlock Text="Actionable Recommendations" Foreground="#8888AA" FontSize="11" FontWeight="SemiBold"/>
-
-                                    <ItemsControl ItemsSource="{Binding AppRecommendations}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="m:ApplicationRecommendation">
-                                                <Border Background="#1A1828" BorderBrush="{Binding ImpactColor}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,3">
-                                                    <StackPanel Spacing="6">
-                                                        <Grid ColumnDefinitions="*,Auto">
-                                                            <TextBlock Grid.Column="0" Text="{Binding Title}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12"/>
-                                                            <Border Grid.Column="1" Background="#261C33" CornerRadius="4" Padding="6,2">
-                                                                <TextBlock Text="{Binding ImpactLabel}" Foreground="{Binding ImpactColor}" FontSize="10" FontWeight="Bold"/>
-                                                            </Border>
-                                                        </Grid>
-                                                        <TextBlock Text="{Binding Description}" Foreground="#BBBBDD" FontSize="11" TextWrapping="Wrap"/>
-                                                        <Border Background="#0D0D18" CornerRadius="4" Padding="8,6" Margin="0,2,0,0">
-                                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                <TextBlock Text="💡" FontSize="11"/>
-                                                                <TextBlock Text="{Binding ActionableStep}" Foreground="#00E676" FontSize="10" TextWrapping="Wrap"/>
-                                                            </StackPanel>
-                                                        </Border>
-                                                    </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <!-- Section: Unified Intelligence Center & DataSense Health -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                    <StackPanel Spacing="14">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <TextBlock Text="🧠" FontSize="14"/>
-                                <TextBlock Text="Unified Intelligence Center" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
-                            </StackPanel>
-                            <Border Grid.Column="1" Background="#1A1A28" BorderBrush="#3535AA" BorderThickness="1" CornerRadius="14" Padding="10,3" VerticalAlignment="Center">
-                                <TextBlock Text="Live Stream" Foreground="#00D2FF" FontSize="10" FontWeight="Bold"/>
-                            </Border>
-                        </Grid>
-
-                        <!-- System Health Observability Banner -->
-                        <Border Background="#161626" BorderBrush="#222238" BorderThickness="1" CornerRadius="8" Padding="14,10">
-                            <Grid ColumnDefinitions="Auto,*">
-                                <TextBlock Grid.Column="0" Text="{Binding SystemHealth.StatusBadgeIcon}" FontSize="20" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="DataSense Health Observatory:" Foreground="#8888AA" FontSize="11" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{Binding SystemHealth.StatusLabel}" Foreground="{Binding SystemHealth.StatusColor}" FontSize="11" FontWeight="Bold"/>
-                                    </StackPanel>
-                                    <TextBlock Text="{Binding SystemHealth.OperationalSummary}" Foreground="#BBBBDD" FontSize="11" TextWrapping="Wrap"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-
-                        <!-- Unified Stream Items -->
-                        <ItemsControl ItemsSource="{Binding UnifiedEvents}">
+                        
+                        <!-- List of consumers -->
+                        <ItemsControl ItemsSource="{Binding TopProcesses}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="m:IntelligenceEvent">
-                                    <Border Background="#161626" BorderBrush="{Binding PriorityColor}" BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,3">
-                                        <Grid ColumnDefinitions="Auto,*,Auto">
-                                            <Border Grid.Column="0" Background="#222238" CornerRadius="6" Width="36" Height="36" Margin="0,0,12,0" VerticalAlignment="Top">
-                                                <TextBlock Text="{Binding TypeIcon}" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-
-                                            <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
-                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <TextBlock Text="{Binding Title}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13"/>
-                                                    <Border Background="#261C33" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding PriorityLabel}" Foreground="{Binding PriorityColor}" FontSize="10" FontWeight="Bold"/>
-                                                    </Border>
-                                                </StackPanel>
-
-                                                <TextBlock Text="{Binding Description}" Foreground="#BBBBDD" FontSize="11" TextWrapping="Wrap"/>
-
-                                                <Border Background="#0D0D18" CornerRadius="4" Padding="8,5" Margin="0,2,0,0" IsVisible="{Binding ActionableStep, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <TextBlock Text="💡" FontSize="11"/>
-                                                        <TextBlock Text="{Binding ActionableStep}" Foreground="#00E676" FontSize="10" TextWrapping="Wrap"/>
-                                                    </StackPanel>
-                                                </Border>
+                                <DataTemplate>
+                                    <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="8">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding ProcessName}" Classes="Body" FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding DataSource}" Classes="Caption" />
                                             </StackPanel>
-
-                                            <TextBlock Grid.Column="2" Text="{Binding FormattedTimeAgo}" Foreground="#666688" FontSize="10" VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding TodayBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -780,472 +151,170 @@
                         </ItemsControl>
                     </StackPanel>
                 </Border>
+            </Grid>
 
-                <!-- Section 2: Network Intelligence -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16" IsVisible="{Binding HasInsights}">
-                    <StackPanel Spacing="14">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="🧠" FontSize="14"/>
-                            <TextBlock Text="Network Intelligence" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
+            <!-- LEVEL 3: SESSION, CONNECTION, RATIO -->
+            <Grid ColumnDefinitions="*,*,*">
+                <!-- Session -->
+                <Border Grid.Column="0" Classes="CardInteractive" Margin="0,0,16,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.SM}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Current Session" Classes="SectionTitle" />
+                            <Button Grid.Column="1" Content="➔" Classes="Icon" Command="{Binding OpenTimelineCommand}"/>
+                        </Grid>
+                        
+                        <StackPanel Classes="EmptyState" IsVisible="{Binding !HasCurrentSession}">
+                            <TextBlock Text="No active network session" Classes="EmptyStateTitle" />
                         </StackPanel>
                         
-                        <ItemsControl ItemsSource="{Binding Insights}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Margin="-4" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
+                        <StackPanel IsVisible="{Binding HasCurrentSession}" Spacing="8">
+                            <TextBlock Text="{Binding CurrentSessionNetwork}" Classes="Body" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding CurrentSessionDuration}" Classes="Caption" />
+                            <Grid ColumnDefinitions="*,*">
+                                <StackPanel>
+                                    <TextBlock Text="Downloaded" Classes="Caption"/>
+                                    <TextBlock Text="{Binding CurrentSessionDownload}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Download}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Uploaded" Classes="Caption"/>
+                                    <TextBlock Text="{Binding CurrentSessionUpload}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Upload}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Connection -->
+                <Border Grid.Column="1" Classes="Card" Margin="0,0,16,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.SM}">
+                        <TextBlock Text="Connection" Classes="SectionTitle" />
+                        <Grid ColumnDefinitions="100,*">
+                            <TextBlock Grid.Column="0" Text="Type:" Classes="Caption" />
+                            <TextBlock Grid.Column="1" Text="{Binding ConnectionType}" Classes="Body" />
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="State:" Classes="Caption" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ConnectionState}" Classes="Body" />
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="SSID:" Classes="Caption" IsVisible="{Binding HasWifi}" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding WifiSsid}" Classes="Body" IsVisible="{Binding HasWifi}" Foreground="{DynamicResource Brush.Accent}" />
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Link Speed:" Classes="Caption" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding LinkSpeed}" Classes="Body" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Download/Upload Ratio -->
+                <Border Grid.Column="2" Classes="Card">
+                    <StackPanel Spacing="{DynamicResource Spacing.SM}">
+                        <TextBlock Text="Download vs Upload" Classes="SectionTitle" />
+                        <TextBlock Text="No data recorded this month." Classes="EmptyStateTitle" IsVisible="{Binding !HasMonthData}" />
+                        
+                        <StackPanel IsVisible="{Binding HasMonthData}" Spacing="16" Margin="0,12,0,0">
+                            <!-- Ratio Bar -->
+                            <Border CornerRadius="{DynamicResource Radius.Small}" ClipToBounds="True" Height="16" Background="{DynamicResource Brush.SurfaceElevated}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="{Binding DownloadColumnWidth}"/>
+                                        <ColumnDefinition Width="{Binding UploadColumnWidth}"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Rectangle Grid.Column="0" Fill="{DynamicResource Brush.Download}" Opacity="0.85"/>
+                                    <Rectangle Grid.Column="1" Fill="{DynamicResource Brush.Upload}" Opacity="0.85"/>
+                                </Grid>
+                            </Border>
+                            <Grid ColumnDefinitions="*,*">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding DownloadActualText}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Download}"/>
+                                    <TextBlock Text="{Binding DownloadRatioText}" Classes="Caption" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding UploadActualText}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Upload}"/>
+                                    <TextBlock Text="{Binding UploadRatioText}" Classes="Caption" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- LEVEL 4: FORECAST, BUDGET, INSIGHTS -->
+            <Grid ColumnDefinitions="*,*,*">
+                <!-- Forecast -->
+                <Border Grid.Column="0" Classes="Card" Margin="0,0,16,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.SM}">
+                        <TextBlock Text="Forecast" Classes="SectionTitle" />
+                        <StackPanel Classes="EmptyState" IsVisible="{Binding !HasForecast}">
+                            <TextBlock Text="Building your forecast baseline" Classes="EmptyStateTitle" />
+                        </StackPanel>
+                        
+                        <StackPanel IsVisible="{Binding HasForecast}" Spacing="8">
+                            <TextBlock Text="Projected Month-End" Classes="Caption" />
+                            <TextBlock Text="{Binding ForecastProjectedText}" Classes="MetricLarge" Foreground="{DynamicResource Brush.Accent}" />
+                            <Grid ColumnDefinitions="*,*">
+                                <StackPanel>
+                                    <TextBlock Text="Avg Daily" Classes="Caption" />
+                                    <TextBlock Text="{Binding ForecastAvgDailyText}" Classes="Body" FontWeight="SemiBold" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Confidence" Classes="Caption" />
+                                    <TextBlock Text="{Binding ForecastConfidenceText}" Classes="Body" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Budget -->
+                <Border Grid.Column="1" Classes="Card" Margin="0,0,16,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.SM}">
+                        <TextBlock Text="Data Budget" Classes="SectionTitle" />
+                        <StackPanel Classes="EmptyState" IsVisible="{Binding !HasBudget}">
+                            <TextBlock Text="No active data budget" Classes="EmptyStateTitle" />
+                        </StackPanel>
+                        
+                        <StackPanel IsVisible="{Binding HasBudget}" Spacing="8">
+                            <TextBlock Text="{Binding BudgetStatusText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Warning}" />
+                            <ProgressBar Value="{Binding BudgetProgressValue}" Minimum="0" Maximum="100" Height="8" CornerRadius="4" BorderThickness="0" Foreground="{DynamicResource Brush.Warning}" Background="{DynamicResource Brush.SurfaceElevated}" />
+                            <Grid ColumnDefinitions="*,*">
+                                <StackPanel>
+                                    <TextBlock Text="Used" Classes="Caption" />
+                                    <TextBlock Text="{Binding BudgetUsedText}" Classes="Body" FontWeight="SemiBold" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Remaining" Classes="Caption" />
+                                    <TextBlock Text="{Binding BudgetRemainingText}" Classes="Body" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Insights -->
+                <Border Grid.Column="2" Classes="CardInteractive">
+                    <StackPanel Spacing="{DynamicResource Spacing.SM}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Network Insights" Classes="SectionTitle" />
+                            <Button Grid.Column="1" Content="➔" Classes="Icon" Command="{Binding NavigateToUnifiedIntelligenceCommand}"/>
+                        </Grid>
+                        
+                        <StackPanel Classes="EmptyState" IsVisible="{Binding !HasInsights}">
+                            <TextBlock Text="Everything looks normal" Classes="EmptyStateTitle" />
+                        </StackPanel>
+                        
+                        <ItemsControl ItemsSource="{Binding Insights}" IsVisible="{Binding HasInsights}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="m:NetworkInsight">
-                                    <Border Background="#1A1A2E" BorderBrush="#2D2D44" BorderThickness="1" CornerRadius="8" Padding="16" Margin="4" Width="300" 
-                                            Cursor="Hand"
-                                            PointerPressed="OnInsightCardPressed">
-                                        <Border.Styles>
-                                            <Style Selector="Border:pointerover">
-                                                <Setter Property="Background" Value="#222238"/>
-                                                <Setter Property="BorderBrush" Value="#444466"/>
-                                            </Style>
-                                        </Border.Styles>
-                                        <StackPanel Spacing="8">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBlock Text="{Binding Severity, Converter={x:Static conv:InsightSeverityIconConverter.Instance}}" FontSize="14"/>
-                                                <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="{Binding Severity, Converter={x:Static conv:InsightSeverityColorConverter.Instance}}" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                            <TextBlock Text="{Binding Description}" FontSize="13" Foreground="#CCCCEE" TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                    </Border>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,4">
+                                        <TextBlock Text="{Binding Title}" Classes="Body" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Description}" Classes="Caption" TextWrapping="Wrap" />
+                                    </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
                 </Border>
-
-                <!-- Section 3: Download vs Upload Ratio -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                    <StackPanel Spacing="12">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="⚖️" FontSize="14"/>
-                            <TextBlock Text="Download vs Upload  —  This Month" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
-                        </StackPanel>
-
-                        <!-- No data message -->
-                        <TextBlock Text="No data recorded this month."
-                                   Foreground="#555577" FontSize="13"
-                                   IsVisible="{Binding !HasMonthData}"
-                                   HorizontalAlignment="Center" Margin="0,8"/>
-
-                        <!-- Proportional bar (only when data exists) -->
-                        <Border IsVisible="{Binding HasMonthData}" CornerRadius="4" ClipToBounds="True" Height="22" Background="#0D0D18">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="{Binding DownloadColumnWidth}"/>
-                                    <ColumnDefinition Width="{Binding UploadColumnWidth}"/>
-                                </Grid.ColumnDefinitions>
-                                <Rectangle Grid.Column="0" Fill="#00D2FF" Opacity="0.85"/>
-                                <Rectangle Grid.Column="1" Fill="#00E676" Opacity="0.85"/>
-                            </Grid>
-                        </Border>
-
-                        <!-- Legend with byte values -->
-                        <StackPanel Orientation="Horizontal" Spacing="24" IsVisible="{Binding HasMonthData}">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <Rectangle Width="12" Height="12" Fill="#00D2FF" RadiusX="2" RadiusY="2" VerticalAlignment="Center"/>
-                                <TextBlock Text="Download" Foreground="#888899" FontSize="12" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding DownloadActualText}" Foreground="#00D2FF" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding DownloadRatioText}" Foreground="#446688" FontSize="11" VerticalAlignment="Center"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <Rectangle Width="12" Height="12" Fill="#00E676" RadiusX="2" RadiusY="2" VerticalAlignment="Center"/>
-                                <TextBlock Text="Upload" Foreground="#888899" FontSize="12" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding UploadActualText}" Foreground="#00E676" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding UploadRatioText}" Foreground="#336644" FontSize="11" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Section 4: 14-Day Bar Chart -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                    <StackPanel Spacing="14">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="📅" FontSize="14"/>
-                            <TextBlock Text="Daily Usage — Last 14 Days" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
-                        </StackPanel>
-
-                        <!-- Legend -->
-                        <StackPanel Orientation="Horizontal" Spacing="18">
-                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                <Rectangle Width="10" Height="10" Fill="#00D2FF" RadiusX="2" RadiusY="2" VerticalAlignment="Center"/>
-                                <TextBlock Text="Download" Foreground="#666688" FontSize="11" VerticalAlignment="Center"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                <Rectangle Width="10" Height="10" Fill="#00E676" RadiusX="2" RadiusY="2" VerticalAlignment="Center"/>
-                                <TextBlock Text="Upload" Foreground="#666688" FontSize="11" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </StackPanel>
-
-                        <!-- Empty state -->
-                        <Border IsVisible="{Binding IsChartEmpty}"
-                                Background="#0D0D18" CornerRadius="6" Padding="20" Height="200">
-                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                                <TextBlock Text="📭" FontSize="36" HorizontalAlignment="Center"/>
-                                <TextBlock Text="No usage data for the last 14 days"
-                                           Foreground="#555577" FontSize="13" HorizontalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Chart canvas — stretches to fill available width -->
-                        <StackPanel IsVisible="{Binding !IsChartEmpty}" Spacing="0">
-                            <!-- Bars -->
-                            <Grid Height="160" SizeChanged="ChartContainer_SizeChanged">
-                                <!-- Grid lines -->
-                                <Canvas>
-                                    <Line StartPoint="0,0"   EndPoint="2000,0"   Stroke="#1E1E30" StrokeThickness="1" Opacity="0.6"/>
-                                    <Line StartPoint="0,40"  EndPoint="2000,40"  Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
-                                    <Line StartPoint="0,80"  EndPoint="2000,80"  Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
-                                    <Line StartPoint="0,120" EndPoint="2000,120" Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
-                                    <Line StartPoint="0,160" EndPoint="2000,160" Stroke="#1E1E30" StrokeThickness="1" Opacity="0.6"/>
-                                </Canvas>
-                                <!-- Bars -->
-                                <ItemsControl ItemsSource="{Binding DailyChartItems}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <Canvas Height="160"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="vm:DailyChartBarViewModel">
-                                            <Canvas>
-                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}"
-                                                           Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}"
-                                                           Fill="#00E676" Opacity="0.85" RadiusX="3" RadiusY="3"
-                                                           ToolTip.Tip="{Binding Tooltip}"/>
-                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}"
-                                                           Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}"
-                                                           Fill="#00D2FF" Opacity="0.85"
-                                                           ToolTip.Tip="{Binding Tooltip}"/>
-                                            </Canvas>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </Grid>
-                            <!-- Day labels -->
-                            <ItemsControl ItemsSource="{Binding DailyChartItems}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <Canvas Height="28"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="vm:DailyChartBarViewModel">
-                                        <TextBlock Canvas.Left="{Binding BarX}" Canvas.Top="4"
-                                                   Text="{Binding DayLabel}"
-                                                   FontSize="10" Foreground="#7777AA"
-                                                   Width="{Binding BarWidth}" TextAlignment="Center"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Section 5: Advanced Period Trend -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                    <StackPanel Spacing="14">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <TextBlock Text="📈" FontSize="14"/>
-                                <TextBlock Text="Network Usage Trend" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
-                            </StackPanel>
-                            <!-- Period Selector -->
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsEnabled="{Binding !IsPeriodAnalyticsLoading}">
-                                <Button Content="Today"      Command="{Binding SelectPeriodCommand}" CommandParameter="Today"      Classes="link-button" Background="Transparent" Foreground="{Binding SelectedPeriod, Converter={x:Static StringConverters.IsNullOrEmpty}}"/> <!-- TODO: custom converter or style for active state -->
-                                <Button Content="7 Days"     Command="{Binding SelectPeriodCommand}" CommandParameter="Last7Days"  Classes="link-button" Background="Transparent"/>
-                                <Button Content="30 Days"    Command="{Binding SelectPeriodCommand}" CommandParameter="Last30Days" Classes="link-button" Background="Transparent"/>
-                                <Button Content="This Month" Command="{Binding SelectPeriodCommand}" CommandParameter="ThisMonth"  Classes="link-button" Background="Transparent"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <ProgressBar IsIndeterminate="True" Height="2" IsVisible="{Binding IsPeriodAnalyticsLoading}" Foreground="#00D2FF"/>
-
-                        <Border IsVisible="{Binding IsPeriodChartEmpty}" Background="#0D0D18" CornerRadius="6" Padding="20" Height="200">
-                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                                <TextBlock Text="📭" FontSize="36" HorizontalAlignment="Center"/>
-                                <TextBlock Text="No usage data for the selected period" Foreground="#555577" FontSize="13" HorizontalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
-
-                        <StackPanel IsVisible="{Binding !IsPeriodChartEmpty}" Spacing="0">
-                            <Grid Height="160" SizeChanged="ChartContainer_SizeChanged">
-                                <Canvas>
-                                    <Line StartPoint="0,0"   EndPoint="2000,0"   Stroke="#1E1E30" StrokeThickness="1" Opacity="0.6"/>
-                                    <Line StartPoint="0,40"  EndPoint="2000,40"  Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
-                                    <Line StartPoint="0,80"  EndPoint="2000,80"  Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
-                                    <Line StartPoint="0,120" EndPoint="2000,120" Stroke="#1E1E30" StrokeThickness="1" Opacity="0.4"/>
-                                    <Line StartPoint="0,160" EndPoint="2000,160" Stroke="#1E1E30" StrokeThickness="1" Opacity="0.6"/>
-                                </Canvas>
-                                <!-- Daily Bars -->
-                                <ItemsControl ItemsSource="{Binding PeriodChartItems}" IsVisible="{Binding !IsHourlyChart}">
-                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="160"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="vm:DailyChartBarViewModel">
-                                            <Canvas>
-                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}" Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}" Fill="#00E676" Opacity="0.85" RadiusX="3" RadiusY="3" ToolTip.Tip="{Binding Tooltip}"/>
-                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}" Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}" Fill="#00D2FF" Opacity="0.85" ToolTip.Tip="{Binding Tooltip}"/>
-                                            </Canvas>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <!-- Hourly Bars -->
-                                <ItemsControl ItemsSource="{Binding HourlyChartItems}" IsVisible="{Binding IsHourlyChart}">
-                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="160"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="vm:HourlyChartBarViewModel">
-                                            <Canvas>
-                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}" Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}" Fill="#00E676" Opacity="0.85" RadiusX="3" RadiusY="3" ToolTip.Tip="{Binding Tooltip}"/>
-                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}" Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}" Fill="#00D2FF" Opacity="0.85" ToolTip.Tip="{Binding Tooltip}"/>
-                                            </Canvas>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </Grid>
-                            
-                            <!-- Day Labels -->
-                            <ItemsControl ItemsSource="{Binding PeriodChartItems}" IsVisible="{Binding !IsHourlyChart}">
-                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="28"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="vm:DailyChartBarViewModel">
-                                        <TextBlock Canvas.Left="{Binding BarX}" Canvas.Top="4" Text="{Binding DayLabel}" FontSize="10" Foreground="#7777AA" Width="{Binding BarWidth}" TextAlignment="Center"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            
-                            <!-- Hourly Labels -->
-                            <ItemsControl ItemsSource="{Binding HourlyChartItems}" IsVisible="{Binding IsHourlyChart}">
-                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="28"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="vm:HourlyChartBarViewModel">
-                                        <TextBlock Canvas.Left="{Binding BarX}" Canvas.Top="4" Text="{Binding HourLabel}" FontSize="9" Foreground="#7777AA" Width="{Binding BarWidth}" TextAlignment="Center"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Section 6: Analytics Summary -->
-                <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                    <StackPanel Spacing="14">
-                        <TextBlock Text="Analytics Summary" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
-                        <Grid ColumnDefinitions="*,12,*,12,*,12,*,12,*">
-                            <Border Grid.Column="0" Classes="stat-card" Background="#1A1A2E">
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="Avg Daily" Classes="insight-label"/>
-                                    <TextBlock Text="{Binding PeriodAvgDailyText}" Classes="insight-value" Foreground="#FFFFFF"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Column="2" Classes="stat-card" Background="#1A1A2E">
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="Peak Day" Classes="insight-label"/>
-                                    <TextBlock Text="{Binding PeriodPeakDayText}" Classes="insight-value" Foreground="#FF9800"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Column="4" Classes="stat-card" Background="#1A1A2E">
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="⬇ Downloaded" Classes="insight-label" Foreground="#00D2FF"/>
-                                    <TextBlock Text="{Binding PeriodTotalDownloadedText}" Classes="insight-value" Foreground="#00D2FF"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Column="6" Classes="stat-card" Background="#1A1A2E">
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="⬆ Uploaded" Classes="insight-label" Foreground="#00E676"/>
-                                    <TextBlock Text="{Binding PeriodTotalUploadedText}" Classes="insight-value" Foreground="#00E676"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Column="8" Classes="stat-card" Background="#1A1A2E" BorderBrush="#3535AA">
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="Total Usage" Classes="insight-label" Foreground="#8888FF"/>
-                                    <TextBlock Text="{Binding PeriodTotalUsageText}" Classes="insight-value" Foreground="#8888FF"/>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <!-- Section 7: Peak Usage -->
-                <Grid ColumnDefinitions="*,12,*">
-                    <Border Grid.Column="0" Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="🔥  Peak Hour Today" Classes="insight-label"/>
-                            <TextBlock Text="{Binding PeakHourText}" Classes="insight-value" Foreground="#FF5252"/>
-                            <TextBlock Text="{Binding PeakHourUsageText}" Classes="insight-label" Foreground="#AA5555"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Grid.Column="2" Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="🏆  Highest Day in Period" Classes="insight-label"/>
-                            <TextBlock Text="{Binding PeakDayInPeriodText}" Classes="insight-value" Foreground="#FFB300"/>
-                            <TextBlock Text="{Binding PeakDayInPeriodUsageText}" Classes="insight-label" Foreground="#AA8800"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-
-                <!-- Section 8: Top Data Consumers & Live Traffic -->
-                <Grid ColumnDefinitions="*,12,1.2*">
-                    <!-- Top Data Consumers (Period-based) -->
-                    <Border Grid.Column="0" Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                        <StackPanel Spacing="14">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="👑" FontSize="14"/>
-                                <TextBlock Text="Top Data Consumers (Today)" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
-                            </StackPanel>
-
-                            <!-- Donut Chart Area -->
-                            <Border IsVisible="{Binding IsTodayChartLoading}" Height="200" Background="#0D0D18" CornerRadius="6">
-                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                                    <ProgressBar IsIndeterminate="True" Width="80" Height="4"/>
-                                    <TextBlock Text="Loading chart..." Foreground="#7777AA" FontSize="12"/>
-                                </StackPanel>
-                            </Border>
-
-                            <Border IsVisible="{Binding !HasTodayChartData}" Height="200" Background="#0D0D18" CornerRadius="6">
-                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                                    <TextBlock Text="📭" FontSize="36" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Insufficient Data" Foreground="#555577" FontSize="13" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-
-                            <Grid Height="250" IsVisible="{Binding HasTodayChartData}">
-                                <lvc:PieChart Series="{Binding TodayTopConsumerSeries}"
-                                              LegendPosition="Bottom"
-                                              AnimationsSpeed="00:00:00.5" />
-                            </Grid>
-
-                            <!-- Top Data Consumers (Historical Profiles) -->
-                            <Grid ColumnDefinitions="*,*" Margin="0,0,0,4" IsVisible="{Binding HasTopProcesses}">
-                                <StackPanel Grid.Column="0" Spacing="2">
-                                    <TextBlock Text="Top Application Insight" Foreground="#888899" FontSize="10"/>
-                                    <TextBlock Text="{Binding TopAppInsightText}" Foreground="#00D2FF" FontSize="11" FontWeight="Bold" TextWrapping="Wrap"/>
-                                </StackPanel>
-                            </Grid>
-                            
-                            <ItemsControl ItemsSource="{Binding TopProcesses}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Background="#1A1A2E" CornerRadius="6" Padding="12" Margin="0,0,0,8">
-                                            <Grid ColumnDefinitions="*,Auto,Auto">
-                                                <!-- Process Name & Badges -->
-                                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding ProcessName}" FontWeight="SemiBold" Foreground="#CCCCEE" VerticalAlignment="Center"/>
-                                                    <!-- Percentage Share Badge -->
-                                                    <Border Background="#21213D" CornerRadius="4" Padding="4,2">
-                                                        <TextBlock Text="{Binding PercentageOfTotal, StringFormat='{}{0:F1}%'}" Foreground="#8888FF" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <!-- Trend Badge -->
-                                                    <Border Background="#21213D" CornerRadius="4" Padding="4,2" IsVisible="{Binding HasSufficientData}">
-                                                        <TextBlock Text="{Binding TrendState}" Foreground="#8888FF" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <!-- Anomaly / Surge Badge -->
-                                                    <Border Background="#3D2121" CornerRadius="4" Padding="4,2" IsVisible="{Binding IsUsageSurging}">
-                                                        <TextBlock Text="Surge" Foreground="#FF5252" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <!-- Data Source -->
-                                                    <TextBlock Text="{Binding DataSource}" Foreground="#555577" FontSize="9" VerticalAlignment="Center" Margin="4,0,0,0"/>
-                                                </StackPanel>
-                                                
-                                                <!-- Total bytes -->
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" Margin="0,0,16,0">
-                                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                                        <TextBlock Text="Total" Foreground="#00D2FF" FontSize="10" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding TodayBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Foreground="#00D2FF" FontSize="12" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                </StackPanel>
-                                                
-                                                <!-- Action Button -->
-                                                <Button Grid.Column="2" 
-                                                        Content="Analytics ➔" 
-                                                        Classes="link-button" 
-                                                        Foreground="#8888FF"
-                                                        Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).NavigateToProcessAnalyticsCommand}"
-                                                        CommandParameter="{Binding ProcessName}"/>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            
-                            <!-- Empty State -->
-                            <TextBlock Text="{Binding TopProcessesBaselineText}" 
-                                       Foreground="#555577" FontSize="13" 
-                                       IsVisible="{Binding !TopProcesses.Count}" 
-                                       HorizontalAlignment="Center" Margin="0,16"/>
-                        </StackPanel>
-                    </Border>
-                    
-                    <!-- Live Process Network Traffic -->
-                    <Border Grid.Column="2" Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
-                        <StackPanel Spacing="14">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="⚡" FontSize="14"/>
-                                    <TextBlock Text="Live Process Traffic" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <Ellipse Grid.Column="1" Width="8" Height="8" Fill="#00E676" VerticalAlignment="Center">
-                                    <!-- Simple pulse animation could go here -->
-                                </Ellipse>
-                            </Grid>
-                            
-                            <!-- Table Header -->
-                            <Border Background="#13131F" Margin="0,0,0,4" Padding="12,8">
-                                <Grid ColumnDefinitions="*,100,100,90">
-                                    <TextBlock Grid.Column="0" Text="Process" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Column="1" Text="Download" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Column="2" Text="Upload" Foreground="#7777AA" FontSize="11" FontWeight="SemiBold"/>
-                                </Grid>
-                            </Border>
-                            
-                            <!-- Table Body -->
-                            <ScrollViewer Height="220" VerticalScrollBarVisibility="Auto">
-                                <ItemsControl ItemsSource="{Binding LiveProcessTraffic}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border BorderBrush="#2D2D44" BorderThickness="0,0,0,1" Padding="12,8">
-                                                <Grid ColumnDefinitions="*,100,100,90">
-                                                    <!-- Process Column -->
-                                                    <TextBlock Grid.Column="0" Text="{Binding ProcessIdentifier}" Foreground="#CCCCEE" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
-                                                    
-                                                    <!-- Download Column -->
-                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                        <TextBlock Text="⬇" Foreground="#00D2FF" FontSize="10" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding DownloadRateBytesPerSec, Converter={x:Static conv:SpeedFormatConverter.Instance}}" Foreground="#00D2FF" FontSize="12" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                    
-                                                    <!-- Upload Column -->
-                                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                        <TextBlock Text="⬆" Foreground="#00E676" FontSize="10" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding UploadRateBytesPerSec, Converter={x:Static conv:SpeedFormatConverter.Instance}}" Foreground="#00E676" FontSize="12" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-
-                                                    <!-- Action Column -->
-                                                    <Button Grid.Column="3" Content="Analytics ➔" 
-                                                            Classes="link-button" 
-                                                            Foreground="#8888FF"
-                                                            FontSize="11"
-                                                            Padding="4"
-                                                            VerticalAlignment="Center"
-                                                            Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).NavigateToProcessAnalyticsCommand}"
-                                                            CommandParameter="{Binding ProcessIdentifier}"/>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-                
-            </StackPanel>
+            </Grid>
+            
         </StackPanel>
     </ScrollViewer>
 </UserControl>

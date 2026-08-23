@@ -5,33 +5,23 @@
              x:Class="DataSense.Views.ExportView"
              x:DataType="vm:ExportViewModel">
 
-    <UserControl.Styles>
-        <Style Selector="Border.card">
-            <Setter Property="Background" Value="#181824"/>
-            <Setter Property="BorderBrush" Value="#2A2A3D"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="20"/>
-        </Style>
-    </UserControl.Styles>
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
-        <StackPanel Spacing="20" MaxWidth="1100">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
+        <StackPanel Spacing="{DynamicResource Spacing.XL}">
             <!-- Header -->
             <StackPanel Spacing="4">
-                <TextBlock Text="📤 Data Export, Reports &amp; Portability" FontSize="20" FontWeight="Bold" Foreground="#FFFFFF"/>
-                <TextBlock Text="Export your DataSense telemetry to CSV, JSON, TXT reports, or complete ZIP backups." FontSize="13" Foreground="#8888AA"/>
+                <TextBlock Text="📤 Data Export, Reports &amp; Portability" Classes="PageTitle"/>
+                <TextBlock Text="Export your DataSense telemetry to CSV, JSON, TXT reports, or complete ZIP backups." Classes="BodySecondary"/>
             </StackPanel>
 
             <!-- Custom Export Config Card -->
-            <Border Classes="card">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="⚙️ Custom Data Export Options" FontSize="15" FontWeight="Bold" Foreground="#00D2FF"/>
-                    <Separator Height="1" Background="#2A2A3D"/>
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="⚙️ Custom Data Export Options" Classes="SectionTitle" Foreground="{DynamicResource Brush.Download}"/>
+                    <Separator Background="{DynamicResource Brush.Border}"/>
 
                     <Grid ColumnDefinitions="*,*">
                         <StackPanel Grid.Column="0" Spacing="12" Margin="0,0,10,0">
-                            <TextBlock Text="Export Format" FontSize="12" FontWeight="Bold" Foreground="#8888AA"/>
+                            <TextBlock Text="Export Format" Classes="Caption" FontWeight="Bold"/>
                             <ComboBox SelectedIndex="{Binding SelectedFormatIndex}" HorizontalAlignment="Stretch">
                                 <ComboBoxItem Content="CSV (Comma Separated Values)"/>
                                 <ComboBoxItem Content="JSON (Structured Telemetry)"/>
@@ -40,7 +30,7 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Spacing="12" Margin="10,0,0,0">
-                            <TextBlock Text="Data Content" FontSize="12" FontWeight="Bold" Foreground="#8888AA"/>
+                            <TextBlock Text="Data Content" Classes="Caption" FontWeight="Bold"/>
                             <ComboBox SelectedIndex="{Binding SelectedDataTypeIndex}" HorizontalAlignment="Stretch">
                                 <ComboBoxItem Content="Usage Telemetry History"/>
                                 <ComboBoxItem Content="Network Session Records"/>
@@ -48,43 +38,43 @@
                         </StackPanel>
                     </Grid>
 
-                    <CheckBox IsChecked="{Binding AnonymizeNetworks}" Content="Anonymize Network Names (Privacy Option)" Foreground="#CCCCCC" FontSize="12"/>
+                    <CheckBox IsChecked="{Binding AnonymizeNetworks}" Content="Anonymize Network Names (Privacy Option)" Classes="Caption"/>
 
                     <StackPanel Spacing="10" Margin="0,8,0,0">
-                        <Button Content="🚀 Start Export" Command="{Binding StartExportCommand}" IsEnabled="{Binding !IsExporting}" Background="#00E676" Foreground="#000000" FontWeight="Bold" FontSize="13" Padding="20,10" CornerRadius="6" HorizontalAlignment="Left"/>
-                        <ProgressBar Value="{Binding ProgressValue}" Maximum="100" IsVisible="{Binding IsExporting}" Height="4" Foreground="#00E676"/>
-                        <TextBlock Text="{Binding StatusMessage}" Foreground="#00E676" FontSize="12" FontWeight="SemiBold"/>
+                        <Button Content="🚀 Start Export" Command="{Binding StartExportCommand}" IsEnabled="{Binding !IsExporting}" Classes="Primary" HorizontalAlignment="Left"/>
+                        <ProgressBar Value="{Binding ProgressValue}" Maximum="100" IsVisible="{Binding IsExporting}" Height="4" Foreground="{DynamicResource Brush.Success}"/>
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource Brush.Success}" Classes="Caption" FontWeight="SemiBold"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
             <!-- Complete Backup Card -->
-            <Border Classes="card">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="📦 Complete Data Backup (.ZIP)" FontSize="15" FontWeight="Bold" Foreground="#FF9800"/>
-                    <Separator Height="1" Background="#2A2A3D"/>
-                    <TextBlock Text="Create a full, portable .zip archive containing your local datasense.db SQLite database and backup metadata for safety or migration." Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"/>
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="📦 Complete Data Backup (.ZIP)" Classes="SectionTitle" Foreground="{DynamicResource Brush.Warning}"/>
+                    <Separator Background="{DynamicResource Brush.Border}"/>
+                    <TextBlock Text="Create a full, portable .zip archive containing your local datasense.db SQLite database and backup metadata for safety or migration." Classes="Caption" TextWrapping="Wrap"/>
                     
                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
-                        <Button Content="💾 Create Full ZIP Backup" Command="{Binding CreateBackupCommand}" Background="#FF9800" Foreground="#000000" FontWeight="Bold" FontSize="12" Padding="16,8" CornerRadius="6"/>
-                        <TextBlock Text="{Binding BackupStatusText}" Foreground="#00E676" FontSize="12" VerticalAlignment="Center"/>
+                        <Button Content="💾 Create Full ZIP Backup" Command="{Binding CreateBackupCommand}" Classes="Primary" Background="{DynamicResource Brush.Warning}" Foreground="{DynamicResource Brush.Surface}"/>
+                        <TextBlock Text="{Binding BackupStatusText}" Foreground="{DynamicResource Brush.Success}" Classes="Caption" VerticalAlignment="Center"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
             <!-- Recent Exports Table -->
-            <Border Classes="card">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="📋 Recent Export History" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"/>
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="📋 Recent Export History" Classes="SectionTitle"/>
                     <ItemsControl ItemsSource="{Binding History}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="models:ExportItemHistory">
-                                <Border Background="#12121E" CornerRadius="4" Padding="12,8" Margin="0,2">
+                                <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="12,8" Margin="0,2">
                                     <Grid ColumnDefinitions="*,100,100,100">
-                                        <TextBlock Grid.Column="0" Text="{Binding FileName}" Foreground="#FFFFFF" FontSize="12" FontWeight="SemiBold"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding Type}" Foreground="#00D2FF" FontSize="11" HorizontalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="{Binding SizeText}" Foreground="#8888AA" FontSize="11" HorizontalAlignment="Center"/>
-                                        <TextBlock Grid.Column="3" Text="{Binding Status}" Foreground="#00E676" FontSize="11" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                        <TextBlock Grid.Column="0" Text="{Binding FileName}" Classes="Body" FontWeight="SemiBold"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Type}" Classes="Caption" Foreground="{DynamicResource Brush.Download}" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding SizeText}" Classes="Caption" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding Status}" Classes="Caption" Foreground="{DynamicResource Brush.Success}" FontWeight="Bold" HorizontalAlignment="Right"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

@@ -1,194 +1,123 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:DataSense.ViewModels"
              xmlns:m="using:DataSense.Models"
              xmlns:s="using:DataSense.Services"
-             mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="850"
+             xmlns:conv="using:DataSense.Converters"
              x:Class="DataSense.Views.LiveMonitoringView"
              x:DataType="vm:LiveMonitoringViewModel">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="20" Margin="24">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
+        <StackPanel Spacing="{DynamicResource Spacing.XL}">
 
             <!-- ── HEADER & NAVIGATION TITLE ──────────────────────────────────────── -->
             <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="Live Network Traffic Intelligence" FontSize="24" FontWeight="Bold" Foreground="#FFFFFF"/>
-                    <TextBlock Text="Real-time per-second interface bandwidth, nethogs socket processes, and link statistics" FontSize="13" Foreground="#94A3B8"/>
+                <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.SM}">
+                    <TextBlock Text="Live Network Traffic" Classes="PageTitle"/>
+                    <TextBlock Text="Real-time interface bandwidth, socket processes, and link statistics" Classes="BodySecondary"/>
                 </StackPanel>
 
                 <!-- Status & Pause/Resume Control -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="8" Padding="12,6">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}" VerticalAlignment="Center">
+                    <Border Classes="Badge">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Ellipse Width="8" Height="8" Fill="{Binding IsPaused, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue='#10B981'}"/>
-                            <TextBlock Text="{Binding MonitoringStatusText}" FontSize="12" FontWeight="SemiBold" Foreground="#E2E8F0" VerticalAlignment="Center"/>
+                            <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding MonitoringStatusText}" Foreground="{DynamicResource Brush.TextPrimary}"/>
                         </StackPanel>
                     </Border>
-
-                    <Button Command="{Binding TogglePauseResumeCommand}"
-                            Background="#2563EB" Foreground="#FFFFFF" CornerRadius="8" Padding="14,8" FontWeight="SemiBold">
+                    <Button Command="{Binding TogglePauseResumeCommand}" Classes="Primary">
                         <TextBlock Text="{Binding IsPaused, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue='Pause'}"/>
                     </Button>
-
-                    <Button Command="{Binding ExportSnapshotCommand}"
-                            Background="#1E1F2E" BorderBrush="#334155" BorderThickness="1" Foreground="#94A3B8" CornerRadius="8" Padding="12,8">
-                        <TextBlock Text="📷 Snapshot" FontSize="12"/>
-                    </Button>
+                    <Button Command="{Binding ExportSnapshotCommand}" Classes="Secondary" Content="📷 Snapshot" />
                 </StackPanel>
             </Grid>
 
             <!-- ── REAL-TIME NETWORK OVERVIEW CARDS ────────────────────────────────── -->
-            <UniformGrid Columns="4" Rows="1">
+            <Grid ColumnDefinitions="*,*,*,*">
                 <!-- Card 1: Network & Connection -->
-                <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="16">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="Current Network" FontSize="12" Foreground="#94A3B8" FontWeight="Medium"/>
-                        <TextBlock Text="{Binding CurrentNetworkName}" FontSize="18" FontWeight="Bold" Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
+                <Border Grid.Column="0" Classes="CardElevated" Margin="0,0,16,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                        <TextBlock Text="Current Network" Classes="Caption" />
+                        <TextBlock Text="{Binding CurrentNetworkName}" Classes="MetricSmall" TextTrimming="CharacterEllipsis"/>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Border Background="#334155" CornerRadius="4" Padding="6,2">
-                                <TextBlock Text="{Binding ConnectionType}" FontSize="11" Foreground="#E2E8F0"/>
+                            <Border Classes="Badge">
+                                <TextBlock Text="{Binding ConnectionType}" />
                             </Border>
-                            <Border Background="#334155" CornerRadius="4" Padding="6,2">
-                                <TextBlock Text="{Binding InterfaceName}" FontSize="11" Foreground="#38BDF8"/>
+                            <Border Classes="Badge">
+                                <TextBlock Text="{Binding InterfaceName}" Foreground="{DynamicResource Brush.Accent}" />
                             </Border>
                         </StackPanel>
                     </StackPanel>
                 </Border>
 
                 <!-- Card 2: Live Download -->
-                <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="16">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="↓ Live Download Speed" FontSize="12" Foreground="#38BDF8" FontWeight="Medium"/>
-                        <TextBlock Text="{Binding LiveDownloadSpeed}" FontSize="22" FontWeight="Bold" Foreground="#38BDF8"/>
-                        <TextBlock Text="Source: Linux Interface Counters" FontSize="11" Foreground="#64748B"/>
+                <Border Grid.Column="1" Classes="Card" Margin="0,0,16,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                        <TextBlock Text="↓ Live Download" Classes="Caption" Foreground="{DynamicResource Brush.Download}" />
+                        <TextBlock Text="{Binding LiveDownloadSpeed}" Classes="MetricLarge" Foreground="{DynamicResource Brush.Download}"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Card 3: Live Upload -->
-                <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="16">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="↑ Live Upload Speed" FontSize="12" Foreground="#C084FC" FontWeight="Medium"/>
-                        <TextBlock Text="{Binding LiveUploadSpeed}" FontSize="22" FontWeight="Bold" Foreground="#C084FC"/>
-                        <TextBlock Text="Source: Linux Interface Counters" FontSize="11" Foreground="#64748B"/>
+                <Border Grid.Column="2" Classes="Card" Margin="0,0,16,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                        <TextBlock Text="↑ Live Upload" Classes="Caption" Foreground="{DynamicResource Brush.Upload}" />
+                        <TextBlock Text="{Binding LiveUploadSpeed}" Classes="MetricLarge" Foreground="{DynamicResource Brush.Upload}"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Card 4: Combined Speed & Packets -->
-                <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="16">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="⚡ Combined Bandwidth" FontSize="12" Foreground="#F59E0B" FontWeight="Medium"/>
-                        <TextBlock Text="{Binding CombinedSpeed}" FontSize="22" FontWeight="Bold" Foreground="#FFFFFF"/>
+                <Border Grid.Column="3" Classes="Card">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                        <TextBlock Text="⚡ Combined Bandwidth" Classes="Caption" Foreground="{DynamicResource Brush.Accent}" />
+                        <TextBlock Text="{Binding CombinedSpeed}" Classes="MetricLarge"/>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <TextBlock Text="{Binding PacketErrorRateText, StringFormat='Err: {0}'}" FontSize="11" Foreground="#EF4444"/>
-                            <TextBlock Text="{Binding PacketDropRateText, StringFormat='Drop: {0}'}" FontSize="11" Foreground="#F59E0B"/>
+                            <TextBlock Text="{Binding PacketErrorRateText, StringFormat='Err: {0}'}" Classes="Caption" Foreground="{DynamicResource Brush.Danger}"/>
+                            <TextBlock Text="{Binding PacketDropRateText, StringFormat='Drop: {0}'}" Classes="Caption" Foreground="{DynamicResource Brush.Warning}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
-            </UniformGrid>
-
-            <!-- ── LIVE TRAFFIC GRAPH ──────────────────────────────────────────────── -->
-            <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="20">
-                <StackPanel Spacing="16">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                            <TextBlock Text="Rolling Traffic Window" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
-                            <TextBlock Text="(In-Memory Ephemeral)" FontSize="12" Foreground="#64748B" VerticalAlignment="Center"/>
-                        </StackPanel>
-
-                        <!-- Window Selector Buttons -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                            <Button Command="{Binding SelectWindowCommand}" CommandParameter="30"
-                                    Background="#2A2C3D" Foreground="#E2E8F0" Padding="10,4" CornerRadius="6" FontSize="12">
-                                <TextBlock Text="30s"/>
-                            </Button>
-                            <Button Command="{Binding SelectWindowCommand}" CommandParameter="60"
-                                    Background="#2563EB" Foreground="#FFFFFF" Padding="10,4" CornerRadius="6" FontSize="12">
-                                <TextBlock Text="60s"/>
-                            </Button>
-                            <Button Command="{Binding SelectWindowCommand}" CommandParameter="300"
-                                    Background="#2A2C3D" Foreground="#E2E8F0" Padding="10,4" CornerRadius="6" FontSize="12">
-                                <TextBlock Text="5m"/>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-
-                    <!-- Real-Time Traffic Stream List Preview -->
-                    <Border Background="#12131C" CornerRadius="8" Height="140" Padding="12">
-                        <ItemsControl ItemsSource="{Binding ChartSamples}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="4"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Width="6" Height="110" VerticalAlignment="Bottom" CornerRadius="2">
-                                        <Grid RowDefinitions="*,*">
-                                            <Border Grid.Row="0" Background="#C084FC" VerticalAlignment="Bottom" Height="20" CornerRadius="2,2,0,0"/>
-                                            <Border Grid.Row="1" Background="#38BDF8" VerticalAlignment="Top" Height="40" CornerRadius="0,0,2,2"/>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Border>
-                </StackPanel>
-            </Border>
+            </Grid>
 
             <!-- ── PROCESS BREAKDOWN & DETAIL GRID ─────────────────────────────────── -->
             <Grid ColumnDefinitions="2*,*">
                 <!-- Left: Process Traffic Ranking Table -->
-                <Border Grid.Column="0" Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,12,0">
-                    <StackPanel Spacing="16">
+                <Border Grid.Column="0" Classes="Card" Margin="0,0,16,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Top Process Data Consumers" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
+                            <TextBlock Grid.Column="0" Text="Top Process Data Consumers" Classes="SectionTitle" VerticalAlignment="Center"/>
                             
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestTotal"
-                                        Background="#2A2C3D" Foreground="#E2E8F0" Padding="8,4" CornerRadius="6" FontSize="11">
-                                    <TextBlock Text="Total"/>
-                                </Button>
-                                <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestDownload"
-                                        Background="#2A2C3D" Foreground="#E2E8F0" Padding="8,4" CornerRadius="6" FontSize="11">
-                                    <TextBlock Text="↓ DL"/>
-                                </Button>
-                                <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestUpload"
-                                        Background="#2A2C3D" Foreground="#E2E8F0" Padding="8,4" CornerRadius="6" FontSize="11">
-                                    <TextBlock Text="↑ UL"/>
-                                </Button>
+                                <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestTotal" Classes="Secondary" Content="Total" />
+                                <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestDownload" Classes="Secondary" Content="↓ DL" />
+                                <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestUpload" Classes="Secondary" Content="↑ UL" />
                             </StackPanel>
                         </Grid>
 
-                        <!-- Process Header -->
-                        <Border Background="#12131C" CornerRadius="6" Padding="12,8">
+                        <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="12,8">
                             <Grid ColumnDefinitions="2*,70,*,*,*,70">
-                                <TextBlock Grid.Column="0" Text="Process Name" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                                <TextBlock Grid.Column="1" Text="PID" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                                <TextBlock Grid.Column="2" Text="↓ Download" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                                <TextBlock Grid.Column="3" Text="↑ Upload" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                                <TextBlock Grid.Column="4" Text="Total" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                                <TextBlock Grid.Column="5" Text="Share" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="0" Text="Process Name" Classes="Caption" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="1" Text="PID" Classes="Caption" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="2" Text="↓ Download" Classes="Caption" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="3" Text="↑ Upload" Classes="Caption" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="4" Text="Total" Classes="Caption" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="5" Text="Share" Classes="Caption" FontWeight="SemiBold"/>
                             </Grid>
                         </Border>
 
-                        <ScrollViewer Height="200" VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer Height="300" VerticalScrollBarVisibility="Auto">
                             <ItemsControl ItemsSource="{Binding RankedProcesses}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="s:LiveProcessRankItem">
-                                        <Button Command="{Binding $parent[UserControl].((vm:LiveMonitoringViewModel)DataContext).SelectProcessCommand}"
-                                                CommandParameter="{Binding}"
-                                                Background="Transparent" Padding="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-                                            <Border BorderBrush="#2A2C3D" BorderThickness="0,0,0,1" Padding="12,8">
+                                        <Button Command="{Binding $parent[UserControl].((vm:LiveMonitoringViewModel)DataContext).SelectProcessCommand}" CommandParameter="{Binding}" Classes="Icon" HorizontalAlignment="Stretch" Padding="0">
+                                            <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="12,8">
                                                 <Grid ColumnDefinitions="2*,70,*,*,*,70">
-                                                    <TextBlock Grid.Column="0" Text="{Binding ProcessName}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Pid}" Foreground="#94A3B8" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="2" Text="{Binding DownloadRateText}" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="3" Text="{Binding UploadRateText}" Foreground="#C084FC" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="4" Text="{Binding CombinedRateText}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="5" Text="{Binding PercentageOfTotalTraffic, StringFormat='{}{0:F1}%'}" Foreground="#F59E0B" FontSize="12" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="0" Text="{Binding ProcessName}" Classes="Body" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Pid}" Classes="Caption" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding DownloadRateText}" Classes="Body" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="3" Text="{Binding UploadRateText}" Classes="Body" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="4" Text="{Binding CombinedRateText}" Classes="Body" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="5" Text="{Binding PercentageOfTotalTraffic, StringFormat='{}{0:F1}%'}" Classes="Body" Foreground="{DynamicResource Brush.Warning}" VerticalAlignment="Center"/>
                                                 </Grid>
                                             </Border>
                                         </Button>
@@ -200,74 +129,69 @@
                 </Border>
 
                 <!-- Right: Selected Process Traffic Detail Card -->
-                <Border Grid.Column="1" Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="20">
-                    <StackPanel Spacing="14">
-                        <TextBlock Text="Process Details" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
-
+                <Border Grid.Column="1" Classes="Card">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                        <TextBlock Text="Process Details" Classes="SectionTitle" />
                         <StackPanel Spacing="4">
-                            <TextBlock Text="{Binding DetailProcessName}" FontSize="18" FontWeight="Bold" Foreground="#38BDF8"/>
-                            <TextBlock Text="{Binding DetailPidText, StringFormat='PID: {0}'}" FontSize="12" Foreground="#94A3B8"/>
+                            <TextBlock Text="{Binding DetailProcessName}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Accent}"/>
+                            <TextBlock Text="{Binding DetailPidText, StringFormat='PID: {0}'}" Classes="Caption" />
                         </StackPanel>
-
-                        <Separator Background="#2A2C3D"/>
-
+                        <Separator Background="{DynamicResource Brush.Border}" Margin="0,8"/>
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*">
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Executable:" FontSize="12" Foreground="#64748B" Margin="0,0,8,6"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding DetailExePath}" FontSize="12" Foreground="#E2E8F0" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Executable:" Classes="Caption" Margin="0,0,8,6"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding DetailExePath}" Classes="Body" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="User:" FontSize="12" Foreground="#64748B" Margin="0,0,8,6"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DetailUser}" FontSize="12" Foreground="#E2E8F0" Margin="0,0,0,6"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="User:" Classes="Caption" Margin="0,0,8,6"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DetailUser}" Classes="Body" Margin="0,0,0,6"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Data Source:" FontSize="12" Foreground="#64748B" Margin="0,0,8,6"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DetailDataSource}" FontSize="12" Foreground="#10B981" Margin="0,0,0,6"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Data Source:" Classes="Caption" Margin="0,0,8,6"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DetailDataSource}" Classes="Body" Foreground="{DynamicResource Brush.Success}" Margin="0,0,0,6"/>
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Today:" FontSize="12" Foreground="#64748B" Margin="0,0,8,6"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DetailTodayUsage}" FontSize="12" Foreground="#FFFFFF" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Today:" Classes="Caption" Margin="0,0,8,6"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DetailTodayUsage}" Classes="Body" FontWeight="SemiBold" Margin="0,0,0,6"/>
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="7 Days:" FontSize="12" Foreground="#64748B" Margin="0,0,8,6"/>
-                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Detail7DayUsage}" FontSize="12" Foreground="#E2E8F0" Margin="0,0,0,6"/>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="7 Days:" Classes="Caption" Margin="0,0,8,6"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Detail7DayUsage}" Classes="Body" Margin="0,0,0,6"/>
 
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="30 Days:" FontSize="12" Foreground="#64748B" Margin="0,0,8,0"/>
-                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Detail30DayUsage}" FontSize="12" Foreground="#E2E8F0"/>
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="30 Days:" Classes="Caption" Margin="0,0,8,0"/>
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Detail30DayUsage}" Classes="Body"/>
                         </Grid>
                     </StackPanel>
                 </Border>
             </Grid>
 
             <!-- ── INTERFACE COMPARISON & QUALITY DATA TABLE ───────────────────────── -->
-            <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="20">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="Network Interface Quality &amp; Dynamic Discovery" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
-
-                    <Border Background="#12131C" CornerRadius="6" Padding="12,8">
-                        <Grid ColumnDefinitions="100,100,80,130,150,100,100,80,80">
-                            <TextBlock Grid.Column="0" Text="Interface" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="1" Text="Type" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="2" Text="State" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="3" Text="IPv4 Address" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="4" Text="MAC Address" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="5" Text="Errors (RX/TX)" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="6" Text="Drops (RX/TX)" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="7" Text="Err Rate" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="8" Text="Drop Rate" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="Network Interfaces" Classes="SectionTitle" />
+                    <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="12,8">
+                        <Grid ColumnDefinitions="120,100,80,130,150,100,100,80,80">
+                            <TextBlock Grid.Column="0" Text="Interface" Classes="Caption" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="1" Text="Type" Classes="Caption" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="2" Text="State" Classes="Caption" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="3" Text="IPv4 Address" Classes="Caption" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="4" Text="MAC Address" Classes="Caption" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="5" Text="Errors (RX/TX)" Classes="Caption" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="6" Text="Drops (RX/TX)" Classes="Caption" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="7" Text="Err Rate" Classes="Caption" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="8" Text="Drop Rate" Classes="Caption" FontWeight="SemiBold"/>
                         </Grid>
                     </Border>
-
-                    <ScrollViewer Height="140" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Height="180" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding AllInterfaces}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="s:NetworkInterfaceStats">
-                                    <Border BorderBrush="#2A2C3D" BorderThickness="0,0,0,1" Padding="12,8">
-                                        <Grid ColumnDefinitions="100,100,80,130,150,100,100,80,80">
-                                            <TextBlock Grid.Column="0" Text="{Binding InterfaceName}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding ConnectionType}" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding State}" Foreground="#10B981" FontSize="12" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="3" Text="{Binding IPv4Address}" Foreground="#E2E8F0" FontSize="12" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="4" Text="{Binding MacAddress}" Foreground="#94A3B8" FontSize="12" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="5" Text="{Binding RxErrors, StringFormat='{}{0}'}" Foreground="#EF4444" FontSize="12" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="6" Text="{Binding RxDropped, StringFormat='{}{0}'}" Foreground="#F59E0B" FontSize="12" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="7" Text="{Binding PacketErrorRatePercentage, StringFormat='{}{0:F2}%'}" Foreground="#EF4444" FontSize="12" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="8" Text="{Binding PacketDropRatePercentage, StringFormat='{}{0:F2}%'}" Foreground="#F59E0B" FontSize="12" VerticalAlignment="Center"/>
+                                    <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="12,8">
+                                        <Grid ColumnDefinitions="120,100,80,130,150,100,100,80,80">
+                                            <TextBlock Grid.Column="0" Text="{Binding InterfaceName}" Classes="Body" FontWeight="Bold" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding ConnectionType}" Classes="Body" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding State}" Classes="Body" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding IPv4Address}" Classes="Body" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="4" Text="{Binding MacAddress}" Classes="Caption" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="5" Text="{Binding RxErrors, StringFormat='{}{0}'}" Classes="Body" Foreground="{DynamicResource Brush.Danger}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="6" Text="{Binding RxDropped, StringFormat='{}{0}'}" Classes="Body" Foreground="{DynamicResource Brush.Warning}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="7" Text="{Binding PacketErrorRatePercentage, StringFormat='{}{0:F2}%'}" Classes="Body" Foreground="{DynamicResource Brush.Danger}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="8" Text="{Binding PacketDropRatePercentage, StringFormat='{}{0:F2}%'}" Classes="Body" Foreground="{DynamicResource Brush.Warning}" VerticalAlignment="Center"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -276,39 +200,6 @@
                     </ScrollViewer>
                 </StackPanel>
             </Border>
-
-            <!-- ── SMART LIVE INSIGHTS ─────────────────────────────────────────────── -->
-            <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="20">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="⚡ Smart Live Network Insights" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
-                    <ItemsControl ItemsSource="{Binding SmartInsights}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="#12131C" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
-                                    <StackPanel Orientation="Horizontal" Spacing="10">
-                                        <TextBlock Text="💡" FontSize="14"/>
-                                        <TextBlock Text="{Binding}" FontSize="13" Foreground="#E2E8F0" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
-
-            <!-- ── DATA SOURCE FOOTER & PRIVACY INDICATOR ─────────────────────────── -->
-            <Border Background="#0F1017" CornerRadius="8" Padding="16">
-                <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-                        <TextBlock Text="Data Sources:" FontSize="11" Foreground="#64748B" FontWeight="Bold"/>
-                        <TextBlock Text="Network Speed: Linux /sys/class/net" FontSize="11" Foreground="#94A3B8"/>
-                        <TextBlock Text="•  Process Traffic: Linux nethogs" FontSize="11" Foreground="#94A3B8"/>
-                        <TextBlock Text="•  History: Local SQLite Store" FontSize="11" Foreground="#94A3B8"/>
-                    </StackPanel>
-                    <TextBlock Grid.Column="1" Text="🔒 100% Local-First • Zero Cloud Upload" FontSize="11" Foreground="#10B981" FontWeight="SemiBold"/>
-                </Grid>
-            </Border>
-
         </StackPanel>
     </ScrollViewer>
 </UserControl>

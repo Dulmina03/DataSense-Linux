@@ -4,64 +4,54 @@
              x:Class="DataSense.Views.PrivacyView"
              x:DataType="vm:PrivacyViewModel">
 
-    <UserControl.Styles>
-        <Style Selector="Border.card">
-            <Setter Property="Background" Value="#181824"/>
-            <Setter Property="BorderBrush" Value="#2A2A3D"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="20"/>
-        </Style>
-    </UserControl.Styles>
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
-        <StackPanel Spacing="20" MaxWidth="1000">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
+        <StackPanel Spacing="{DynamicResource Spacing.XL}">
             <!-- Header -->
             <StackPanel Spacing="4">
-                <TextBlock Text="🛡️ Privacy &amp; Data Lifecycle Management" FontSize="20" FontWeight="Bold" Foreground="#FFFFFF"/>
-                <TextBlock Text="DataSense keeps network telemetry strictly on this computer." FontSize="13" Foreground="#8888AA"/>
+                <TextBlock Text="🛡️ Privacy &amp; Data Lifecycle Management" Classes="PageTitle"/>
+                <TextBlock Text="DataSense keeps network telemetry strictly on this computer." Classes="BodySecondary"/>
             </StackPanel>
 
             <!-- 1. Local Data Policy -->
-            <Border Classes="card">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="🔒 Local-First Policy &amp; Storage" FontSize="15" FontWeight="Bold" Foreground="#00D2FF"/>
-                    <Separator Height="1" Background="#2A2A3D"/>
-                    <TextBlock Text="Your network usage history is stored locally in the DataSense SQLite database. DataSense operates 100% locally without cloud synchronization, remote tracking, account systems, or telemetry uploads." Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"/>
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="🔒 Local-First Policy &amp; Storage" Classes="SectionTitle" Foreground="{DynamicResource Brush.Download}"/>
+                    <Separator Background="{DynamicResource Brush.Border}"/>
+                    <TextBlock Text="Your network usage history is stored locally in the DataSense SQLite database. DataSense operates 100% locally without cloud synchronization, remote tracking, account systems, or telemetry uploads." Classes="Caption" TextWrapping="Wrap"/>
                     
                     <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
                         <StackPanel Grid.Column="0" Spacing="2">
-                            <TextBlock Text="Database Path" FontSize="12" FontWeight="SemiBold" Foreground="#8888AA"/>
-                            <TextBlock Text="{Binding DbPath}" FontSize="12" Foreground="#FFFFFF"/>
+                            <TextBlock Text="Database Path" Classes="Caption" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding DbPath}" Classes="Caption" Foreground="{DynamicResource Brush.TextPrimary}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
-                            <TextBlock Text="Database Size" FontSize="12" FontWeight="SemiBold" Foreground="#8888AA" HorizontalAlignment="Right"/>
-                            <TextBlock Text="{Binding DbSizeText}" FontSize="14" FontWeight="Bold" Foreground="#00E676" HorizontalAlignment="Right"/>
+                            <TextBlock Text="Database Size" Classes="Caption" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{Binding DbSizeText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" HorizontalAlignment="Right"/>
                         </StackPanel>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <!-- 2. External Network Access Transparency -->
-            <Border Classes="card">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="🌐 External Network Access Transparency" FontSize="15" FontWeight="Bold" Foreground="#FF9800"/>
-                    <Separator Height="1" Background="#2A2A3D"/>
-                    <TextBlock Text="DataSense contacts only external endpoints explicitly initiated by you for speed testing:" Foreground="#CCCCCC" FontSize="12"/>
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="🌐 External Network Access Transparency" Classes="SectionTitle" Foreground="{DynamicResource Brush.Warning}"/>
+                    <Separator Background="{DynamicResource Brush.Border}"/>
+                    <TextBlock Text="DataSense contacts only external endpoints explicitly initiated by you for speed testing:" Classes="Caption"/>
 
-                    <Border Background="#12121E" CornerRadius="6" Padding="12">
+                    <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="12">
                         <Grid ColumnDefinitions="140,*,180">
                             <StackPanel Grid.Column="0" Spacing="2">
-                                <TextBlock Text="Service" FontSize="11" FontWeight="Bold" Foreground="#8888AA"/>
-                                <TextBlock Text="Cloudflare CDN" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                <TextBlock Text="Service" Classes="Caption" FontWeight="Bold"/>
+                                <TextBlock Text="Cloudflare CDN" Classes="Body" FontWeight="SemiBold"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock Text="Purpose" FontSize="11" FontWeight="Bold" Foreground="#8888AA"/>
-                                <TextBlock Text="Internet speed testing (latency, download, upload)" FontSize="12" Foreground="#CCCCCC"/>
+                                <TextBlock Text="Purpose" Classes="Caption" FontWeight="Bold"/>
+                                <TextBlock Text="Internet speed testing (latency, download, upload)" Classes="Caption"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2" Spacing="2" HorizontalAlignment="Right">
-                                <TextBlock Text="When Used" FontSize="11" FontWeight="Bold" Foreground="#8888AA" HorizontalAlignment="Right"/>
-                                <TextBlock Text="Only when you click 'Start Test'" FontSize="12" Foreground="#00E676" HorizontalAlignment="Right"/>
+                                <TextBlock Text="When Used" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                <TextBlock Text="Only when you click 'Start Test'" Classes="Caption" Foreground="{DynamicResource Brush.Success}" HorizontalAlignment="Right"/>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -69,58 +59,58 @@
             </Border>
 
             <!-- 3. System Privileges & Security -->
-            <Border Classes="card">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="🔑 System Privileges &amp; Elevated Access" FontSize="15" FontWeight="Bold" Foreground="#8888FF"/>
-                    <Separator Height="1" Background="#2A2A3D"/>
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="🔑 System Privileges &amp; Elevated Access" Classes="SectionTitle" Foreground="{DynamicResource Brush.Accent}"/>
+                    <Separator Background="{DynamicResource Brush.Border}"/>
                     <Grid ColumnDefinitions="*,*">
                         <StackPanel Grid.Column="0" Spacing="6" Margin="0,0,10,0">
-                            <TextBlock Text="Interface &amp; Session Monitoring" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                            <TextBlock Text="Reads system counters from /proc/net/dev and /proc/net/route. Runs under standard user permissions without root." Foreground="#8888AA" FontSize="11" TextWrapping="Wrap"/>
+                            <TextBlock Text="Interface &amp; Session Monitoring" Classes="Body" FontWeight="SemiBold"/>
+                            <TextBlock Text="Reads system counters from /proc/net/dev and /proc/net/route. Runs under standard user permissions without root." Classes="Caption" TextWrapping="Wrap"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Spacing="6" Margin="10,0,0,0">
-                            <TextBlock Text="Per-Process Traffic Monitoring (nethogs)" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                            <TextBlock Text="{Binding ProcessCapabilityNotice}" Foreground="#8888AA" FontSize="11" TextWrapping="Wrap"/>
+                            <TextBlock Text="Per-Process Traffic Monitoring (nethogs)" Classes="Body" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding ProcessCapabilityNotice}" Classes="Caption" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <!-- 3.5 Session Timeline Storage -->
-            <Border Classes="card">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="⏱️ Session Timeline &amp; Intelligence" FontSize="15" FontWeight="Bold" Foreground="#38BDF8"/>
-                    <Separator Height="1" Background="#2A2A3D"/>
-                    <TextBlock Text="{Binding SessionTimelineDisclosure}" Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"/>
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="⏱️ Session Timeline &amp; Intelligence" Classes="SectionTitle" Foreground="{DynamicResource Brush.Download}"/>
+                    <Separator Background="{DynamicResource Brush.Border}"/>
+                    <TextBlock Text="{Binding SessionTimelineDisclosure}" Classes="Caption" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
 
             <!-- 3.6 Application Intelligence -->
-            <Border Classes="card">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="🧠 Application Historical Intelligence" FontSize="15" FontWeight="Bold" Foreground="#E040FB"/>
-                    <Separator Height="1" Background="#2A2A3D"/>
-                    <TextBlock Text="{Binding ApplicationIntelligenceDisclosure}" Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"/>
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="🧠 Application Historical Intelligence" Classes="SectionTitle" Foreground="{DynamicResource Brush.Upload}"/>
+                    <Separator Background="{DynamicResource Brush.Border}"/>
+                    <TextBlock Text="{Binding ApplicationIntelligenceDisclosure}" Classes="Caption" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
 
             <!-- 4. Data Lifecycle & Retention -->
-            <Border Classes="card">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="🧹 Data Lifecycle &amp; Retention Settings" FontSize="15" FontWeight="Bold" Foreground="#FF5252"/>
-                    <Separator Height="1" Background="#2A2A3D"/>
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="🧹 Data Lifecycle &amp; Retention Settings" Classes="SectionTitle" Foreground="{DynamicResource Brush.Danger}"/>
+                    <Separator Background="{DynamicResource Brush.Border}"/>
                     
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="Automatic Purge Threshold (Days)" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                            <TextBlock Text="Remove raw telemetry records older than the selected retention period." FontSize="11" Foreground="#8888AA"/>
+                            <TextBlock Text="Automatic Purge Threshold (Days)" Classes="Body" FontWeight="SemiBold"/>
+                            <TextBlock Text="Remove raw telemetry records older than the selected retention period." Classes="Caption"/>
                         </StackPanel>
-                        <NumericUpDown Grid.Column="1" Value="{Binding RetentionDays}" Minimum="7" Maximum="365" Increment="7" Width="140" FontSize="12"/>
+                        <NumericUpDown Grid.Column="1" Value="{Binding RetentionDays}" Minimum="7" Maximum="365" Increment="7" Width="140" VerticalAlignment="Center"/>
                     </Grid>
 
                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
-                        <Button Content="Purge Old Telemetry Now" Command="{Binding PurgeOldDataCommand}" IsEnabled="{Binding !IsPurging}" Background="#FF5252" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12" Padding="14,8"/>
-                        <TextBlock Text="{Binding StatusMessage}" Foreground="#00E676" FontSize="12" VerticalAlignment="Center"/>
+                        <Button Content="Purge Old Telemetry Now" Command="{Binding PurgeOldDataCommand}" IsEnabled="{Binding !IsPurging}" Classes="Primary" Background="{DynamicResource Brush.Danger}" Foreground="{DynamicResource Brush.Surface}"/>
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource Brush.Success}" Classes="Caption" VerticalAlignment="Center"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

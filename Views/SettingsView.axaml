@@ -1,134 +1,128 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DataSense.ViewModels"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="600"
              x:Class="DataSense.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
     
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="16">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
+        <StackPanel Spacing="{DynamicResource Spacing.XL}">
             <!-- Global Description -->
-            <TextBlock Text="Modify DataSense application behavior and threshold boundaries." 
-                       FontSize="13" 
-                       Foreground="#888888" 
-                       Margin="0,0,0,8" />
+            <TextBlock Text="Modify DataSense application behavior and threshold boundaries." Classes="BodySecondary" Margin="0,0,0,8" />
 
             <!-- Group 1: General Settings -->
-            <Border Background="#1A1A1A" BorderBrush="#222222" BorderThickness="1" CornerRadius="8" Padding="20">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="General Configuration" FontSize="14" FontWeight="Bold" Foreground="#007ACC" />
-                    <Separator Height="1" Background="#242424" />
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="General Configuration" Classes="SectionTitle" Foreground="{DynamicResource Brush.Accent}" />
+                    <Separator Background="{DynamicResource Brush.Border}" />
 
                     <!-- Theme Setting -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="Application Theme" FontSize="13" FontWeight="SemiBold" Foreground="#E0E0E0" />
-                            <TextBlock Text="Choose the visual appearance style of the desktop interface." FontSize="11" Foreground="#666666" />
+                            <TextBlock Text="Application Theme" Classes="Body" FontWeight="SemiBold" />
+                            <TextBlock Text="Choose the visual appearance style of the desktop interface." Classes="Caption" />
                         </StackPanel>
-                        <ComboBox Grid.Column="1" SelectedIndex="0" Width="160" FontSize="12">
+                        <ComboBox Grid.Column="1" SelectedIndex="0" Width="160">
                             <ComboBoxItem Content="Fluent Dark (Default)" />
                             <ComboBoxItem Content="Fluent Light" />
                             <ComboBoxItem Content="System Sync" />
                         </ComboBox>
                     </Grid>
                     
-                    <Separator Height="1" Background="#242424" />
+                    <Separator Background="{DynamicResource Brush.Border}" />
 
                     <!-- Storage Setting -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="Data Storage Location" FontSize="13" FontWeight="SemiBold" Foreground="#E0E0E0" />
-                            <TextBlock Text="The absolute path where the local SQLite database resides." FontSize="11" Foreground="#666666" />
+                            <TextBlock Text="Data Storage Location" Classes="Body" FontWeight="SemiBold" />
+                            <TextBlock Text="The absolute path where the local SQLite database resides." Classes="Caption" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                            <TextBox Text="~/.config/datasense/datasense.db" IsReadOnly="True" Width="240" FontSize="11" Background="#141414" BorderBrush="#333333" VerticalContentAlignment="Center" />
-                            <Button Content="Browse..." IsEnabled="False" FontSize="11" VerticalAlignment="Center" />
+                            <TextBox Text="~/.config/datasense/datasense.db" IsReadOnly="True" Width="240" VerticalContentAlignment="Center" />
+                            <Button Content="Browse..." IsEnabled="False" Classes="Secondary" VerticalAlignment="Center" />
                         </StackPanel>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <!-- Group 2: Data Budget & Forecasting Configuration -->
-            <Border Background="#1A1A1A" BorderBrush="#222222" BorderThickness="1" CornerRadius="8" Padding="20">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="Data Budget &amp; Forecasting Configuration" FontSize="14" FontWeight="Bold" Foreground="#007ACC" />
-                    <TextBlock Text="Set monthly or daily bandwidth allowances to track usage pace and receive intelligent overage warnings." FontSize="11" Foreground="#666666" />
-                    <Separator Height="1" Background="#242424" />
+            <Border Classes="Card">
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                    <TextBlock Text="Data Budget &amp; Forecasting Configuration" Classes="SectionTitle" Foreground="{DynamicResource Brush.Accent}" />
+                    <TextBlock Text="Set monthly or daily bandwidth allowances to track usage pace and receive intelligent overage warnings." Classes="Caption" />
+                    <Separator Background="{DynamicResource Brush.Border}" />
 
                     <!-- Monthly Budget Toggle & Limit -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="Enable Monthly Data Budget" FontSize="13" FontWeight="SemiBold" Foreground="#E0E0E0" />
-                            <TextBlock Text="Set a target monthly data cap to monitor percentage used and projected exhaustion date." FontSize="11" Foreground="#666666" />
+                            <TextBlock Text="Enable Monthly Data Budget" Classes="Body" FontWeight="SemiBold" />
+                            <TextBlock Text="Set a target monthly data cap to monitor percentage used and projected exhaustion date." Classes="Caption" />
                         </StackPanel>
-                        <CheckBox Grid.Column="1" IsChecked="{Binding BudgetEnabled}" Content="Active" FontSize="12" Foreground="#E0E0E0" VerticalAlignment="Center"/>
+                        <CheckBox Grid.Column="1" IsChecked="{Binding BudgetEnabled}" Content="Active" VerticalAlignment="Center"/>
                     </Grid>
 
                     <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding BudgetEnabled}">
                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="Monthly Allowance (GB)" FontSize="13" FontWeight="SemiBold" Foreground="#CCCCEE" />
-                            <TextBlock Text="Total data limit allocated for the calendar month." FontSize="11" Foreground="#666666" />
+                            <TextBlock Text="Monthly Allowance (GB)" Classes="Body" FontWeight="SemiBold" />
+                            <TextBlock Text="Total data limit allocated for the calendar month." Classes="Caption" />
                         </StackPanel>
-                        <NumericUpDown Grid.Column="1" Value="{Binding MonthlyLimitGb}" Minimum="1" Maximum="10000" Increment="10" Width="160" FontSize="12" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" Value="{Binding MonthlyLimitGb}" Minimum="1" Maximum="10000" Increment="10" Width="160" VerticalAlignment="Center" />
                     </Grid>
 
-                    <Separator Height="1" Background="#242424" />
+                    <Separator Background="{DynamicResource Brush.Border}" />
 
                     <!-- Daily Budget Toggle & Limit -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="Enable Optional Daily Budget" FontSize="13" FontWeight="SemiBold" Foreground="#E0E0E0" />
-                            <TextBlock Text="Monitor daily usage bursts against a daily limit boundary." FontSize="11" Foreground="#666666" />
+                            <TextBlock Text="Enable Optional Daily Budget" Classes="Body" FontWeight="SemiBold" />
+                            <TextBlock Text="Monitor daily usage bursts against a daily limit boundary." Classes="Caption" />
                         </StackPanel>
-                        <CheckBox Grid.Column="1" IsChecked="{Binding DailyBudgetEnabled}" Content="Active" FontSize="12" Foreground="#E0E0E0" VerticalAlignment="Center"/>
+                        <CheckBox Grid.Column="1" IsChecked="{Binding DailyBudgetEnabled}" Content="Active" VerticalAlignment="Center"/>
                     </Grid>
 
                     <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding DailyBudgetEnabled}">
                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="Daily Allowance (GB)" FontSize="13" FontWeight="SemiBold" Foreground="#CCCCEE" />
-                            <TextBlock Text="Maximum recommended daily download/upload total." FontSize="11" Foreground="#666666" />
+                            <TextBlock Text="Daily Allowance (GB)" Classes="Body" FontWeight="SemiBold" />
+                            <TextBlock Text="Maximum recommended daily download/upload total." Classes="Caption" />
                         </StackPanel>
-                        <NumericUpDown Grid.Column="1" Value="{Binding DailyLimitGb}" Minimum="0.5" Maximum="500" Increment="1" Width="160" FontSize="12" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" Value="{Binding DailyLimitGb}" Minimum="0.5" Maximum="500" Increment="1" Width="160" VerticalAlignment="Center" />
                     </Grid>
 
-                    <Separator Height="1" Background="#242424" />
+                    <Separator Background="{DynamicResource Brush.Border}" />
 
                     <!-- Threshold Percentages -->
                     <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding BudgetEnabled}">
                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="Warning Threshold (%)" FontSize="13" FontWeight="SemiBold" Foreground="#FF9800" />
-                            <TextBlock Text="Percentage of allowance at which a warning status is triggered." FontSize="11" Foreground="#666666" />
+                            <TextBlock Text="Warning Threshold (%)" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Warning}" />
+                            <TextBlock Text="Percentage of allowance at which a warning status is triggered." Classes="Caption" />
                         </StackPanel>
-                        <NumericUpDown Grid.Column="1" Value="{Binding WarningThreshold}" Minimum="50" Maximum="95" Increment="5" Width="160" FontSize="12" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" Value="{Binding WarningThreshold}" Minimum="50" Maximum="95" Increment="5" Width="160" VerticalAlignment="Center" />
                     </Grid>
 
                     <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding BudgetEnabled}">
                         <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="Critical Threshold (%)" FontSize="13" FontWeight="SemiBold" Foreground="#FF5252" />
-                            <TextBlock Text="Percentage of allowance at which critical overage alerts trigger." FontSize="11" Foreground="#666666" />
+                            <TextBlock Text="Critical Threshold (%)" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Danger}" />
+                            <TextBlock Text="Percentage of allowance at which critical overage alerts trigger." Classes="Caption" />
                         </StackPanel>
-                        <NumericUpDown Grid.Column="1" Value="{Binding CriticalThreshold}" Minimum="60" Maximum="99" Increment="5" Width="160" FontSize="12" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" Value="{Binding CriticalThreshold}" Minimum="60" Maximum="99" Increment="5" Width="160" VerticalAlignment="Center" />
                     </Grid>
 
-                    <Separator Height="1" Background="#242424" IsVisible="{Binding BudgetEnabled}" />
+                    <Separator Background="{DynamicResource Brush.Border}" IsVisible="{Binding BudgetEnabled}" />
 
                     <!-- Action buttons & feedback -->
                     <StackPanel Spacing="8">
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <Button Content="Save Budget Settings" Command="{Binding SaveBudgetCommand}" IsEnabled="{Binding !IsSaving}" Background="#007ACC" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12" Padding="14,8" />
-                            <Button Content="Disable Budget" Command="{Binding DisableBudgetCommand}" IsEnabled="{Binding !IsSaving}" Background="#2A2A2A" Foreground="#FF8888" FontSize="12" Padding="14,8" />
+                            <Button Content="Save Budget Settings" Command="{Binding SaveBudgetCommand}" IsEnabled="{Binding !IsSaving}" Classes="Primary" />
+                            <Button Content="Disable Budget" Command="{Binding DisableBudgetCommand}" IsEnabled="{Binding !IsSaving}" Classes="Secondary" Foreground="{DynamicResource Brush.Danger}" />
                         </StackPanel>
-                        <TextBlock Text="{Binding SaveStatusText}" Foreground="#00E676" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding SaveStatusText}" Foreground="{DynamicResource Brush.Success}" Classes="Caption" FontWeight="SemiBold" VerticalAlignment="Center" />
                     </StackPanel>
                 </StackPanel>
             </Border>
 
             <!-- Save Bar -->
             <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0" Text="Changes are automatically applied locally." VerticalAlignment="Center" Foreground="#555555" FontSize="11" />
-                <Button Grid.Column="1" Content="Reset Default Settings" IsEnabled="False" FontSize="11" Padding="12,6" />
+                <TextBlock Grid.Column="0" Text="Changes are automatically applied locally." Classes="Caption" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Content="Reset Default Settings" IsEnabled="False" Classes="Secondary" />
             </Grid>
         </StackPanel>
     </ScrollViewer>
