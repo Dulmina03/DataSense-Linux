@@ -160,6 +160,10 @@ public partial class ApplicationAnalyticsService
             _profileCache = new CacheEntry<IReadOnlyList<ApplicationHistoricalProfile>>(
                 result, DateTimeOffset.UtcNow.Add(_profileCacheTtl));
         }
+
+        // Publish events for notable conditions (fire-and-forget; never throws)
+        PublishAnalyticsEvents(result);
+
         return result;
     }
 

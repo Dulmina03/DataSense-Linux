@@ -98,4 +98,12 @@ public interface IApplicationAnalyticsService
     /// </summary>
     Task<ApplicationTrendComparison> GetApplicationTrendAsync(
         string processName, int pid, long startTimeTicks);
+
+    /// <summary>
+    /// Returns applications ranked by highest positive trend percentage (fastest-growing).
+    /// Only includes applications with HasSufficientData and a valid TrendPercentage.
+    /// Secondary sort: ProcessName ascending for determinism.
+    /// </summary>
+    Task<IEnumerable<ApplicationHistoricalProfile>> GetFastestGrowingApplicationsAsync(
+        int limit = 10);
 }
