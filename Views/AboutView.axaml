@@ -48,12 +48,12 @@
         </StackPanel>
 
         <!-- Graphic Emblem (Right Side) -->
-        <Border Grid.Column="1" Width="180" Height="180" Background="#1A1A1A" BorderBrush="#242424" BorderThickness="1" CornerRadius="12" Margin="40,0,0,0" VerticalAlignment="Top">
+        <Border Grid.Column="1" Width="180" Height="180" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Margin="40,0,0,0" VerticalAlignment="Top">
             <Grid>
                 <!-- Stylized decorative C# cube outline representing the core app engine -->
-                <TextBlock Text="DS" FontSize="72" FontWeight="Black" Foreground="#222222" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                <Ellipse Width="100" Height="100" Stroke="#007ACC" StrokeThickness="4" Opacity="0.5" />
-                <Ellipse Width="80" Height="80" Stroke="#FF8C00" StrokeThickness="2" Opacity="0.25" />
+                <TextBlock Text="DS" FontSize="72" FontWeight="Black" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Ellipse Width="100" Height="100" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="4" Opacity="0.5" />
+                <Ellipse Width="80" Height="80" Stroke="{DynamicResource Brush.Warning}" StrokeThickness="2" Opacity="0.25" />
             </Grid>
         </Border>
     </Grid>

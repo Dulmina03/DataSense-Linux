@@ -3,7 +3,8 @@
              xmlns:vm="using:DataSense.ViewModels"
              xmlns:models="using:DataSense.Models"
              x:Class="DataSense.Views.DiagnosticsView"
-             x:DataType="vm:DiagnosticsViewModel">
+             x:DataType="vm:DiagnosticsViewModel"
+             xmlns:conv="using:DataSense.Converters">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
         <StackPanel Spacing="{DynamicResource Spacing.XL}">
@@ -14,7 +15,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <TextBlock Text="🛠️ Diagnostics &amp; Troubleshooting Center" Classes="PageTitle"/>
                             <Border Classes="Badge">
-                                <TextBlock Text="{Binding OverallStatusText}" Foreground="{Binding OverallStatusColor}" Classes="Body" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding OverallStatusText}" Foreground="{Binding OverallStatusColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" Classes="Body" FontWeight="Bold"/>
                             </Border>
                         </StackPanel>
                         <TextBlock Text="Inspect component operational states, capability diagnostics, and recovery recommendations." Classes="BodySecondary"/>

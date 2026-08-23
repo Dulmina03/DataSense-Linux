@@ -3,7 +3,8 @@
              xmlns:vm="using:DataSense.ViewModels"
              xmlns:models="using:DataSense.Models"
              x:Class="DataSense.Views.PerformanceView"
-             x:DataType="vm:PerformanceViewModel">
+             x:DataType="vm:PerformanceViewModel"
+             xmlns:conv="using:DataSense.Converters">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
         <StackPanel Spacing="{DynamicResource Spacing.XL}">
@@ -15,7 +16,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <TextBlock Text="⚡ Performance &amp; Resource Monitor" Classes="PageTitle"/>
                             <Border Classes="Badge">
-                                <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor}" Classes="Body" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" Classes="Body" FontWeight="SemiBold"/>
                             </Border>
                         </StackPanel>
                         <TextBlock Text="Real-time DataSense process CPU, working set, thread counts, and operation latencies." Classes="BodySecondary"/>

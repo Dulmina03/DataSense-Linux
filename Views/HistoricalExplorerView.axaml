@@ -88,7 +88,7 @@
                         <Border Grid.Column="3" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="12,8" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="Change:" Classes="Caption"/>
-                                <TextBlock Text="{Binding CompareChangeText}" Foreground="{Binding CompareChangeColor}" Classes="Body" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding CompareChangeText}" Foreground="{Binding CompareChangeColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" Classes="Body" FontWeight="Bold"/>
                             </StackPanel>
                         </Border>
                     </Grid>

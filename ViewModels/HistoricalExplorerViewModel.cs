@@ -88,7 +88,7 @@ public partial class HistoricalExplorerViewModel : ViewModelBase
     [ObservableProperty] private string _compareCurrentTotal  = "—";
     [ObservableProperty] private string _comparePreviousTotal = "—";
     [ObservableProperty] private string _compareChangeText    = "—";
-    [ObservableProperty] private string _compareChangeColor   = "#888899";
+    [ObservableProperty] private string _compareChangeColor   = "Muted";
     [ObservableProperty] private bool   _hasComparison        = false;
 
     // ── Drill Level ──────────────────────────────────────────────────────────
@@ -267,7 +267,7 @@ public partial class HistoricalExplorerViewModel : ViewModelBase
                     ComparePreviousTotal = ByteFormatter.FormatBytes(cmp.PeriodBTotal);
                     var pct              = cmp.TotalChangePct;
                     CompareChangeText    = pct >= 0 ? $"+{pct:F1}%" : $"{pct:F1}%";
-                    CompareChangeColor   = pct >= 0 ? "#FF6B6B" : "#00E676";
+                    CompareChangeColor   = pct >= 0 ? "Danger" : "Success";
                 }
                 else HasComparison = false;
 

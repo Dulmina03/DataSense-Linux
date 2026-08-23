@@ -42,7 +42,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _totalDownloadedText = "0 B";
     [ObservableProperty] private string _totalUploadedText   = "0 B";
     [ObservableProperty] private string _statusText          = "Standby";
-    [ObservableProperty] private string _statusDotColor      = "#555566"; // grey until connected
+    [ObservableProperty] private string _statusDotColor      = "Muted"; // grey until connected
     [ObservableProperty] private string _topActiveProcessText = "None";
 
     [RelayCommand]
@@ -80,7 +80,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _todayUploadedText     = "—";
     [ObservableProperty] private string _todayTotalText        = "—";
     [ObservableProperty] private string _todayVsYesterdayText  = "—";   // e.g. "+12%" / "-5%"
-    [ObservableProperty] private string _todayDeltaColor       = "#888899"; // green / red / neutral
+    [ObservableProperty] private string _todayDeltaColor       = "Muted"; // green / red / neutral
     [ObservableProperty] private bool   _hasTodayDelta         = false;
 
     // ── Yesterday summary properties ────────────────────────────────────────
@@ -202,7 +202,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _budgetRemainingText  = "—";
     [ObservableProperty] private string _budgetUsedPctText    = "—";
     [ObservableProperty] private string _budgetStatusText     = "—";
-    [ObservableProperty] private string _budgetStatusColor    = "#888899";
+    [ObservableProperty] private string _budgetStatusColor    = "Muted";
     [ObservableProperty] private double _budgetProgressValue  = 0;
     [ObservableProperty] private string _budgetExhaustionText = "—";
     [ObservableProperty] private string _budgetPaceText       = "—";
@@ -210,7 +210,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _dailyBudgetUsedText  = "—";
     [ObservableProperty] private string _dailyBudgetLimitText = "—";
     [ObservableProperty] private string _dailyBudgetStatusText = "—";
-    [ObservableProperty] private string _dailyBudgetStatusColor = "#888899";
+    [ObservableProperty] private string _dailyBudgetStatusColor = "Muted";
 
     // ── Usage Patterns & Anomaly Detection ──────────────────────────────────
 
@@ -479,7 +479,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         TotalDownloadedText = ByteFormatter.FormatBytes(bytesReceived);
         TotalUploadedText   = ByteFormatter.FormatBytes(bytesSent);
         StatusText          = isConnected ? "Monitoring" : "Offline";
-        StatusDotColor      = isConnected ? "#00E676" : "#555566";
+        StatusDotColor      = isConnected ? "Success" : "Muted";
 
         var current = _sessionManager.CurrentSession;
         if (current != null)
@@ -540,14 +540,14 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
             // Delta percentage vs yesterday
             string deltaText  = "—";
-            string deltaColor = "#888899";
+            string deltaColor = "Muted";
             bool   hasDelta   = false;
             if (hasYesterday && yesterdayTotal > 0)
             {
                 double pct = (todayTotal - yesterdayTotal) / (double)yesterdayTotal * 100.0;
                 string sign = pct >= 0 ? "+" : "";
                 deltaText  = $"{sign}{pct:F0}% vs yesterday";
-                deltaColor = pct >= 0 ? "#FF9800" : "#00E676"; // orange = higher, green = lower
+                deltaColor = pct >= 0 ? "Warning" : "Success"; // orange = higher, green = lower
                 hasDelta   = true;
             }
 
@@ -1121,7 +1121,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                         DailyBudgetLimitText = ByteFormatter.FormatBytes(budgetResult.DailyLimitBytes);
                         bool dailyOk = budgetResult.TodayUsedBytes <= budgetResult.DailyLimitBytes;
                         DailyBudgetStatusText  = dailyOk ? "✅ Within daily limit" : "❌ Daily limit exceeded";
-                        DailyBudgetStatusColor = dailyOk ? "#00E676" : "#FF5252";
+                        DailyBudgetStatusColor = dailyOk ? "Success" : "Danger";
                     }
                 }
             });

@@ -21,7 +21,7 @@
                             <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}" Margin="0,16,0,0">
                                 <Border Classes="Badge">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <Ellipse Width="8" Height="8" Fill="{Binding StatusDotColor}" VerticalAlignment="Center"/>
+                                        <Ellipse Width="8" Height="8" Fill="{Binding StatusDotColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" VerticalAlignment="Center"/>
                                         <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Brush.TextPrimary}" />
                                     </StackPanel>
                                 </Border>

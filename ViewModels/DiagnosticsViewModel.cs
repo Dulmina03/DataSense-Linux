@@ -17,7 +17,7 @@ public partial class DiagnosticsViewModel : ViewModelBase
 
     [ObservableProperty] private bool   _isLoading = false;
     [ObservableProperty] private string _overallStatusText = "Optimal";
-    [ObservableProperty] private string _overallStatusColor = "#00E676";
+    [ObservableProperty] private string _overallStatusColor = "Success";
 
     public ObservableCollection<DiagnosticComponent> Components { get; } = new();
 
@@ -56,17 +56,17 @@ public partial class DiagnosticsViewModel : ViewModelBase
                 if (hasError)
                 {
                     OverallStatusText  = "Degraded / Attention Required";
-                    OverallStatusColor = "#FF5252";
+                    OverallStatusColor = "Danger";
                 }
                 else if (hasDegraded)
                 {
                     OverallStatusText  = "Operational (Some features unavailable)";
-                    OverallStatusColor = "#FF9800";
+                    OverallStatusColor = "Warning";
                 }
                 else
                 {
                     OverallStatusText  = "All Subsystems Healthy";
-                    OverallStatusColor = "#00E676";
+                    OverallStatusColor = "Success";
                 }
             });
         }
@@ -75,7 +75,7 @@ public partial class DiagnosticsViewModel : ViewModelBase
             Dispatcher.UIThread.Post(() =>
             {
                 OverallStatusText  = $"Diagnostic query failed: {ex.Message}";
-                OverallStatusColor = "#FF5252";
+                OverallStatusColor = "Danger";
             });
         }
         finally

@@ -188,7 +188,7 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _peakHourBytesText     = "—";
     [ObservableProperty] private string _rankText              = "—";
     [ObservableProperty] private string _trendBadgeText        = "—";
-    [ObservableProperty] private string _trendBadgeColor       = "#888899";
+    [ObservableProperty] private string _trendBadgeColor       = "Muted";
     [ObservableProperty] private string _surgeText             = string.Empty;
     [ObservableProperty] private bool   _isUsageSurging        = false;
     [ObservableProperty] private bool   _hasSufficientHistory  = false;
@@ -197,7 +197,7 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _todayVsYesterdayText  = "—";
     // Comparison: 7-day vs prev 7-day
     [ObservableProperty] private string _sevenDayComparisonText = "—";
-    [ObservableProperty] private string _sevenDayComparisonColor = "#888899";
+    [ObservableProperty] private string _sevenDayComparisonColor = "Muted";
 
     // Application Intelligence & Smart Recommendations
     [ObservableProperty] private ApplicationUsageProfile? _currentProfile;
@@ -579,10 +579,10 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
                     // Trend badge
                     (TrendBadgeText, TrendBadgeColor) = histProfile.TrendState switch
                     {
-                        "Increasing"       => (histProfile.TrendPercentage.HasValue ? $"↗ +{histProfile.TrendPercentage.Value:F1}%" : "↗ Increasing", "#FF9800"),
-                        "Decreasing"       => (histProfile.TrendPercentage.HasValue ? $"↘ {histProfile.TrendPercentage.Value:F1}%"  : "↘ Decreasing", "#00E676"),
-                        "Stable"           => ("→ Stable", "#888899"),
-                        _                  => ("— Insufficient Data", "#555577")
+                        "Increasing"       => (histProfile.TrendPercentage.HasValue ? $"↗ +{histProfile.TrendPercentage.Value:F1}%" : "↗ Increasing", "Warning"),
+                        "Decreasing"       => (histProfile.TrendPercentage.HasValue ? $"↘ {histProfile.TrendPercentage.Value:F1}%"  : "↘ Decreasing", "Success"),
+                        "Stable"           => ("→ Stable", "Muted"),
+                        _                  => ("— Insufficient Data", "Muted")
                     };
 
                     // Surge
@@ -607,12 +607,12 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
                         double pct = histProfile.TrendPercentage.Value;
                         string arrow = pct > 0 ? "↑" : pct < 0 ? "↓" : "→";
                         SevenDayComparisonText  = $"{arrow} {Math.Abs(pct):F1}% vs previous 7 days";
-                        SevenDayComparisonColor = pct > 10 ? "#FF9800" : pct < -10 ? "#00E676" : "#888899";
+                        SevenDayComparisonColor = pct > 10 ? "Warning" : pct < -10 ? "Success" : "Muted";
                     }
                     else
                     {
                         SevenDayComparisonText  = "Insufficient history for comparison";
-                        SevenDayComparisonColor = "#555577";
+                        SevenDayComparisonColor = "Muted";
                     }
 
                     // Today vs Yesterday
@@ -647,12 +647,12 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
                     PeakHourText          = "—";
                     PeakHourBytesText     = "—";
                     TrendBadgeText        = "— Insufficient Data";
-                    TrendBadgeColor       = "#555577";
+                    TrendBadgeColor       = "Muted";
                     RankText              = "—";
                     SurgeText             = string.Empty;
                     IsUsageSurging        = false;
                     SevenDayComparisonText  = "Insufficient history";
-                    SevenDayComparisonColor = "#555577";
+                    SevenDayComparisonColor = "Muted";
                     TodayVsYesterdayText    = "—";
                 }
 

@@ -14,8 +14,10 @@
             <SolidColorBrush x:Key="Brush.TextPrimary">#FFFFFF</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.TextSecondary">#B0B0B0</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.TextMuted">#777777</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.TextDisabled">#555555</SolidColorBrush>
             
             <SolidColorBrush x:Key="Brush.Accent">#007ACC</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.AccentHover">#0098FF</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Success">#4CAF50</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Warning">#FFC107</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Danger">#F44336</SolidColorBrush>
@@ -38,8 +40,10 @@
             <SolidColorBrush x:Key="Brush.TextPrimary">#111111</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.TextSecondary">#555555</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.TextMuted">#888888</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.TextDisabled">#AAAAAA</SolidColorBrush>
             
             <SolidColorBrush x:Key="Brush.Accent">#005A9E</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.AccentHover">#0078D4</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Success">#2E7D32</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Warning">#F57F17</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Danger">#C62828</SolidColorBrush>
