@@ -87,7 +87,7 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate DataType="m:NetworkSessionItem">
                                                 <Button Command="{Binding $parent[UserControl].((vm:NetworkActivityTimelineViewModel)DataContext).SelectSessionCommand}" CommandParameter="{Binding}" Classes="Ghost" HorizontalAlignment="Stretch" Padding="0" Margin="0,0,0,8">
-                                                    <Border Classes="CardInteractive" Padding="16" HorizontalAlignment="Stretch">
+                                                    <Border Classes="MetricSurface" Padding="16" HorizontalAlignment="Stretch">
                                                         <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
                                                             <!-- Line 1: Network Name & Status Badge -->
                                                             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}">
@@ -108,15 +108,15 @@
                                                             <!-- Line 3: Usage -->
                                                             <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*">
                                                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
-                                                                    <TextBlock Text="↓" Foreground="{DynamicResource Brush.Download}" FontSize="11" VerticalAlignment="Center"/>
+                                                                    <TextBlock Text="↓" Foreground="{DynamicResource Brush.Download}" Classes="Caption" VerticalAlignment="Center"/>
                                                                     <TextBlock Text="{Binding FormattedDownload}" Foreground="{DynamicResource Brush.TextPrimary}" Classes="MetricSmall" />
                                                                 </StackPanel>
                                                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                                                                    <TextBlock Text="↑" Foreground="{DynamicResource Brush.Upload}" FontSize="11" VerticalAlignment="Center"/>
+                                                                    <TextBlock Text="↑" Foreground="{DynamicResource Brush.Upload}" Classes="Caption" VerticalAlignment="Center"/>
                                                                     <TextBlock Text="{Binding FormattedUpload}" Foreground="{DynamicResource Brush.TextPrimary}" Classes="MetricSmall" />
                                                                 </StackPanel>
                                                                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
-                                                                    <TextBlock Text="Σ" Foreground="{DynamicResource Brush.Accent}" FontSize="11" VerticalAlignment="Center"/>
+                                                                    <TextBlock Text="Σ" Foreground="{DynamicResource Brush.Accent}" Classes="Caption" VerticalAlignment="Center"/>
                                                                     <TextBlock Text="{Binding FormattedTotal}" Foreground="{DynamicResource Brush.TextPrimary}" Classes="MetricSmall" />
                                                                 </StackPanel>
                                                             </Grid>

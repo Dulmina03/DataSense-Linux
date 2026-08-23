@@ -58,11 +58,11 @@
                         <!-- Table Header -->
                         <Border Grid.Row="0" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Background="{DynamicResource Brush.SurfaceHover}" Padding="16,12">
                             <Grid ColumnDefinitions="*,120,100,120,100">
-                                <Button Grid.Column="0" Content="APPLICATION" Command="{Binding SortCommand}" CommandParameter="Name" Classes="Ghost" HorizontalAlignment="Left" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" FontWeight="SemiBold" />
-                                <Button Grid.Column="1" Content="TOTAL USAGE" Command="{Binding SortCommand}" CommandParameter="Total" Classes="Ghost" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" FontWeight="SemiBold" />
-                                <Button Grid.Column="2" Content="SHARE" Command="{Binding SortCommand}" CommandParameter="Percentage" Classes="Ghost" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" FontWeight="SemiBold" />
-                                <Button Grid.Column="3" Content="TREND" Command="{Binding SortCommand}" CommandParameter="Trend" Classes="Ghost" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" FontWeight="SemiBold" />
-                                <Button Grid.Column="4" Content="STATUS" Command="{Binding SortCommand}" CommandParameter="Status" Classes="Ghost" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" FontWeight="SemiBold" />
+                                <Button Grid.Column="0" Content="APPLICATION" Command="{Binding SortCommand}" CommandParameter="Name" Classes="Ghost" HorizontalAlignment="Left" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" />
+                                <Button Grid.Column="1" Content="TOTAL USAGE" Command="{Binding SortCommand}" CommandParameter="Total" Classes="Ghost" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" />
+                                <Button Grid.Column="2" Content="SHARE" Command="{Binding SortCommand}" CommandParameter="Percentage" Classes="Ghost" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" />
+                                <Button Grid.Column="3" Content="TREND" Command="{Binding SortCommand}" CommandParameter="Trend" Classes="Ghost" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" />
+                                <Button Grid.Column="4" Content="STATUS" Command="{Binding SortCommand}" CommandParameter="Status" Classes="Ghost" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" />
                             </Grid>
                         </Border>
 
@@ -85,10 +85,10 @@
 
                                                 <TextBlock Grid.Column="2" Text="{Binding PercentageOfTotal, StringFormat=\{0:F1\}%}" Classes="BodySecondary" VerticalAlignment="Center" HorizontalAlignment="Right"/>
 
-                                                <TextBlock Grid.Column="3" Text="{Binding CombinedTrend}" Foreground="{Binding CombinedTrend, Converter={x:Static conv:TrendColorConverter.Instance}}" VerticalAlignment="Center" FontSize="12" HorizontalAlignment="Right" FontWeight="Medium"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding CombinedTrend}" Foreground="{Binding CombinedTrend, Converter={x:Static conv:TrendColorConverter.Instance}}" VerticalAlignment="Center" Classes="Caption" HorizontalAlignment="Right" FontWeight="Medium"/>
 
                                                 <Border Grid.Column="4" HorizontalAlignment="Right" CornerRadius="{DynamicResource Radius.Small}" Padding="8,4" Background="{Binding IsCurrentlyRunning, Converter={x:Static conv:RunningStatusBgConverter.Instance}}">
-                                                    <TextBlock Text="{Binding IsCurrentlyRunning, Converter={x:Static conv:RunningStatusTextConverter.Instance}}" Foreground="{Binding IsCurrentlyRunning, Converter={x:Static conv:RunningStatusColorConverter.Instance}}" FontSize="10" FontWeight="Bold" LetterSpacing="0.5"/>
+                                                    <TextBlock Text="{Binding IsCurrentlyRunning, Converter={x:Static conv:RunningStatusTextConverter.Instance}}" Foreground="{Binding IsCurrentlyRunning, Converter={x:Static conv:RunningStatusColorConverter.Instance}}" Classes="Caption" FontWeight="Bold" LetterSpacing="0.5"/>
                                                 </Border>
                                             </Grid>
                                         </Border>
@@ -111,7 +111,7 @@
 
                         <!-- Top Navigation & Identity -->
                         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}" VerticalAlignment="Top">
-                            <Button Content="←" Command="{Binding NavigateBackCommand}" Classes="Icon" ToolTip.Tip="Back to Applications" FontSize="16" />
+                            <Button Content="←" Command="{Binding NavigateBackCommand}" Classes="Icon" ToolTip.Tip="Back to Applications" />
                             <StackPanel Spacing="{DynamicResource Spacing.XS}">
                                 <TextBlock Text="{Binding ApplicationNameText}" Classes="PageTitle" />
                                 <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}">
@@ -130,11 +130,11 @@
                                     <TextBlock Text="ACTIVE NOW" Classes="Caption" Foreground="{DynamicResource Brush.Success}" FontWeight="Bold" LetterSpacing="0.5"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}">
-                                    <TextBlock Text="⬇" Foreground="{DynamicResource Brush.Download}" FontSize="11" />
+                                    <TextBlock Text="⬇" Foreground="{DynamicResource Brush.Download}" Classes="Caption" />
                                     <TextBlock Text="{Binding LiveDownloadSpeed}" Foreground="{DynamicResource Brush.TextPrimary}" Classes="MetricSmall" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}">
-                                    <TextBlock Text="⬆" Foreground="{DynamicResource Brush.Upload}" FontSize="11" />
+                                    <TextBlock Text="⬆" Foreground="{DynamicResource Brush.Upload}" Classes="Caption" />
                                     <TextBlock Text="{Binding LiveUploadSpeed}" Foreground="{DynamicResource Brush.TextPrimary}" Classes="MetricSmall" />
                                 </StackPanel>
                             </StackPanel>

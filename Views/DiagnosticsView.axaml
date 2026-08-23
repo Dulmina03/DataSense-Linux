@@ -6,61 +6,65 @@
              x:DataType="vm:DiagnosticsViewModel"
              xmlns:conv="using:DataSense.Converters">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
-        <StackPanel Spacing="{DynamicResource Spacing.XL}">
-            <!-- Header Toolbar -->
-            <Border Classes="CardElevated">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Panel>
+            <StackPanel Spacing="{DynamicResource Spacing.XXL}" Margin="{DynamicResource Padding.Large}">
+
+                <!-- Header Toolbar -->
                 <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.SM}">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="🛠️ Diagnostics &amp; Troubleshooting Center" Classes="PageTitle"/>
-                            <Border Classes="Badge">
-                                <TextBlock Text="{Binding OverallStatusText}" Foreground="{Binding OverallStatusColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" Classes="Body" FontWeight="Bold"/>
+                    <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}">
+                        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}" VerticalAlignment="Center">
+                            <TextBlock Text="Diagnostics Center" Classes="PageTitle"/>
+                            <Border Classes="StatusPill" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}" VerticalAlignment="Center">
+                                    <Ellipse Classes="LiveIndicator" Width="8" Height="8" Fill="{Binding OverallStatusColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding OverallStatusText}" Classes="Caption" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="SemiBold"/>
+                                </StackPanel>
                             </Border>
                         </StackPanel>
                         <TextBlock Text="Inspect component operational states, capability diagnostics, and recovery recommendations." Classes="BodySecondary"/>
                     </StackPanel>
                     <Button Grid.Column="1" Content="🔄 Refresh Diagnostics" Command="{Binding RefreshDiagnosticsCommand}" Classes="Secondary" VerticalAlignment="Center"/>
                 </Grid>
-            </Border>
 
-            <!-- Components List -->
-            <ItemsControl ItemsSource="{Binding Components}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="models:DiagnosticComponent">
-                        <Border Classes="Card" Margin="0,0,0,16">
-                            <Grid RowDefinitions="Auto,Auto,Auto">
-                                <!-- Row 0: Name, Category, Status Badge -->
-                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding DisplayName}" Classes="SectionTitle"/>
-                                        <Border Classes="Badge">
-                                            <TextBlock Text="{Binding Category}" />
+                <!-- Components List -->
+                <ItemsControl ItemsSource="{Binding Components}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="models:DiagnosticComponent">
+                            <Border Classes="AnalyticsSurface" Padding="{DynamicResource Padding.Large}" Margin="0,0,0,16">
+                                <Grid RowDefinitions="Auto,Auto,Auto">
+                                    <!-- Row 0: Name, Category, Status Badge -->
+                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayName}" Classes="PanelTitle"/>
+                                            <Border Classes="Badge">
+                                                <TextBlock Text="{Binding Category}" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Classes="StatusPill">
+                                            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource Brush.Success}" Classes="Caption" FontWeight="Bold"/>
                                         </Border>
+                                    </Grid>
+
+                                    <!-- Row 1: Message & Details -->
+                                    <StackPanel Grid.Row="1" Spacing="{DynamicResource Spacing.XS}" Margin="0,16">
+                                        <TextBlock Text="{Binding Message}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                        <TextBlock Text="{Binding DetailedMessage}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" TextWrapping="Wrap"/>
                                     </StackPanel>
-                                    <Border Grid.Column="1" Classes="Badge">
-                                        <TextBlock Text="{Binding Status}" Foreground="{DynamicResource Brush.Success}" Classes="Body" FontWeight="Bold"/>
+
+                                    <!-- Row 2: Recommended Action Banner -->
+                                    <Border Grid.Row="2" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="16,12" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <TextBlock Grid.Column="0" Text="💡 Recommended Action: " Foreground="{DynamicResource Brush.Warning}" Classes="Caption" FontWeight="Bold" Margin="0,0,8,0"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding RecommendedAction}" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap"/>
+                                        </Grid>
                                     </Border>
                                 </Grid>
-
-                                <!-- Row 1: Message & Details -->
-                                <StackPanel Grid.Row="1" Spacing="4" Margin="0,12">
-                                    <TextBlock Text="{Binding Message}" Classes="Body" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding DetailedMessage}" Classes="Caption" TextWrapping="Wrap"/>
-                                </StackPanel>
-
-                                <!-- Row 2: Recommended Action Banner -->
-                                <Border Grid.Row="2" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="12,8">
-                                    <Grid ColumnDefinitions="Auto,*">
-                                        <TextBlock Grid.Column="0" Text="💡 Recommended Action:" Foreground="{DynamicResource Brush.Warning}" Classes="Caption" FontWeight="Bold" Margin="0,0,8,0"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding RecommendedAction}" Classes="Caption" TextWrapping="Wrap"/>
-                                    </Grid>
-                                </Border>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Panel>
     </ScrollViewer>
 </UserControl>

@@ -4,46 +4,56 @@
              x:Class="DataSense.Views.ImportRestoreView"
              x:DataType="vm:ImportRestoreViewModel">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
-        <StackPanel Spacing="{DynamicResource Spacing.XL}">
-            <!-- Header -->
-            <StackPanel Spacing="4">
-                <TextBlock Text="📥 Import &amp; Restore Center" Classes="PageTitle"/>
-                <TextBlock Text="Safely restore database backups or import telemetry CSV/JSON records." Classes="BodySecondary"/>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Panel>
+            <StackPanel Spacing="{DynamicResource Spacing.XXL}" Margin="{DynamicResource Padding.Large}">
+                <!-- Header -->
+                <StackPanel Spacing="{DynamicResource Spacing.XS}">
+                    <TextBlock Text="Import &amp; Restore Center" Classes="PageTitle"/>
+                    <TextBlock Text="Safely restore database backups or import telemetry CSV/JSON records." Classes="BodySecondary"/>
+                </StackPanel>
+
+                <!-- Status Panel -->
+                <Border Classes="AnalyticsSurface" Padding="{DynamicResource Padding.Large}">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                        <TextBlock Text="Migration Status &amp; Controls" Classes="PanelTitle"/>
+                        <TextBlock Text="{Binding StatusMessage}" Classes="Body" Foreground="{DynamicResource Brush.Download}" FontWeight="SemiBold"/>
+                        <ProgressBar IsIndeterminate="{Binding IsProcessing}" IsVisible="{Binding IsProcessing}" Height="4" Foreground="{DynamicResource Brush.Download}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- File Select Surface -->
+                <Border Classes="AnalyticsSurface" Padding="{DynamicResource Padding.Large}">
+                    <StackPanel Spacing="{DynamicResource Spacing.LG}">
+                        <StackPanel Spacing="{DynamicResource Spacing.XS}">
+                            <TextBlock Text="Select Data Source" Classes="PanelTitle"/>
+                            <TextBlock Text="Specify a local .zip backup archive or .csv/.json telemetry file" Classes="BodySecondary"/>
+                        </StackPanel>
+
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto">
+                            <TextBox Grid.Column="0" Text="{Binding SelectedFilePath}" Watermark="Select .zip, .csv, or .json file..." Margin="0,0,12,0"/>
+                            <Button Grid.Column="1" Content="Start Import / Restore" Command="{Binding ExecuteImportCommand}" Classes="Primary"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Preview Surface -->
+                <Border Classes="AnalyticsSurface" Padding="{DynamicResource Padding.Large}" IsVisible="{Binding Preview, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <StackPanel Spacing="{DynamicResource Spacing.LG}">
+                        <StackPanel Spacing="{DynamicResource Spacing.XS}">
+                            <TextBlock Text="Import File Preview" Classes="PanelTitle"/>
+                            <TextBlock Text="Validation summary of the selected data package" Classes="BodySecondary"/>
+                        </StackPanel>
+
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Preview.Format, StringFormat='Format: {0}'}" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Preview.TotalRecords, StringFormat='Total Records: {0}'}" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding Preview.FileSizeBytes, StringFormat='File Size: {0} bytes'}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" Margin="0,8,0,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Preview.ValidRecords, StringFormat='Valid Records: {0}'}" Classes="Caption" Foreground="{DynamicResource Brush.Success}" FontWeight="Bold" Margin="0,8,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
             </StackPanel>
-
-            <!-- Status Card -->
-            <Border Classes="Card">
-                <StackPanel Spacing="10">
-                    <TextBlock Text="Migration Controls" Classes="SectionTitle"/>
-                    <TextBlock Text="{Binding StatusMessage}" Classes="Body" Foreground="{DynamicResource Brush.Download}"/>
-                    <ProgressBar IsIndeterminate="{Binding IsProcessing}" IsVisible="{Binding IsProcessing}" Height="4" Foreground="{DynamicResource Brush.Download}"/>
-                </StackPanel>
-            </Border>
-
-            <!-- File Select Card -->
-            <Border Classes="Card">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="Select Data Source" Classes="SectionTitle"/>
-                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto">
-                        <TextBox Grid.Column="0" Text="{Binding SelectedFilePath}" Watermark="Select .zip, .csv, or .json file..." Margin="0,0,10,0"/>
-                        <Button Grid.Column="1" Content="Start Import / Restore" Command="{Binding ExecuteImportCommand}" Classes="Primary"/>
-                    </Grid>
-                </StackPanel>
-            </Border>
-
-            <!-- Preview Card -->
-            <Border Classes="Card" IsVisible="{Binding Preview, Converter={x:Static ObjectConverters.IsNotNull}}">
-                <StackPanel Spacing="10">
-                    <TextBlock Text="Import File Preview" Classes="SectionTitle"/>
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Preview.Format, StringFormat='Format: {0}'}" Classes="Caption"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Preview.TotalRecords, StringFormat='Total Records: {0}'}" Classes="Caption"/>
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding Preview.FileSizeBytes, StringFormat='File Size: {0} bytes'}" Classes="Caption"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Preview.ValidRecords, StringFormat='Valid Records: {0}'}" Classes="Caption" Foreground="{DynamicResource Brush.Success}"/>
-                    </Grid>
-                </StackPanel>
-            </Border>
-        </StackPanel>
+        </Panel>
     </ScrollViewer>
 </UserControl>

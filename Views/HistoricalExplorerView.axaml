@@ -204,7 +204,7 @@
                         <ItemsControl Grid.Row="2" ItemsSource="{Binding DailyRows}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:DailyUsageViewModel">
-                                    <Border Classes="CardInteractive" Padding="16,12" Margin="0">
+                                    <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="16,12" Background="Transparent">
                                         <Grid ColumnDefinitions="60,*,120,120,120,100">
                                             <TextBlock Grid.Column="0" Text="{Binding DayOfWeekLabel}" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="1" Text="{Binding DayLabel}" Classes="Body" FontWeight="Medium" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>

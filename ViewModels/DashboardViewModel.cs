@@ -420,10 +420,12 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     private void OnLiveTrafficUpdated(IEnumerable<ProcessNetworkUsage> currentBatch)
     {
-        // Limit to processes actually transmitting data, sort by download + upload
+        // Limit to processes transmitting data or with active byte counters, sort by rate then total
         var active = currentBatch
-            .Where(p => p.DownloadRateBytesPerSec > 0 || p.UploadRateBytesPerSec > 0)
-            .OrderByDescending(p => p.DownloadRateBytesPerSec + p.UploadRateBytesPerSec)
+            .Where(p => p.DownloadRateBytesPerSec > 0 || p.UploadRateBytesPerSec > 0 || p.DownloadBytes > 0 || p.UploadBytes > 0)
+            .OrderByDescending(p => (p.DownloadRateBytesPerSec + p.UploadRateBytesPerSec) > 0 
+                ? (p.DownloadRateBytesPerSec + p.UploadRateBytesPerSec) 
+                : (double)(p.DownloadBytes + p.UploadBytes))
             .Take(10)
             .ToList();
 
@@ -741,6 +743,29 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                     HourlyChartItems.Clear();
                     foreach (var item in hourlyItems) HourlyChartItems.Add(item);
                     IsPeriodChartEmpty = !hourlyItems.Any(i => i.HasData);
+
+                    DailyChartItems.Clear();
+                    foreach (var h in hourlyItems)
+                    {
+                        DailyChartItems.Add(new DailyChartBarViewModel
+                        {
+                            DayLabel = $"{h.Hour:00}:00",
+                            BytesDownloaded = h.BytesDownloaded,
+                            BytesUploaded = h.BytesUploaded,
+                            TotalBytes = h.TotalBytes,
+                            DownloadedText = h.DownloadedText,
+                            UploadedText = h.UploadedText,
+                            TotalText = h.TotalText,
+                            BarX = h.BarX,
+                            BarWidth = h.BarWidth,
+                            DownloadBarHeight = h.DownloadBarHeight,
+                            UploadBarHeight = h.UploadBarHeight,
+                            DownloadBarY = h.DownloadBarY,
+                            UploadBarY = h.UploadBarY,
+                            LabelY = h.LabelY
+                        });
+                    }
+                    IsChartEmpty = !hourlyItems.Any(i => i.HasData);
                 });
             }
             else
@@ -754,6 +779,10 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                     PeriodChartItems.Clear();
                     foreach (var item in dailyItems) PeriodChartItems.Add(item);
                     IsPeriodChartEmpty = !dailyItems.Any(i => i.HasData);
+
+                    DailyChartItems.Clear();
+                    foreach (var item in dailyItems) DailyChartItems.Add(item);
+                    IsChartEmpty = !dailyItems.Any(i => i.HasData);
                 });
             }
 
@@ -777,6 +806,25 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             // Load Top Processes (Historical Profiles)
             var topProcessesList = (await _applicationAnalyticsService.GetTopApplicationsAsync(5)).ToList();
             
+            // Fallback to active live process telemetry if database process table has no records yet
+            if (topProcessesList.Count == 0 && LiveProcessTraffic.Count > 0)
+            {
+                var liveGrouped = LiveProcessTraffic
+                    .GroupBy(p => p.ProcessIdentifier)
+                    .Select(g => new ApplicationHistoricalProfile
+                    {
+                        ProcessName = g.Key,
+                        DownloadBytes = g.Sum(x => x.DownloadBytes),
+                        UploadBytes = g.Sum(x => x.UploadBytes),
+                        TodayBytes = g.Sum(x => x.DownloadBytes + x.UploadBytes),
+                        DataSource = "Live Telemetry"
+                    })
+                    .OrderByDescending(p => p.TotalBytes)
+                    .Take(5)
+                    .ToList();
+                topProcessesList = liveGrouped;
+            }
+
             long totalProcessBytes = topProcessesList.Sum(p => p.TotalBytes);
             if (totalProcessBytes > 0)
             {

@@ -78,3 +78,39 @@ public class RunningStatusTextConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+public class ProcessIndexColorConverter : IValueConverter
+{
+    public static readonly ProcessIndexColorConverter Instance = new();
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        int index = 0;
+        if (parameter != null && int.TryParse(parameter.ToString(), out int pIdx))
+        {
+            index = pIdx;
+        }
+
+        string key = (index % 5) switch
+        {
+            0 => "Brush.ChartSegment1",
+            1 => "Brush.ChartSegment2",
+            2 => "Brush.ChartSegment3",
+            3 => "Brush.ChartSegment4",
+            4 => "Brush.ChartSegment5",
+            _ => "Brush.ChartSegment1"
+        };
+
+        if (Avalonia.Application.Current != null &&
+            Avalonia.Application.Current.TryGetResource(key, Avalonia.Application.Current.ActualThemeVariant, out var resource) &&
+            resource is IBrush brush)
+        {
+            return brush;
+        }
+
+        return SemanticBrushConverter.Resolve("Download");
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

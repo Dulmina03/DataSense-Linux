@@ -1,60 +1,63 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DataSense.ViewModels"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="600"
              x:Class="DataSense.Views.AboutView"
              x:DataType="vm:AboutViewModel">
     
-    <Grid ColumnDefinitions="*,Auto" Margin="0,40">
-        <!-- Text details -->
-        <StackPanel Grid.Column="0" Spacing="24">
-            <StackPanel Spacing="8">
-                <TextBlock Text="DataSense Desktop" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" />
-                <TextBlock Text="Version 1.0.0-Beta (Core-Build)" FontSize="13" Foreground="{DynamicResource Brush.TextSecondary}" />
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Panel>
+            <StackPanel Spacing="{DynamicResource Spacing.XXL}" Margin="{DynamicResource Padding.Large}">
+                <Border Classes="AnalyticsSurface" Padding="{DynamicResource Padding.Large}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <!-- Text details -->
+                        <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XL}">
+                            <StackPanel Spacing="{DynamicResource Spacing.XS}">
+                                <TextBlock Text="DataSense Desktop" Classes="PageTitle"/>
+                                <TextBlock Text="Version 1.0.0-Beta (Core-Build)" Classes="BodySecondary" Foreground="{DynamicResource Brush.Accent}"/>
+                            </StackPanel>
+
+                            <TextBlock Text="DataSense is a high-performance system utility and network telemetry aggregator engineered specifically for enterprise Ubuntu Linux workstations. It provides offline logs recording, real-time interface speed diagnostics, and local hardware monitoring metrics with zero web technologies, telemetry leakage, or third-party cloud requirements." 
+                                       TextWrapping="Wrap" 
+                                       Classes="Body" 
+                                       Foreground="{DynamicResource Brush.TextMuted}"/>
+
+                            <!-- Tech Details -->
+                            <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                                <TextBlock Text="Built With Modern Technologies" Classes="PanelTitle" Foreground="{DynamicResource Brush.Accent}"/>
+                                <Border Height="1" Background="{DynamicResource Brush.Border}"/>
+                                
+                                <Grid ColumnDefinitions="160,*" RowDefinitions="Auto,Auto,Auto" Margin="0,8,0,0">
+                                    <!-- Row 0 -->
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Language Runtime:" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,0,0,10"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="C# 13 • .NET 10" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="SemiBold" Margin="0,0,0,10"/>
+
+                                    <!-- Row 1 -->
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="UI Framework:" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,0,0,10"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Avalonia UI 11 (X11 &amp; Wayland native)" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="SemiBold" Margin="0,0,0,10"/>
+
+                                    <!-- Row 2 -->
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Architecture:" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Pure MVVM &amp; Microsoft dependency injection" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="SemiBold"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Legal -->
+                            <TextBlock Text="© 2026 DataSense Core Team. Licensed under the MIT License." 
+                                       Classes="Caption" 
+                                       Foreground="{DynamicResource Brush.TextMuted}"/>
+                        </StackPanel>
+
+                        <!-- Graphic Emblem (Right Side) -->
+                        <Border Grid.Column="1" Width="160" Height="160" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="{DynamicResource Radius.Medium}" Margin="32,0,0,0" VerticalAlignment="Top">
+                            <Grid>
+                                <TextBlock Text="DS" Classes="PageTitle" FontWeight="Black" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Ellipse Width="110" Height="110" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="3" Opacity="0.4"/>
+                                <Ellipse Width="85" Height="85" Stroke="{DynamicResource Brush.Warning}" StrokeThickness="2" Opacity="0.2"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
             </StackPanel>
-
-            <TextBlock Text="DataSense is a high-performance system utility and network telemetry aggregator engineered specifically for enterprise Ubuntu Linux workstations. It provides offline logs recording, real-time interface speed diagnostics, and local hardware monitoring metrics with zero web technologies, telemetry leakage, or third-party cloud requirements." 
-                       TextWrapping="Wrap" 
-                       LineHeight="20"
-                       FontSize="13" 
-                       Foreground="{DynamicResource Brush.TextMuted}" />
-
-            <!-- Tech Details Grid -->
-            <StackPanel Spacing="12">
-                <TextBlock Text="Built With Modern Technologies" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}" />
-                <Separator Height="1" Background="{DynamicResource Brush.Border}" />
-                
-                <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto" Margin="0,4">
-                    <!-- Row 0 -->
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Language Runtime:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="13" Margin="0,0,0,8" />
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="C# 13 • .NET 10" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="13" Margin="0,0,0,8" />
-
-                    <!-- Row 1 -->
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="UI Framework:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="13" Margin="0,0,0,8" />
-                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Avalonia UI 11 (X11 &amp; Wayland native)" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="13" Margin="0,0,0,8" />
-
-                    <!-- Row 2 -->
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Architecture:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="13" />
-                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Pure MVVM &amp; Microsoft dependency injection" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="13" />
-                </Grid>
-            </StackPanel>
-
-            <!-- Legal -->
-            <TextBlock Text="© 2026 DataSense Core Team. Licensed under the MIT License." 
-                       FontSize="11" 
-                       Foreground="{DynamicResource Brush.TextMuted}" />
-        </StackPanel>
-
-        <!-- Graphic Emblem (Right Side) -->
-        <Border Grid.Column="1" Width="180" Height="180" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Margin="40,0,0,0" VerticalAlignment="Top">
-            <Grid>
-                <!-- Stylized decorative C# cube outline representing the core app engine -->
-                <TextBlock Text="DS" FontSize="72" FontWeight="Black" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                <Ellipse Width="100" Height="100" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="4" Opacity="0.5" />
-                <Ellipse Width="80" Height="80" Stroke="{DynamicResource Brush.Warning}" StrokeThickness="2" Opacity="0.25" />
-            </Grid>
-        </Border>
-    </Grid>
+        </Panel>
+    </ScrollViewer>
 </UserControl>
