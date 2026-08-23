@@ -19,6 +19,7 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
     private readonly ProcessNetworkMonitorWorker _processMonitorWorker;
     private readonly IApplicationIntelligenceService _appIntelligenceService;
     private readonly IProcessNetworkIntelligenceService _processNetworkIntelligenceService;
+    private readonly IApplicationSessionService _applicationSessionService;
     
     private bool _disposed;
     
@@ -28,12 +29,14 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
         IApplicationAnalyticsService applicationAnalyticsService,
         ProcessNetworkMonitorWorker processMonitorWorker,
         IApplicationIntelligenceService appIntelligenceService,
-        IProcessNetworkIntelligenceService processNetworkIntelligenceService)
+        IProcessNetworkIntelligenceService processNetworkIntelligenceService,
+        IApplicationSessionService applicationSessionService)
     {
         _applicationAnalyticsService = applicationAnalyticsService ?? throw new ArgumentNullException(nameof(applicationAnalyticsService));
         _processMonitorWorker        = processMonitorWorker        ?? throw new ArgumentNullException(nameof(processMonitorWorker));
         _appIntelligenceService      = appIntelligenceService      ?? throw new ArgumentNullException(nameof(appIntelligenceService));
         _processNetworkIntelligenceService = processNetworkIntelligenceService ?? throw new ArgumentNullException(nameof(processNetworkIntelligenceService));
+        _applicationSessionService   = applicationSessionService   ?? throw new ArgumentNullException(nameof(applicationSessionService));
 
         _processMonitorWorker.LiveTrafficUpdated += OnLiveTrafficUpdated;
     }
