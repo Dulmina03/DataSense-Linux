@@ -60,5 +60,6 @@
 
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://DataSense/Styles/DataSenseStyles.axaml" />
     </Application.Styles>
 </Application>

@@ -1,0 +1,40 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        
+    <!-- Empty State Container -->
+    <Style Selector="StackPanel.EmptyState">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Spacing" Value="{DynamicResource Spacing.MD}" />
+        <Setter Property="Margin" Value="{DynamicResource Padding.Large}" />
+    </Style>
+
+    <Style Selector="TextBlock.EmptyStateIcon">
+        <Setter Property="FontSize" Value="48" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextMuted}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.EmptyStateTitle">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.EmptyStateDescription">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextMuted}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="MaxWidth" Value="300" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!-- Skeleton Loading Block -->
+    <Style Selector="Border.SkeletonBlock">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
+        <!-- Subtle pulsing animation could be applied here via Behaviors or KeyFrames if Avalonia supports it natively in XAML without code-behind -->
+    </Style>
+</Styles>

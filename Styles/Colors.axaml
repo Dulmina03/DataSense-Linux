@@ -1,0 +1,53 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Default">
+            <!-- Dark Theme (Default) -->
+            <SolidColorBrush x:Key="Brush.AppBackground">#0F0F1A</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Surface">#13131F</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.SurfaceElevated">#1A1A28</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.SurfaceHover">#1E1E2F</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.SurfacePressed">#2D2D44</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Border">#1E1E30</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.BorderStrong">#2D2D44</SolidColorBrush>
+            
+            <SolidColorBrush x:Key="Brush.TextPrimary">#FFFFFF</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.TextSecondary">#B0B0B0</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.TextMuted">#777777</SolidColorBrush>
+            
+            <SolidColorBrush x:Key="Brush.Accent">#007ACC</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Success">#4CAF50</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Warning">#FFC107</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Danger">#F44336</SolidColorBrush>
+            
+            <SolidColorBrush x:Key="Brush.Download">#03A9F4</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Upload">#E91E63</SolidColorBrush>
+            
+            <SolidColorBrush x:Key="Brush.NavigationBackground">#161622</SolidColorBrush>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+            <!-- Light Theme -->
+            <SolidColorBrush x:Key="Brush.AppBackground">#F5F5F7</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Surface">#FFFFFF</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.SurfaceElevated">#F0F0F2</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.SurfaceHover">#EAECEE</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.SurfacePressed">#DFE1E5</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Border">#E0E0E0</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.BorderStrong">#CCCCCC</SolidColorBrush>
+            
+            <SolidColorBrush x:Key="Brush.TextPrimary">#111111</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.TextSecondary">#555555</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.TextMuted">#888888</SolidColorBrush>
+            
+            <SolidColorBrush x:Key="Brush.Accent">#005A9E</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Success">#2E7D32</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Warning">#F57F17</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Danger">#C62828</SolidColorBrush>
+            
+            <SolidColorBrush x:Key="Brush.Download">#0288D1</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Upload">#C2185B</SolidColorBrush>
+            
+            <SolidColorBrush x:Key="Brush.NavigationBackground">#FFFFFF</SolidColorBrush>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

@@ -1,0 +1,40 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Base Window Style -->
+    <Style Selector="Window">
+        <Setter Property="Background" Value="{DynamicResource Brush.AppBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="FontFamily" Value="Inter, Ubuntu, sans-serif" />
+    </Style>
+
+    <!-- Content Card -->
+    <Style Selector="Border.Card">
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <!-- Sidebar Button -->
+    <Style Selector="Button.SidebarItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="CornerRadius" Value="6" />
+    </Style>
+    <Style Selector="Button.SidebarItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    </Style>
+    <Style Selector="Button.SidebarItem.active /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+    <Style Selector="Button.SidebarItem.active">
+        <Setter Property="BorderThickness" Value="4,0,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+</Styles>

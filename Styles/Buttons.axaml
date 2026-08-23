@@ -1,0 +1,53 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        
+    <!-- Primary Button -->
+    <Style Selector="Button.Primary">
+        <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.Primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.AccentHover}" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="Button.Primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
+
+    <!-- Secondary Button -->
+    <Style Selector="Button.Secondary">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
+    </Style>
+    <Style Selector="Button.Secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    </Style>
+
+    <!-- Danger Button -->
+    <Style Selector="Button.Danger">
+        <Setter Property="Background" Value="{DynamicResource Brush.Danger}" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
+    </Style>
+
+    <!-- Icon Button -->
+    <Style Selector="Button.Icon">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
+    </Style>
+    <Style Selector="Button.Icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    </Style>
+</Styles>
