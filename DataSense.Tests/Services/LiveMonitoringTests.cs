@@ -158,7 +158,7 @@ public class LiveMonitoringTests
         // Arrange
         using var dbContext = await TestDatabaseFactory.CreateAsync();
         var analyticsMock = new AnalyticsService(dbContext.Repository);
-        var exportService = new ExportService(dbContext.Repository, analyticsMock);
+        var exportService = new ExportService(dbContext.Repository, analyticsMock, new Moq.Mock<DataSense.Services.IApplicationAnalyticsService>().Object);
 
         string tempFile = Path.Combine(Path.GetTempPath(), $"live_snapshot_test_{Guid.NewGuid():N}.json");
         var activeIface = new NetworkInterfaceStats

@@ -1,0 +1,136 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DataSense.ViewModels"
+             xmlns:conv="using:DataSense.Converters"
+             xmlns:m="using:DataSense.Models"
+             x:Class="DataSense.Views.UnifiedIntelligenceView"
+             x:DataType="vm:UnifiedIntelligenceViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Border.card">
+            <Setter Property="Background"      Value="#1A1A2E"/>
+            <Setter Property="BorderBrush"     Value="#2D2D44"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius"    Value="10"/>
+            <Setter Property="Padding"         Value="14,12"/>
+        </Style>
+        <Style Selector="TextBlock.section-title">
+            <Setter Property="FontSize"   Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#EEEEFF"/>
+            <Setter Property="Margin"     Value="0,0,0,12"/>
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer>
+        <StackPanel Spacing="16" Margin="24">
+            <!-- Header -->
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Unified Intelligence Center" FontSize="22" FontWeight="Bold" Foreground="#FFFFFF"/>
+                    <TextBlock Text="Cross-domain deterministic correlations across your applications and networks." Foreground="#8888AA" FontSize="13" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="Refresh Analysis" Command="{Binding RefreshDataCommand}" Classes="outline" VerticalAlignment="Center"/>
+            </Grid>
+
+            <!-- Loading State -->
+            <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoading}" Height="2" Margin="0,10" Foreground="#8888FF"/>
+
+            <!-- System Summary -->
+            <Border Classes="card">
+                <StackPanel>
+                    <TextBlock Text="Current System Status" Classes="section-title"/>
+                    <Grid ColumnDefinitions="*,*,*,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Intelligence Engine" Foreground="#8888AA" FontSize="11"/>
+                            <TextBlock Text="{Binding SystemSummary.OverallIntelligenceStatus}" Foreground="#00E676" FontSize="14" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="Today's Top App" Foreground="#8888AA" FontSize="11"/>
+                            <TextBlock Text="{Binding SystemSummary.TodayTopApplication}" Foreground="#00D2FF" FontSize="14" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Current Network" Foreground="#8888AA" FontSize="11"/>
+                            <TextBlock Text="{Binding SystemSummary.CurrentNetwork}" Foreground="#CCCCEE" FontSize="14" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Spacing="4">
+                            <TextBlock Text="Total Usage Today" Foreground="#8888AA" FontSize="11"/>
+                            <TextBlock Text="{Binding SystemSummary.TodayTotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Foreground="#E040FB" FontSize="14" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Filters -->
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,8">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Category" FontSize="11" Foreground="#8888AA"/>
+                        <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding CategoryFilter}" Width="150"/>
+                    </StackPanel>
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Severity" FontSize="11" Foreground="#8888AA"/>
+                        <ComboBox ItemsSource="{Binding Severities}" SelectedItem="{Binding SeverityFilter}" Width="120"/>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Grid.Column="2" Text="{Binding FilteredInsights.Count, StringFormat='{}{0} Insights Found'}" Foreground="#555577" VerticalAlignment="Bottom" FontSize="12"/>
+            </Grid>
+
+            <!-- Insights List -->
+            <ItemsControl ItemsSource="{Binding FilteredInsights}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Classes="card" Margin="0,0,0,12">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <!-- Severity Indicator -->
+                                <Border Grid.Column="0" Width="4" CornerRadius="2" Margin="0,0,12,0"
+                                        Background="{Binding Severity, Converter={x:Static conv:UnifiedInsightSeverityColorConverter.Instance}}"/>
+                                
+                                <StackPanel Grid.Column="1" Spacing="6">
+                                    <!-- Title & Meta -->
+                                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                        <Border Background="#21213D" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="{Binding Category}" Foreground="#8888FF" FontSize="10" FontWeight="SemiBold"/>
+                                        </Border>
+                                    </StackPanel>
+                                    
+                                    <!-- Description -->
+                                    <TextBlock Text="{Binding Description}" FontSize="13" Foreground="#CCCCEE" TextWrapping="Wrap"/>
+                                    
+                                    <!-- Evidence Box -->
+                                    <Border Background="#12121E" CornerRadius="6" Padding="12" Margin="0,4,0,0" IsVisible="{Binding Evidence.Count}">
+                                        <StackPanel>
+                                            <TextBlock Text="Supporting Evidence" FontSize="10" FontWeight="Bold" Foreground="#8888AA" Margin="0,0,0,6"/>
+                                            <ItemsControl ItemsSource="{Binding Evidence}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}" FontSize="11" Foreground="#9999AA" Margin="0,2"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Recommended Action -->
+                                <StackPanel Grid.Column="2" MaxWidth="250" Margin="16,0,0,0" Spacing="4">
+                                    <TextBlock Text="Recommended Action" FontSize="10" FontWeight="Bold" Foreground="#8888AA" HorizontalAlignment="Right"/>
+                                    <TextBlock Text="{Binding RecommendedAction}" FontSize="12" Foreground="#00E676" TextWrapping="Wrap" HorizontalAlignment="Right" TextAlignment="Right"/>
+                                    <TextBlock Text="{Binding Confidence, StringFormat='{}Confidence: {0}'}" FontSize="10" Foreground="#555577" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            
+            <!-- Empty State -->
+            <TextBlock IsVisible="{Binding !FilteredInsights.Count}" 
+                       Text="No insights found matching the current filters." 
+                       Foreground="#555577" 
+                       HorizontalAlignment="Center" 
+                       Margin="0,40"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

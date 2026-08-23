@@ -185,7 +185,22 @@ public class ProcessNetworkMonitoringTests : IDisposable
     {
         // Arrange
         var analyticsService = new AnalyticsService(_repository);
-        var exportService = new ExportService(_repository, analyticsService);
+        var appAnalyticsMock = new Moq.Mock<DataSense.Services.IApplicationAnalyticsService>();
+        appAnalyticsMock.Setup(x => x.GetTopApplicationsAsync(Moq.It.IsAny<int>(), default))
+            .Returns(Task.FromResult((IEnumerable<ApplicationHistoricalProfile>)new List<ApplicationHistoricalProfile>
+            {
+                new ApplicationHistoricalProfile
+                {
+                    ProcessName = "code",
+                    ExecutablePath = "/usr/bin/code",
+                    UserName = "dulmina",
+                    LastSeen = DateTime.UtcNow,
+                    DownloadBytes = 2048,
+                    UploadBytes = 1024,
+                    DataSource = "Nethogs"
+                }
+            }));
+        var exportService = new ExportService(_repository, analyticsService, appAnalyticsMock.Object);
 
         await _repository.SaveProcessUsageAsync(new ProcessUsageRecord
         {

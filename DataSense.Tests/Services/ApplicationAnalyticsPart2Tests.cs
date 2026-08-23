@@ -447,7 +447,7 @@ public class ApplicationAnalyticsPart2Tests
         await Seed(ctx.Repository, "export-app", 30, 300, DateTime.UtcNow, 5000, 500);
 
         var analyticsService = new AnalyticsService(ctx.Repository);
-        var exportSvc = new ExportService(ctx.Repository, analyticsService);
+        var exportSvc = new ExportService(ctx.Repository, analyticsService, new Moq.Mock<DataSense.Services.IApplicationAnalyticsService>().Object);
 
         var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "DataSense_ExportTest_" + Guid.NewGuid().ToString("N"));

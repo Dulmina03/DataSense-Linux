@@ -14,7 +14,7 @@ public class BackupRecoveryServiceTests
     {
         using var context = await TestDatabaseFactory.CreateAsync();
         var analytics = new AnalyticsService(context.Repository);
-        var exportService = new ExportService(context.Repository, analytics);
+        var exportService = new ExportService(context.Repository, analytics, new Moq.Mock<DataSense.Services.IApplicationAnalyticsService>().Object);
         var eventService = new EventService();
         var backupService = new BackupRecoveryService(exportService, eventService);
 

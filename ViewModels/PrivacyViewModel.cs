@@ -30,6 +30,7 @@ public partial class PrivacyViewModel : ViewModelBase
     [ObservableProperty] private string _processCapabilityNotice = "Per-process telemetry requires the nethogs utility with CAP_NET_RAW capability. DataSense itself runs entirely unprivileged without root access.";
     [ObservableProperty] private string _liveMonitoringDisclosure = "Live Monitoring maintains a short-lived, in-memory rolling chart window (max 300 samples). High-frequency per-second graph data is never persisted to SQLite or written to disk, ensuring optimal performance and zero unnecessary storage overhead.";
     [ObservableProperty] private string _sessionTimelineDisclosure = "Network sessions are tracked chronologically with local process attribution. All session timeline history, intelligent switch event logs, and comparative analytics are stored entirely locally in your SQLite database. DataSense never transmits your browsing history or session behavior to external services.";
+    [ObservableProperty] private string _applicationIntelligenceDisclosure = "DataSense maintains per-process historical data (process name, PID, executable path, username, data source, usage, timestamps, network context) strictly in the local SQLite database. No application telemetry is uploaded to cloud services, and no external AI analyzes this data. Export remains user-controlled, and anonymization options continue to apply.";
 
     public PrivacyViewModel(
         INetworkUsageRepository repository,

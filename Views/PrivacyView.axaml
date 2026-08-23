@@ -95,6 +95,15 @@
                 </StackPanel>
             </Border>
 
+            <!-- 3.6 Application Intelligence -->
+            <Border Classes="card">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="🧠 Application Historical Intelligence" FontSize="15" FontWeight="Bold" Foreground="#E040FB"/>
+                    <Separator Height="1" Background="#2A2A3D"/>
+                    <TextBlock Text="{Binding ApplicationIntelligenceDisclosure}" Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
             <!-- 4. Data Lifecycle & Retention -->
             <Border Classes="card">
                 <StackPanel Spacing="12">

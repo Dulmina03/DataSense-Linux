@@ -15,7 +15,7 @@ public class ExportServiceTests
     {
         using var context = await TestDatabaseFactory.CreateAsync();
         var analytics = new AnalyticsService(context.Repository);
-        var exportService = new ExportService(context.Repository, analytics);
+        var exportService = new ExportService(context.Repository, analytics, new Moq.Mock<DataSense.Services.IApplicationAnalyticsService>().Object);
 
         string tempFolder = Path.Combine(Path.GetTempPath(), "DataSense_ExportTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempFolder);
@@ -47,7 +47,7 @@ public class ExportServiceTests
     {
         using var context = await TestDatabaseFactory.CreateAsync();
         var analytics = new AnalyticsService(context.Repository);
-        var exportService = new ExportService(context.Repository, analytics);
+        var exportService = new ExportService(context.Repository, analytics, new Moq.Mock<DataSense.Services.IApplicationAnalyticsService>().Object);
 
         string tempFolder = Path.Combine(Path.GetTempPath(), "DataSense_BackupTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempFolder);

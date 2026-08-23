@@ -41,7 +41,7 @@ public class SystemHealthAndDiagnosticsTests
 
         var components = (await diagService.GetDiagnosticsAsync()).ToList();
 
-        Assert.Equal(7, components.Count);
+        Assert.Equal(8, components.Count);
         Assert.Contains(components, c => c.Name == "SQLiteDatabase" && c.Status == SubsystemState.Healthy);
     }
 }

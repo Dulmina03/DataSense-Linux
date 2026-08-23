@@ -15,7 +15,7 @@ public class ImportRestoreServiceTests
     {
         using var context = await TestDatabaseFactory.CreateAsync();
         var analytics = new AnalyticsService(context.Repository);
-        var exportService = new ExportService(context.Repository, analytics);
+        var exportService = new ExportService(context.Repository, analytics, new Moq.Mock<DataSense.Services.IApplicationAnalyticsService>().Object);
         var eventService = new EventService();
         var importService = new ImportRestoreService(exportService, eventService);
 
@@ -39,7 +39,7 @@ public class ImportRestoreServiceTests
     {
         using var context = await TestDatabaseFactory.CreateAsync();
         var analytics = new AnalyticsService(context.Repository);
-        var exportService = new ExportService(context.Repository, analytics);
+        var exportService = new ExportService(context.Repository, analytics, new Moq.Mock<DataSense.Services.IApplicationAnalyticsService>().Object);
         var eventService = new EventService();
         var importService = new ImportRestoreService(exportService, eventService);
 

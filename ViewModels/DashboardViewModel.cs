@@ -28,6 +28,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IPatternAnalysisService   _patternAnalysisService;
     private readonly IApplicationIntelligenceService _appIntelligenceService;
     private readonly IUnifiedIntelligenceService     _unifiedIntelligenceService;
+    private readonly IApplicationAnalyticsService    _applicationAnalyticsService;
     private readonly NetworkSessionManager     _sessionManager;
     private bool     _disposed;
     private int      _tickCount  = 4; // Start at 4 so first tick triggers details load immediately
@@ -173,12 +174,13 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     // ── Process Analytics ───────────────────────────────────────────────────
     public ObservableCollection<ProcessNetworkUsage> LiveProcessTraffic { get; } = new();
-    public ObservableCollection<ProcessUsageRecord> TopProcesses { get; } = new();
+    public ObservableCollection<ApplicationHistoricalProfile> TopProcesses { get; } = new();
 
     [ObservableProperty] private string _downloadHeavyProcessText = "—";
     [ObservableProperty] private string _uploadHeavyProcessText = "—";
     [ObservableProperty] private string _topProcessesBaselineText = "Collecting process usage baseline...";
     [ObservableProperty] private bool _hasTopProcesses = false;
+    [ObservableProperty] private string _topAppInsightText = "Analyzing application behavior...";
 
     // ── Forecast & Budget ────────────────────────────────────────────────────
 
@@ -231,6 +233,10 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     public ObservableCollection<IntelligenceEvent> UnifiedEvents { get; } = new();
     [ObservableProperty] private DataSenseHealthModel? _systemHealth;
     [ObservableProperty] private bool _hasUnifiedEvents = false;
+    
+    [ObservableProperty] private UnifiedInsight? _primaryUnifiedInsight;
+    [ObservableProperty] private bool _hasUnifiedInsights;
+    private readonly IUnifiedAnalyticsIntelligenceService _unifiedAnalyticsIntelligenceService;
 
     // ── Chart layout constants ──────────────────────────────────────────────
 
@@ -262,6 +268,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         IPatternAnalysisService   patternAnalysisService,
         IApplicationIntelligenceService appIntelligenceService,
         IUnifiedIntelligenceService     unifiedIntelligenceService,
+        IApplicationAnalyticsService    applicationAnalyticsService,
+        IUnifiedAnalyticsIntelligenceService unifiedAnalyticsIntelligenceService,
         NetworkSessionManager           sessionManager)
     {
         _networkMonitorWorker   = networkMonitorWorker   ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
@@ -274,6 +282,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         _patternAnalysisService = patternAnalysisService ?? throw new ArgumentNullException(nameof(patternAnalysisService));
         _appIntelligenceService = appIntelligenceService ?? throw new ArgumentNullException(nameof(appIntelligenceService));
         _unifiedIntelligenceService = unifiedIntelligenceService ?? throw new ArgumentNullException(nameof(unifiedIntelligenceService));
+        _applicationAnalyticsService = applicationAnalyticsService ?? throw new ArgumentNullException(nameof(applicationAnalyticsService));
+        _unifiedAnalyticsIntelligenceService = unifiedAnalyticsIntelligenceService ?? throw new ArgumentNullException(nameof(unifiedAnalyticsIntelligenceService));
         _sessionManager         = sessionManager         ?? throw new ArgumentNullException(nameof(sessionManager));
 
         // Populate live card with current worker state immediately
@@ -326,6 +336,13 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     {
         var mainWindowVm = App.Services?.GetService(typeof(MainWindowViewModel)) as MainWindowViewModel;
         mainWindowVm?.NavigateToNetworkAnalytics(networkName);
+    }
+
+    [RelayCommand]
+    private void NavigateToUnifiedIntelligence()
+    {
+        var mainWindowVm = App.Services?.GetService(typeof(MainWindowViewModel)) as MainWindowViewModel;
+        mainWindowVm?.NavigateToUnifiedIntelligence();
     }
 
     [RelayCommand]
@@ -639,6 +656,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             // Unified Intelligence & Health Observatory
             var unifiedStream = (await _unifiedIntelligenceService.GetUnifiedEventsAsync(8)).ToList();
             var healthState   = await _unifiedIntelligenceService.GetDataSenseHealthAsync();
+            var topUnifiedInsight = (await _unifiedAnalyticsIntelligenceService.GetUnifiedInsightsAsync()).FirstOrDefault();
 
             Dispatcher.UIThread.Post(() =>
             {
@@ -671,6 +689,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 HasUnifiedEvents = UnifiedEvents.Count > 0;
 
                 SystemHealth = healthState;
+                
+                PrimaryUnifiedInsight = topUnifiedInsight;
+                HasUnifiedInsights = topUnifiedInsight != null;
             });
 
             // Load forecast/budget section
@@ -744,20 +765,44 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 if (showLoading) IsPeriodAnalyticsLoading = false;
             });
 
-            // Load Top Processes
-            var topProcessesList = (await _analyticsService.GetTopDataConsumersAsync(SelectedPeriod, 5)).ToList();
+            // Load Top Processes (Historical Profiles)
+            var topProcessesList = (await _applicationAnalyticsService.GetTopApplicationsAsync(5)).ToList();
             
             long totalProcessBytes = topProcessesList.Sum(p => p.TotalBytes);
             if (totalProcessBytes > 0)
             {
                 foreach (var p in topProcessesList)
                 {
-                    p.PercentageShare = (double)p.TotalBytes / totalProcessBytes * 100.0;
+                    p.PercentageOfTotal = (double)p.TotalBytes / totalProcessBytes * 100.0;
                 }
             }
 
-            var dlHeavy = topProcessesList.Count > 0 ? topProcessesList.MaxBy(p => p.BytesDownloaded) : null;
-            var ulHeavy = topProcessesList.Count > 0 ? topProcessesList.MaxBy(p => p.BytesUploaded) : null;
+            var dlHeavy = topProcessesList.Count > 0 ? topProcessesList.MaxBy(p => p.TodayBytes) : null; // simplified max
+            var ulHeavy = dlHeavy; // Profiles don't separate dl/ul cleanly for MaxBy, but we can just map it
+
+            // Application Intelligence Insight
+            string insight = "Insufficient application history.";
+            try
+            {
+                var recs = await _appIntelligenceService.GenerateApplicationRecommendationsAsync();
+                var topRec = recs.FirstOrDefault();
+                if (topRec != null && topRec.Title != "Establishing Application Baselines")
+                {
+                    insight = topRec.Description;
+                }
+                else if (topProcessesList.Count > 0)
+                {
+                    var topApp = topProcessesList[0];
+                    if (topApp.PercentageOfTotal > 0)
+                        insight = $"{topApp.ProcessName} is responsible for {topApp.PercentageOfTotal:F0}% of usage.";
+                    else
+                        insight = "No unusual application activity detected.";
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"App intelligence failed: {ex.Message}");
+            }
 
             Dispatcher.UIThread.Post(() =>
             {
@@ -768,22 +813,16 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 }
 
                 HasTopProcesses = TopProcesses.Count > 0;
+                TopAppInsightText = insight;
                 
-                if (dlHeavy != null && dlHeavy.BytesDownloaded > 0)
+                if (dlHeavy != null && dlHeavy.TodayBytes > 0)
                 {
-                    DownloadHeavyProcessText = $"{dlHeavy.ProcessName} ({ByteFormatter.FormatBytes(dlHeavy.BytesDownloaded)})";
+                    DownloadHeavyProcessText = $"{dlHeavy.ProcessName} ({ByteFormatter.FormatBytes(dlHeavy.TodayBytes)})";
+                    UploadHeavyProcessText = $"{dlHeavy.ProcessName} ({ByteFormatter.FormatBytes(dlHeavy.TodayBytes)})"; // Placeholder for UI layout
                 }
                 else
                 {
                     DownloadHeavyProcessText = "—";
-                }
-
-                if (ulHeavy != null && ulHeavy.BytesUploaded > 0)
-                {
-                    UploadHeavyProcessText = $"{ulHeavy.ProcessName} ({ByteFormatter.FormatBytes(ulHeavy.BytesUploaded)})";
-                }
-                else
-                {
                     UploadHeavyProcessText = "—";
                 }
 

@@ -160,6 +160,36 @@
                 </StackPanel>
             </Border>
 
+            <!-- ══ Unified Intelligence ══ -->
+            <Border Background="#1A1A2E" BorderBrush="#3D3D5C" BorderThickness="1" CornerRadius="10" Padding="20">
+                <StackPanel Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="🧠" FontSize="14"/>
+                            <TextBlock Text="Unified Intelligence" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="View Details ➔" Classes="link-button" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center" Command="{Binding NavigateToUnifiedIntelligenceCommand}"/>
+                    </Grid>
+                    
+                    <Border Background="#232338" CornerRadius="8" Padding="16" IsVisible="{Binding HasUnifiedInsights}">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Border Width="4" CornerRadius="2" Background="{Binding PrimaryUnifiedInsight.Severity, Converter={x:Static conv:UnifiedInsightSeverityColorConverter.Instance}}"/>
+                                <TextBlock Text="{Binding PrimaryUnifiedInsight.Title}" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding PrimaryUnifiedInsight.Description}" FontSize="13" Foreground="#CCCCEE" TextWrapping="Wrap" Margin="16,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <Border Background="#232338" CornerRadius="8" Padding="16" IsVisible="{Binding !HasUnifiedInsights}">
+                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                            <TextBlock Text="ℹ️ Collecting baseline" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
+                            <TextBlock Text="More historical data is required before reliable cross-domain insights can be generated." FontSize="13" Foreground="#8888AA" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
             <!-- ══ Connection Details Panel ══ -->
             <Border Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="20">
                 <StackPanel Spacing="14">
@@ -1069,15 +1099,11 @@
                                 <TextBlock Text="Top Data Consumers" FontSize="14" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
                             </StackPanel>
 
-                            <!-- Download/Upload Heavy stats -->
+                            <!-- Top Data Consumers (Historical Profiles) -->
                             <Grid ColumnDefinitions="*,*" Margin="0,0,0,4" IsVisible="{Binding HasTopProcesses}">
                                 <StackPanel Grid.Column="0" Spacing="2">
-                                    <TextBlock Text="Download-Heavy" Foreground="#888899" FontSize="10"/>
-                                    <TextBlock Text="{Binding DownloadHeavyProcessText}" Foreground="#00D2FF" FontSize="11" FontWeight="Bold"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Spacing="2">
-                                    <TextBlock Text="Upload-Heavy" Foreground="#888899" FontSize="10"/>
-                                    <TextBlock Text="{Binding UploadHeavyProcessText}" Foreground="#00E676" FontSize="11" FontWeight="Bold"/>
+                                    <TextBlock Text="Top Application Insight" Foreground="#888899" FontSize="10"/>
+                                    <TextBlock Text="{Binding TopAppInsightText}" Foreground="#00D2FF" FontSize="11" FontWeight="Bold" TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Grid>
                             
@@ -1086,24 +1112,30 @@
                                     <DataTemplate>
                                         <Border Background="#1A1A2E" CornerRadius="6" Padding="12" Margin="0,0,0,8">
                                             <Grid ColumnDefinitions="*,Auto,Auto">
-                                                <!-- Process Name -->
+                                                <!-- Process Name & Badges -->
                                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding ProcessName}" FontWeight="SemiBold" Foreground="#CCCCEE" VerticalAlignment="Center"/>
                                                     <!-- Percentage Share Badge -->
                                                     <Border Background="#21213D" CornerRadius="4" Padding="4,2">
-                                                        <TextBlock Text="{Binding PercentageShare, StringFormat='{}{0:F1}%'}" Foreground="#8888FF" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding PercentageOfTotal, StringFormat='{}{0:F1}%'}" Foreground="#8888FF" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"/>
                                                     </Border>
+                                                    <!-- Trend Badge -->
+                                                    <Border Background="#21213D" CornerRadius="4" Padding="4,2" IsVisible="{Binding HasSufficientData}">
+                                                        <TextBlock Text="{Binding TrendState}" Foreground="#8888FF" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <!-- Anomaly / Surge Badge -->
+                                                    <Border Background="#3D2121" CornerRadius="4" Padding="4,2" IsVisible="{Binding IsUsageSurging}">
+                                                        <TextBlock Text="Surge" Foreground="#FF5252" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <!-- Data Source -->
+                                                    <TextBlock Text="{Binding DataSource}" Foreground="#555577" FontSize="9" VerticalAlignment="Center" Margin="4,0,0,0"/>
                                                 </StackPanel>
                                                 
                                                 <!-- Total bytes -->
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" Margin="0,0,16,0">
                                                     <StackPanel Orientation="Horizontal" Spacing="4">
-                                                        <TextBlock Text="⬇" Foreground="#00D2FF" FontSize="10" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding BytesDownloaded, Converter={x:Static conv:ByteFormatConverter.Instance}}" Foreground="#00D2FF" FontSize="12" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                                        <TextBlock Text="⬆" Foreground="#00E676" FontSize="10" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding BytesUploaded, Converter={x:Static conv:ByteFormatConverter.Instance}}" Foreground="#00E676" FontSize="12" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Total" Foreground="#00D2FF" FontSize="10" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding TodayBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Foreground="#00D2FF" FontSize="12" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </StackPanel>
                                                 

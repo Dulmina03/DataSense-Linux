@@ -65,6 +65,14 @@
                     </StackPanel>
                 </Button>
                 <Button Classes="sidebar-btn" 
+                        Classes.active="{Binding IsUnifiedIntelligenceActive}"
+                        Command="{Binding NavigateToUnifiedIntelligenceCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="🧠" Width="20" />
+                        <TextBlock Text="Intelligence Center" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="sidebar-btn" 
                         Classes.active="{Binding IsLiveMonitoringActive}"
                         Command="{Binding NavigateToLiveMonitoringCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="12">

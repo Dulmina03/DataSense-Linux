@@ -54,6 +54,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isTimelineActive;
+    
+    [ObservableProperty]
+    private bool _isUnifiedIntelligenceActive;
 
     public MainWindowViewModel()
     {
@@ -178,12 +181,23 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    public void NavigateToUnifiedIntelligence()
+    {
+        if (App.Services != null)
+        {
+            var vm = App.Services.GetRequiredService<UnifiedIntelligenceViewModel>();
+            SetCurrentPage(vm);
+        }
+    }
+
     private void SetCurrentPage(ViewModelBase page)
     {
         CurrentPage = page;
         
         IsDashboardActive   = page is DashboardViewModel;
         IsHistoryActive     = page is HistoryViewModel;
+        IsUnifiedIntelligenceActive = page is UnifiedIntelligenceViewModel;
         IsExplorerActive    = page is HistoricalExplorerViewModel;
         IsSpeedTestActive   = page is SpeedTestViewModel;
         IsLiveMonitoringActive = page is LiveMonitoringViewModel;

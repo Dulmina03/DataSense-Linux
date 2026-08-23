@@ -26,11 +26,13 @@ public class ExportService : IExportService
 {
     private readonly INetworkUsageRepository _repository;
     private readonly IAnalyticsService _analyticsService;
+    private readonly IApplicationAnalyticsService _appAnalyticsService;
 
-    public ExportService(INetworkUsageRepository repository, IAnalyticsService analyticsService)
+    public ExportService(INetworkUsageRepository repository, IAnalyticsService analyticsService, IApplicationAnalyticsService appAnalyticsService)
     {
         _repository       = repository       ?? throw new ArgumentNullException(nameof(repository));
         _analyticsService = analyticsService ?? throw new ArgumentNullException(nameof(analyticsService));
+        _appAnalyticsService = appAnalyticsService ?? throw new ArgumentNullException(nameof(appAnalyticsService));
     }
 
     public async Task<ExportResult> ExportDataAsync(ExportOptions options, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
@@ -117,8 +119,8 @@ public class ExportService : IExportService
         }
         else if (options.DataType == ExportDataType.Applications)
         {
-            await writer.WriteLineAsync("Timestamp,ProcessName,ExecutablePath,UserName,BytesDownloaded,BytesUploaded,TotalBytes,DataSource");
-            var procs = await _repository.GetTopProcessesAsync(options.StartDate, options.EndDate, 10000);
+            await writer.WriteLineAsync("Timestamp,ProcessName,ExecutablePath,UserName,BytesDownloaded,BytesUploaded,TotalBytes,DataSource,TrendState,SurgeFlag,SevenDayAverageBytes");
+            var procs = await _appAnalyticsService.GetTopApplicationsAsync(10000);
             var list = procs.ToList();
             for (int i = 0; i < list.Count; i++)
             {
@@ -126,7 +128,7 @@ public class ExportService : IExportService
                 var p = list[i];
                 string pName = options.AnonymizeApplicationNames ? $"App_{i + 1}" : p.ProcessName;
                 string execPath = options.AnonymizeApplicationNames ? "/usr/bin/anon" : p.ExecutablePath;
-                await writer.WriteLineAsync($"{p.Timestamp:o},\"{pName}\",\"{execPath}\",\"{p.UserName}\",{p.BytesDownloaded},{p.BytesUploaded},{p.TotalBytes},\"{p.DataSource}\"");
+                await writer.WriteLineAsync($"{p.LastSeen:o},\"{pName}\",\"{execPath}\",\"{p.UserName}\",{p.DownloadBytes},{p.UploadBytes},{p.TotalBytes},\"{p.DataSource}\",\"{p.TrendState}\",{p.IsUsageSurging},{(p.SevenDayAverageBytes ?? 0)}");
                 if (list.Count > 0) progress?.Report((int)((i / (double)list.Count) * 100));
             }
             return list.Count;
@@ -139,21 +141,25 @@ public class ExportService : IExportService
     {
         if (options.DataType == ExportDataType.Applications)
         {
-            var procs = await _repository.GetTopProcessesAsync(options.StartDate, options.EndDate, 10000);
+            var procs = await _appAnalyticsService.GetTopApplicationsAsync(10000);
             var procList = procs.ToList();
             var procData = new
             {
                 Metadata = new { Application = "DataSense", ExportedAt = DateTime.UtcNow, DataType = "Applications", Version = "1.0.0" },
                 Records = procList.Select((p, idx) => new
                 {
-                    Timestamp = p.Timestamp,
+                    Timestamp = p.LastSeen,
                     ProcessName = options.AnonymizeApplicationNames ? $"App_{idx + 1}" : p.ProcessName,
                     ExecutablePath = options.AnonymizeApplicationNames ? "/usr/bin/anon" : p.ExecutablePath,
                     UserName = p.UserName,
-                    BytesDownloaded = p.BytesDownloaded,
-                    BytesUploaded = p.BytesUploaded,
+                    BytesDownloaded = p.DownloadBytes,
+                    BytesUploaded = p.UploadBytes,
                     TotalBytes = p.TotalBytes,
-                    DataSource = p.DataSource
+                    DataSource = p.DataSource,
+                    TrendState = p.TrendState,
+                    TrendPercentage = p.TrendPercentage,
+                    IsUsageSurging = p.IsUsageSurging,
+                    SevenDayAverageBytes = p.SevenDayAverageBytes
                 })
             };
 

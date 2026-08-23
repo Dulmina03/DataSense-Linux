@@ -126,7 +126,7 @@ public class ApplicationIntelligenceService : IApplicationIntelligenceService
             // Rule 1: High Bandwidth Heavyweight (> 25% of today's total system bandwidth)
             if (app.PercentageOfTotalUsage >= 25.0 && app.TodayBytes > 100_000_000)
             {
-                long potentialSavings = (long)(app.TodayBytes * 0.3); // 30% potential reduction
+                // PotentialSavingsBytes: omitted (not deterministically calculable)
                 recommendations.Add(new ApplicationRecommendation
                 {
                     ProcessName           = app.ProcessName,
@@ -134,7 +134,7 @@ public class ApplicationIntelligenceService : IApplicationIntelligenceService
                     Description           = $"{app.DisplayName} accounts for {app.PercentageOfTotalUsage:F0}% of today's total network traffic ({FormatBytes((long)app.TodayBytes)}).",
                     ActionableStep        = $"Consider configuring background download limits, lowering video resolution, or closing unused tabs in {app.DisplayName}.",
                     Impact                = RecommendationImpact.High,
-                    PotentialSavingsBytes = potentialSavings,
+                    PotentialSavingsBytes = 0,
                     Timestamp             = DateTime.UtcNow
                 });
             }
@@ -142,6 +142,9 @@ public class ApplicationIntelligenceService : IApplicationIntelligenceService
             // Rule 2: Rapid Usage Surge (> 50% increase over 7-day average)
             if (app.TrendPercentage > 50.0 && app.TodayBytes > 50_000_000 && app.HasSufficientData)
             {
+                long realDelta = app.TodayBytes > (long)app.SevenDayAverageBytes
+                    ? (long)(app.TodayBytes - app.SevenDayAverageBytes)
+                    : 0;
                 recommendations.Add(new ApplicationRecommendation
                 {
                     ProcessName           = app.ProcessName,
@@ -149,7 +152,7 @@ public class ApplicationIntelligenceService : IApplicationIntelligenceService
                     Description           = $"{app.DisplayName}'s bandwidth consumption surged by {app.TrendPercentage:F0}% today compared to its 7-day average.",
                     ActionableStep        = $"Check if {app.DisplayName} is executing background updates, syncing cloud drives, or streaming media.",
                     Impact                = RecommendationImpact.Medium,
-                    PotentialSavingsBytes = (long)(app.TodayBytes - app.SevenDayAverageBytes),
+                    PotentialSavingsBytes = realDelta,
                     Timestamp             = DateTime.UtcNow
                 });
             }
@@ -165,7 +168,7 @@ public class ApplicationIntelligenceService : IApplicationIntelligenceService
                     Description           = appAnomaly.Description,
                     ActionableStep        = $"Verify active connections in {app.DisplayName} or restart the process if network traffic is unintended.",
                     Impact                = RecommendationImpact.Critical,
-                    PotentialSavingsBytes = (long)(app.TodayBytes * 0.4),
+                    PotentialSavingsBytes = 0, // not deterministically calculable
                     Timestamp             = DateTime.UtcNow
                 });
             }

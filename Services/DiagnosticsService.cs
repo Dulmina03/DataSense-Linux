@@ -236,6 +236,46 @@ public class DiagnosticsService : IDiagnosticsService
             RecommendedAction = "Requires at least 3 days of historical records for accurate predictions."
         });
 
+        // 10. Application Analytics Component
+        var appReport = reports.GetValueOrDefault("ApplicationAnalytics");
+        
+        SubsystemState appState = appReport?.State ?? SubsystemState.Healthy;
+        string appMessage = appReport?.Message ?? "Application analytics operating normally.";
+        string appDetailed = "Aggregates per-process historical intelligence and detects unusual application activity.";
+        string appRecovery = "No action required.";
+
+        if (appReport == null) 
+        {
+            // Fallback: check if we have any process telemetry
+            bool hasProcessData = false;
+            try 
+            {
+                var summary = await _repository.GetTopProcessesAsync(DateTime.UtcNow.AddDays(-1), DateTime.UtcNow, 1);
+                hasProcessData = summary.Any();
+            } 
+            catch { appState = SubsystemState.Error; appMessage = "Analytics backend/database failure."; appRecovery = "Check database permissions or logs."; }
+
+            if (appState != SubsystemState.Error && !hasProcessData)
+            {
+                appState = SubsystemState.Unavailable;
+                appMessage = "No valid process telemetry exists.";
+                appRecovery = "Install/configure nethogs to enable per-process telemetry.";
+            }
+        }
+
+        components.Add(new DiagnosticComponent
+        {
+            Name = "ApplicationAnalytics",
+            DisplayName = "Application Intelligence Analytics",
+            Category = "Analytics & Intelligence",
+            Status = appState,
+            Message = appMessage,
+            DetailedMessage = appDetailed,
+            IsRequired = false,
+            CanRecoverAutomatically = true,
+            RecommendedAction = appRecovery
+        });
+
         // 7. Cloudflare Speed Test Component
         var speedReport = reports.GetValueOrDefault("SpeedTest");
         components.Add(new DiagnosticComponent

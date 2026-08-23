@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddSingleton<IApplicationAnalyticsService, ApplicationAnalyticsService>();
         services.AddSingleton<IProcessNetworkIntelligenceService, ProcessNetworkIntelligenceService>();
         services.AddSingleton<IApplicationNetworkCorrelationService, ApplicationNetworkCorrelationService>();
+        services.AddSingleton<IUnifiedAnalyticsIntelligenceService, UnifiedAnalyticsIntelligenceService>();
 
         // Monitoring Services
         services.AddSingleton<INetworkMonitorService, LinuxNetworkMonitorService>();
@@ -79,6 +80,7 @@ public static class DependencyInjection
         services.AddTransient<NetworkAnalyticsViewModel>();
         services.AddTransient<LiveMonitoringViewModel>();
         services.AddTransient<NetworkActivityTimelineViewModel>();
+        services.AddTransient<UnifiedIntelligenceViewModel>();
 
         // Views
         services.AddTransient<MainWindow>();
