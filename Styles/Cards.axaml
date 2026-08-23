@@ -1,23 +1,22 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
         
-    <!-- Base Panel (Clean, implicit structure) -->
+    <!-- Base Panel -->
     <Style Selector="Border.Card">
         <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
-        <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
+        <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
     </Style>
 
-    <!-- Elevated Panel (Floating effect) -->
+    <!-- Elevated Panel -->
     <Style Selector="Border.CardElevated">
         <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
-        <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
-        <!-- Subtle shadow/elevation effect handled natively by background depth in this design -->
+        <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
     </Style>
 
     <!-- Hero Panel (Large central focal point) -->
@@ -35,8 +34,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
-        <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
-        <!-- Avalonia fast Transitions -->
+        <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.15" />
@@ -46,7 +44,7 @@
     </Style>
     <Style Selector="Border.CardInteractive:pointerover">
         <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
     </Style>
 
     <!-- Status Cards -->
@@ -55,7 +53,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
-        <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
+        <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
     </Style>
 
     <Style Selector="Border.CardWarning">
@@ -63,7 +61,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Warning}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
-        <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
+        <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
     </Style>
 
     <Style Selector="Border.CardDanger">
@@ -71,6 +69,59 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
+        <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
+    </Style>
+
+    <!-- NEW: Modern Analytics Surfaces -->
+    <Style Selector="Border.HeroSurface">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <Style Selector="Border.MetricSurface">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceMuted}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
+    </Style>
+
+    <Style Selector="Border.AnalyticsSurface">
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
+        <Setter Property="Padding" Value="{DynamicResource Padding.Large}" />
+    </Style>
+
+    <!-- Status Pills and Indicators -->
+    <Style Selector="Border.StatusPill">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Pill}" />
+        <Setter Property="Padding" Value="10,4" />
+    </Style>
+    
+    <!-- Legacy Badge Support -->
+    <Style Selector="Border.Badge">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Pill}" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+
+    <Style Selector="Ellipse.LiveIndicator">
+        <Setter Property="Width" Value="8" />
+        <Setter Property="Height" Value="8" />
+    </Style>
+    
+    <Style Selector="Border.HeroBox">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="BorderThickness" Value="0" />
     </Style>
 </Styles>
