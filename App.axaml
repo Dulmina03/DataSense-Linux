@@ -4,6 +4,16 @@
              xmlns:v="using:DataSense.Views"
              x:Class="DataSense.App"
              RequestedThemeVariant="Dark">
+             
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://DataSense/Styles/Colors.axaml" />
+                <ResourceInclude Source="avares://DataSense/Styles/Spacing.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.DataTemplates>
         <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
             <v:DashboardView />

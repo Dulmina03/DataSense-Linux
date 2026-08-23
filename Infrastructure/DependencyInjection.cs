@@ -56,7 +56,7 @@ public static class DependencyInjection
 
         // Process-level monitoring services
         services.AddSingleton<ILinuxProcessResolver, LinuxProcessResolver>();
-        services.AddSingleton<IProcessNetworkMonitor, NethogsProcessNetworkMonitor>();
+        services.AddSingleton<IProcessNetworkMonitor, CompositeProcessNetworkMonitor>();
         services.AddSingleton<ProcessNetworkMonitorWorker>();
         services.AddSingleton<ILinuxInterfaceStatsService, LinuxInterfaceStatsService>();
         services.AddSingleton<ILiveMonitoringEngine, LiveMonitoringEngine>();

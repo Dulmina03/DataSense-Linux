@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using DataSense.Models;
 
 namespace DataSense.Converters;
 
@@ -17,7 +18,6 @@ public class TrendColorConverter : IValueConverter
             {
                 "Increasing" => SemanticBrushConverter.Resolve("Danger"),
                 "Decreasing" => SemanticBrushConverter.Resolve("Success"),
-                "Stable" => SemanticBrushConverter.Resolve("Muted"),
                 _ => SemanticBrushConverter.Resolve("Muted")
             };
         }
@@ -83,32 +83,37 @@ public class ProcessIndexColorConverter : IValueConverter
 {
     public static readonly ProcessIndexColorConverter Instance = new();
 
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    private static readonly IBrush[] Palette = new IBrush[]
+    {
+        new SolidColorBrush(Color.Parse("#38BDF8")), // Cyan
+        new SolidColorBrush(Color.Parse("#10B981")), // Green
+        new SolidColorBrush(Color.Parse("#EAB308")), // Yellow
+        new SolidColorBrush(Color.Parse("#EF4444")), // Red
+        new SolidColorBrush(Color.Parse("#A855F7")), // Purple
+        new SolidColorBrush(Color.Parse("#F97316"))  // Orange
+    };
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         int index = 0;
         if (parameter != null && int.TryParse(parameter.ToString(), out int pIdx))
         {
             index = pIdx;
         }
-
-        string key = (index % 5) switch
+        else if (value is ApplicationHistoricalProfile profile)
         {
-            0 => "Brush.ChartSegment1",
-            1 => "Brush.ChartSegment2",
-            2 => "Brush.ChartSegment3",
-            3 => "Brush.ChartSegment4",
-            4 => "Brush.ChartSegment5",
-            _ => "Brush.ChartSegment1"
-        };
-
-        if (Avalonia.Application.Current != null &&
-            Avalonia.Application.Current.TryGetResource(key, Avalonia.Application.Current.ActualThemeVariant, out var resource) &&
-            resource is IBrush brush)
+            index = Math.Abs(profile.ProcessName?.GetHashCode() ?? 0) % Palette.Length;
+        }
+        else if (value is double pct)
         {
-            return brush;
+            index = (int)(pct * 10) % Palette.Length;
+        }
+        else if (value is string str)
+        {
+            index = Math.Abs(str.GetHashCode()) % Palette.Length;
         }
 
-        return SemanticBrushConverter.Resolve("Download");
+        return Palette[Math.Abs(index) % Palette.Length];
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

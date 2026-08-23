@@ -1,79 +1,142 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
     <ResourceDictionary.ThemeDictionaries>
+        
+        <!-- DARK THEME (DEFAULT) -->
         <ResourceDictionary x:Key="Default">
-            <!-- Dark Theme (Default) - Premium Professional -->
-            <SolidColorBrush x:Key="Brush.AppBackground">#0B0F19</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.NavigationBackground">#101423</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.Surface">#151B2E</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.SurfaceElevated">#1C243B</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.SurfaceHover">#232D48</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.SurfacePressed">#1C243B</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.SurfaceMuted">#121828</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.AppBackground" Color="#06080D"/>
+            <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#0A0D14"/>
+            <SolidColorBrush x:Key="Brush.Surface" Color="#111520"/>
+            <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#171D2B"/>
+            <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#202738"/>
+            <SolidColorBrush x:Key="Brush.SurfacePressed" Color="#141A26"/>
+            <SolidColorBrush x:Key="Brush.SurfaceMuted" Color="#0E121C"/>
             
-            <SolidColorBrush x:Key="Brush.Border">#232D48</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.BorderStrong">#2A3554</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Border" Color="#1C2333"/>
+            <SolidColorBrush x:Key="Brush.BorderStrong" Color="#283247"/>
             
-            <SolidColorBrush x:Key="Brush.TextPrimary">#FFFFFF</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.TextSecondary">#94A3B8</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.TextMuted">#64748B</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.TextDisabled">#475569</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.TextPrimary" Color="#F8FAFC"/>
+            <SolidColorBrush x:Key="Brush.TextSecondary" Color="#94A3B8"/>
+            <SolidColorBrush x:Key="Brush.TextMuted" Color="#64748B"/>
+            <SolidColorBrush x:Key="Brush.TextDisabled" Color="#475569"/>
             
-            <SolidColorBrush x:Key="Brush.Accent">#3B82F6</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.AccentHover">#60A5FA</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Accent" Color="#3B82F6"/>
+            <SolidColorBrush x:Key="Brush.AccentHover" Color="#60A5FA"/>
+            <SolidColorBrush x:Key="Brush.AccentSurface" Color="#1A3B82F6"/>
             
-            <SolidColorBrush x:Key="Brush.Success">#10B981</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.SuccessSurface">#1A10B981</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.Warning">#F59E0B</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.Danger">#EF4444</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.DangerSurface">#1AEF4444</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Success" Color="#10B981"/>
+            <SolidColorBrush x:Key="Brush.SuccessSurface" Color="#1A10B981"/>
+            <SolidColorBrush x:Key="Brush.Warning" Color="#F59E0B"/>
+            <SolidColorBrush x:Key="Brush.Danger" Color="#EF4444"/>
+            <SolidColorBrush x:Key="Brush.DangerSurface" Color="#1AEF4444"/>
             
-            <SolidColorBrush x:Key="Brush.Download">#38BDF8</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.Upload">#8B5CF6</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.Download" Color="#38BDF8"/>
+            <SolidColorBrush x:Key="Brush.Upload" Color="#A855F7"/>
 
-            <!-- Chart Segment Palette Brushes -->
-            <SolidColorBrush x:Key="Brush.ChartSegment1">#38BDF8</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.ChartSegment2">#8B5CF6</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.ChartSegment3">#3B82F6</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.ChartSegment4">#10B981</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.ChartSegment5">#F59E0B</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#38BDF8"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#A855F7"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#6366F1"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#14B8A6"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#F59E0B"/>
+
+            <!-- FluentTheme System Overrides -->
+            <SolidColorBrush x:Key="SystemRegionBrush" Color="#06080D"/>
+            <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="#06080D"/>
+            <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="#111520"/>
+            <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumLowBrush" Color="#111520"/>
+            <SolidColorBrush x:Key="SystemControlBackgroundChromeLowBrush" Color="#171D2B"/>
+            <SolidColorBrush x:Key="SystemControlBackgroundListLowBrush" Color="#111520"/>
+            <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="#F8FAFC"/>
+            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="#94A3B8"/>
+            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumLowBrush" Color="#64748B"/>
         </ResourceDictionary>
-        <ResourceDictionary x:Key="Light">
-            <!-- Light Theme - Refined Off-White -->
-            <SolidColorBrush x:Key="Brush.AppBackground">#F8FAFC</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.NavigationBackground">#FFFFFF</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.Surface">#FFFFFF</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.SurfaceElevated">#F1F5F9</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.SurfaceHover">#E2E8F0</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.SurfacePressed">#CBD5E1</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.SurfaceMuted">#F1F5F9</SolidColorBrush>
-            
-            <SolidColorBrush x:Key="Brush.Border">#E2E8F0</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.BorderStrong">#CBD5E1</SolidColorBrush>
-            
-            <SolidColorBrush x:Key="Brush.TextPrimary">#0F172A</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.TextSecondary">#475569</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.TextMuted">#64748B</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.TextDisabled">#94A3B8</SolidColorBrush>
-            
-            <SolidColorBrush x:Key="Brush.Accent">#2563EB</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.AccentHover">#1D4ED8</SolidColorBrush>
-            
-            <SolidColorBrush x:Key="Brush.Success">#059669</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.SuccessSurface">#1A059669</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.Warning">#D97706</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.Danger">#DC2626</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.DangerSurface">#1ADC2626</SolidColorBrush>
-            
-            <SolidColorBrush x:Key="Brush.Download">#0284C7</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.Upload">#7C3AED</SolidColorBrush>
 
-            <!-- Chart Segment Palette Brushes (Light Theme) -->
-            <SolidColorBrush x:Key="Brush.ChartSegment1">#0284C7</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.ChartSegment2">#7C3AED</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.ChartSegment3">#2563EB</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.ChartSegment4">#059669</SolidColorBrush>
-            <SolidColorBrush x:Key="Brush.ChartSegment5">#D97706</SolidColorBrush>
+        <!-- DARK THEME EXPLICIT KEY -->
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="Brush.AppBackground" Color="#06080D"/>
+            <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#0A0D14"/>
+            <SolidColorBrush x:Key="Brush.Surface" Color="#111520"/>
+            <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#171D2B"/>
+            <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#202738"/>
+            <SolidColorBrush x:Key="Brush.SurfacePressed" Color="#141A26"/>
+            <SolidColorBrush x:Key="Brush.SurfaceMuted" Color="#0E121C"/>
+            
+            <SolidColorBrush x:Key="Brush.Border" Color="#1C2333"/>
+            <SolidColorBrush x:Key="Brush.BorderStrong" Color="#283247"/>
+            
+            <SolidColorBrush x:Key="Brush.TextPrimary" Color="#F8FAFC"/>
+            <SolidColorBrush x:Key="Brush.TextSecondary" Color="#94A3B8"/>
+            <SolidColorBrush x:Key="Brush.TextMuted" Color="#64748B"/>
+            <SolidColorBrush x:Key="Brush.TextDisabled" Color="#475569"/>
+            
+            <SolidColorBrush x:Key="Brush.Accent" Color="#3B82F6"/>
+            <SolidColorBrush x:Key="Brush.AccentHover" Color="#60A5FA"/>
+            <SolidColorBrush x:Key="Brush.AccentSurface" Color="#1A3B82F6"/>
+            
+            <SolidColorBrush x:Key="Brush.Success" Color="#10B981"/>
+            <SolidColorBrush x:Key="Brush.SuccessSurface" Color="#1A10B981"/>
+            <SolidColorBrush x:Key="Brush.Warning" Color="#F59E0B"/>
+            <SolidColorBrush x:Key="Brush.Danger" Color="#EF4444"/>
+            <SolidColorBrush x:Key="Brush.DangerSurface" Color="#1AEF4444"/>
+            
+            <SolidColorBrush x:Key="Brush.Download" Color="#38BDF8"/>
+            <SolidColorBrush x:Key="Brush.Upload" Color="#A855F7"/>
+
+            <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#38BDF8"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#A855F7"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#6366F1"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#14B8A6"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#F59E0B"/>
+
+            <!-- FluentTheme System Overrides -->
+            <SolidColorBrush x:Key="SystemRegionBrush" Color="#06080D"/>
+            <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="#06080D"/>
+            <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="#111520"/>
+            <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumLowBrush" Color="#111520"/>
+            <SolidColorBrush x:Key="SystemControlBackgroundChromeLowBrush" Color="#171D2B"/>
+            <SolidColorBrush x:Key="SystemControlBackgroundListLowBrush" Color="#111520"/>
+            <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="#F8FAFC"/>
+            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="#94A3B8"/>
+            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumLowBrush" Color="#64748B"/>
+        </ResourceDictionary>
+
+        <!-- LIGHT THEME -->
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="Brush.AppBackground" Color="#F8FAFC"/>
+            <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="Brush.Surface" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#F1F5F9"/>
+            <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#E2E8F0"/>
+            <SolidColorBrush x:Key="Brush.SurfacePressed" Color="#CBD5E1"/>
+            <SolidColorBrush x:Key="Brush.SurfaceMuted" Color="#F1F5F9"/>
+            
+            <SolidColorBrush x:Key="Brush.Border" Color="#E2E8F0"/>
+            <SolidColorBrush x:Key="Brush.BorderStrong" Color="#CBD5E1"/>
+            
+            <SolidColorBrush x:Key="Brush.TextPrimary" Color="#0F172A"/>
+            <SolidColorBrush x:Key="Brush.TextSecondary" Color="#475569"/>
+            <SolidColorBrush x:Key="Brush.TextMuted" Color="#64748B"/>
+            <SolidColorBrush x:Key="Brush.TextDisabled" Color="#94A3B8"/>
+            
+            <SolidColorBrush x:Key="Brush.Accent" Color="#2563EB"/>
+            <SolidColorBrush x:Key="Brush.AccentHover" Color="#1D4ED8"/>
+            <SolidColorBrush x:Key="Brush.AccentSurface" Color="#1A2563EB"/>
+            
+            <SolidColorBrush x:Key="Brush.Success" Color="#059669"/>
+            <SolidColorBrush x:Key="Brush.SuccessSurface" Color="#1A059669"/>
+            <SolidColorBrush x:Key="Brush.Warning" Color="#D97706"/>
+            <SolidColorBrush x:Key="Brush.Danger" Color="#DC2626"/>
+            <SolidColorBrush x:Key="Brush.DangerSurface" Color="#1ADC2626"/>
+            
+            <SolidColorBrush x:Key="Brush.Download" Color="#0284C7"/>
+            <SolidColorBrush x:Key="Brush.Upload" Color="#7C3AED"/>
+
+            <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#0284C7"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#7C3AED"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#2563EB"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#059669"/>
+            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#D97706"/>
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>

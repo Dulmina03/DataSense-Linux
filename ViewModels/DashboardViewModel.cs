@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -139,6 +140,46 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     // ── Chart ───────────────────────────────────────────────────────────────
 
     public ObservableCollection<DailyChartBarViewModel> DailyChartItems { get; } = new();
+
+    // ── Real-Time Network Traffic Chart ──────────────────────────────────────
+
+    public ObservableCollection<RealtimeNetworkPoint> RealtimeTrafficPoints { get; } = new();
+    public ObservableCollection<string> TimeAxisLabels { get; } = new();
+
+    [ObservableProperty] private Geometry? _realtimeDownloadAreaGeometry;
+    [ObservableProperty] private Geometry? _realtimeDownloadLineGeometry;
+    [ObservableProperty] private Geometry? _realtimeUploadAreaGeometry;
+    [ObservableProperty] private Geometry? _realtimeUploadLineGeometry;
+
+    [ObservableProperty] private string _liveGraphStatusText = "LIVE";
+    [ObservableProperty] private string _liveGraphStatusColor = "Success";
+    [ObservableProperty] private bool   _isRealtimeGraphLive = true;
+    [ObservableProperty] private bool   _hasRealtimeGraphData = false;
+
+    [ObservableProperty] private string _currentLiveDownloadSpeedText = "0.0 B/s";
+    [ObservableProperty] private string _currentLiveUploadSpeedText = "0.0 B/s";
+    [ObservableProperty] private string _peakLiveDownloadSpeedText = "0.0 B/s";
+    [ObservableProperty] private string _peakLiveUploadSpeedText = "0.0 B/s";
+    [ObservableProperty] private double _peakDownloadRateInWindow = 0;
+    [ObservableProperty] private double _peakUploadRateInWindow = 0;
+
+    [ObservableProperty] private string _yAxisTopText = "100.0 KB/s";
+    [ObservableProperty] private string _yAxisMidHighText = "75.0 KB/s";
+    [ObservableProperty] private string _yAxisMidText = "50.0 KB/s";
+    [ObservableProperty] private string _yAxisMidLowText = "25.0 KB/s";
+    [ObservableProperty] private string _yAxisMinText = "0 B/s";
+
+    [ObservableProperty] private RealtimeNetworkPoint? _hoveredRealtimePoint;
+    [ObservableProperty] private bool   _isHoveringRealtimeGraph = false;
+    [ObservableProperty] private double _hoverLineX = 0;
+
+    [ObservableProperty] private double _latestDownloadX = 0;
+    [ObservableProperty] private double _latestDownloadY = 180;
+    [ObservableProperty] private double _latestUploadX = 0;
+    [ObservableProperty] private double _latestUploadY = 180;
+
+    private const int MaxRealtimePoints = 60;
+    private string _lastInterfaceName = string.Empty;
 
     /// <summary>
     /// Pixel width of the chart canvas.  Updated by the view's SizeChanged handler.
@@ -303,6 +344,11 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             _networkMonitorWorker.TotalBytesDownloaded,
             _networkMonitorWorker.TotalBytesUploaded);
 
+        AddRealtimeTrafficSample(
+            _networkMonitorWorker.DownloadSpeed,
+            _networkMonitorWorker.UploadSpeed,
+            _networkMonitorWorker.ActiveInterface);
+
         // Subscribe to live updates
         _networkMonitorWorker.NetworkUsageUpdated += OnNetworkUsageUpdated;
         _processMonitorWorker.LiveTrafficUpdated += OnLiveTrafficUpdated;
@@ -382,6 +428,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         if (Math.Abs(rounded - ChartWidth) < 10) return; // ignore sub-10 px jitter
         ChartWidth = rounded;
         _ = RebuildChartAsync();
+        RebuildRealtimeChartGeometry();
     }
 
     private async Task RebuildChartAsync()
@@ -420,8 +467,27 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     private void OnLiveTrafficUpdated(IEnumerable<ProcessNetworkUsage> currentBatch)
     {
-        // Limit to processes transmitting data or with active byte counters, sort by rate then total
+        // Aggregate socket/PID-level measurements into process-level entries
         var active = currentBatch
+            .GroupBy(p => p.ProcessIdentifier.Trim().ToLowerInvariant())
+            .Select(g =>
+            {
+                var first = g.First();
+                return new ProcessNetworkUsage
+                {
+                    ProcessIdentifier = first.ProcessIdentifier,
+                    ExecutablePath = first.ExecutablePath,
+                    Pid = first.Pid,
+                    User = first.User,
+                    DownloadRateBytesPerSec = g.Sum(x => x.DownloadRateBytesPerSec),
+                    UploadRateBytesPerSec = g.Sum(x => x.UploadRateBytesPerSec),
+                    DownloadBytes = g.Sum(x => x.DownloadBytes),
+                    UploadBytes = g.Sum(x => x.UploadBytes),
+                    Timestamp = g.Max(x => x.Timestamp),
+                    DataSource = first.DataSource,
+                    ProcessIdentityKey = first.ProcessIdentityKey
+                };
+            })
             .Where(p => p.DownloadRateBytesPerSec > 0 || p.UploadRateBytesPerSec > 0 || p.DownloadBytes > 0 || p.UploadBytes > 0)
             .OrderByDescending(p => (p.DownloadRateBytesPerSec + p.UploadRateBytesPerSec) > 0 
                 ? (p.DownloadRateBytesPerSec + p.UploadRateBytesPerSec) 
@@ -436,6 +502,39 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             {
                 LiveProcessTraffic.Add(process);
             }
+
+            if ((!HasTopProcesses || TopProcesses.Count == 0) && LiveProcessTraffic.Count > 0)
+            {
+                var liveGrouped = LiveProcessTraffic
+                    .GroupBy(p => p.ProcessIdentifier)
+                    .Select(g => new ApplicationHistoricalProfile
+                    {
+                        ProcessName = g.Key,
+                        DownloadBytes = g.Sum(x => x.DownloadBytes),
+                        UploadBytes = g.Sum(x => x.UploadBytes),
+                        TodayBytes = g.Sum(x => x.DownloadBytes + x.UploadBytes),
+                        DataSource = "Live Telemetry"
+                    })
+                    .OrderByDescending(p => p.TotalBytes)
+                    .Take(5)
+                    .ToList();
+
+                long totalBytes = liveGrouped.Sum(p => p.TotalBytes);
+                if (totalBytes > 0)
+                {
+                    foreach (var p in liveGrouped)
+                    {
+                        p.PercentageOfTotal = (double)p.TotalBytes / totalBytes * 100.0;
+                    }
+                }
+
+                TopProcesses.Clear();
+                foreach (var p in liveGrouped)
+                {
+                    TopProcesses.Add(p);
+                }
+                HasTopProcesses = TopProcesses.Count > 0;
+            }
         });
     }
 
@@ -449,6 +548,11 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 usage.UploadSpeed,
                 usage.BytesReceived,
                 usage.BytesSent);
+
+            AddRealtimeTrafficSample(
+                usage.DownloadSpeed,
+                usage.UploadSpeed,
+                usage.InterfaceName);
         });
 
         // Auto-refresh analytics when the UTC calendar date has rolled over midnight
@@ -464,6 +568,218 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             _ = LoadConnectionDetailsAsync(usage.InterfaceName);
             _ = LoadAnalyticsAsync(showLoading: false);
         }
+    }
+
+    public void AddRealtimeTrafficSample(double downloadSpeed, double uploadSpeed, string? interfaceName)
+    {
+        bool isConnected = !string.IsNullOrEmpty(interfaceName) && interfaceName != "None" && interfaceName != "Disconnected";
+
+        if (!isConnected)
+        {
+            IsRealtimeGraphLive = false;
+            LiveGraphStatusText = "OFFLINE";
+            LiveGraphStatusColor = "Muted";
+            return;
+        }
+
+        IsRealtimeGraphLive = true;
+        LiveGraphStatusText = "LIVE";
+        LiveGraphStatusColor = "Success";
+
+        // If network interface switched, reset history window to avoid huge false rate spike
+        if (!string.IsNullOrEmpty(_lastInterfaceName) && _lastInterfaceName != interfaceName)
+        {
+            RealtimeTrafficPoints.Clear();
+        }
+        _lastInterfaceName = interfaceName ?? string.Empty;
+
+        var sample = new RealtimeNetworkPoint
+        {
+            Timestamp = DateTime.UtcNow,
+            DownloadRateBytesPerSec = downloadSpeed,
+            UploadRateBytesPerSec = uploadSpeed
+        };
+
+        RealtimeTrafficPoints.Add(sample);
+        while (RealtimeTrafficPoints.Count > MaxRealtimePoints)
+        {
+            RealtimeTrafficPoints.RemoveAt(0);
+        }
+
+        CurrentLiveDownloadSpeedText = ByteFormatter.FormatSpeed(downloadSpeed);
+        CurrentLiveUploadSpeedText = ByteFormatter.FormatSpeed(uploadSpeed);
+
+        PeakDownloadRateInWindow = RealtimeTrafficPoints.Max(p => p.DownloadRateBytesPerSec);
+        PeakUploadRateInWindow = RealtimeTrafficPoints.Max(p => p.UploadRateBytesPerSec);
+
+        PeakLiveDownloadSpeedText = ByteFormatter.FormatSpeed(PeakDownloadRateInWindow);
+        PeakLiveUploadSpeedText = ByteFormatter.FormatSpeed(PeakUploadRateInWindow);
+
+        HasRealtimeGraphData = RealtimeTrafficPoints.Count > 0;
+
+        RebuildRealtimeChartGeometry();
+    }
+
+    public void RebuildRealtimeChartGeometry()
+    {
+        if (RealtimeTrafficPoints.Count == 0)
+        {
+            RealtimeDownloadAreaGeometry = null;
+            RealtimeDownloadLineGeometry = null;
+            RealtimeUploadAreaGeometry = null;
+            RealtimeUploadLineGeometry = null;
+            TimeAxisLabels.Clear();
+            return;
+        }
+
+        double maxObserved = Math.Max(PeakDownloadRateInWindow, PeakUploadRateInWindow);
+        double yMax = Math.Max(102400.0, maxObserved * 1.25); // 100 KB/s minimum scale floor
+
+        YAxisTopText = ByteFormatter.FormatSpeed(yMax);
+        YAxisMidHighText = ByteFormatter.FormatSpeed(yMax * 0.75);
+        YAxisMidText = ByteFormatter.FormatSpeed(yMax * 0.50);
+        YAxisMidLowText = ByteFormatter.FormatSpeed(yMax * 0.25);
+        YAxisMinText = "0 B/s";
+
+        double canvasWidth = Math.Max(300.0, ChartWidth - 78.0);
+        double canvasHeight = 180.0;
+        int count = RealtimeTrafficPoints.Count;
+
+        var downloadPoints = new List<Point>();
+        var uploadPoints = new List<Point>();
+
+        for (int i = 0; i < count; i++)
+        {
+            var p = RealtimeTrafficPoints[i];
+            double x = count == 1 ? canvasWidth : (double)i / (count - 1) * canvasWidth;
+
+            double dlRatio = Math.Clamp(p.DownloadRateBytesPerSec / yMax, 0.0, 1.0);
+            double ulRatio = Math.Clamp(p.UploadRateBytesPerSec / yMax, 0.0, 1.0);
+
+            double dlY = canvasHeight - (dlRatio * (canvasHeight - 20.0)) - 10.0;
+            double ulY = canvasHeight - (ulRatio * (canvasHeight - 20.0)) - 10.0;
+
+            p.CanvasX = x;
+            p.DownloadY = dlY;
+            p.UploadY = ulY;
+
+            downloadPoints.Add(new Point(x, dlY));
+            uploadPoints.Add(new Point(x, ulY));
+        }
+
+        // Build curve geometries
+        var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
+        var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, canvasHeight, canvasWidth);
+
+        RealtimeDownloadLineGeometry = dlLine;
+        RealtimeDownloadAreaGeometry = dlArea;
+        RealtimeUploadLineGeometry = ulLine;
+        RealtimeUploadAreaGeometry = ulArea;
+
+        // Set latest dot positions
+        if (downloadPoints.Count > 0)
+        {
+            LatestDownloadX = downloadPoints.Last().X;
+            LatestDownloadY = downloadPoints.Last().Y;
+            LatestUploadX = uploadPoints.Last().X;
+            LatestUploadY = uploadPoints.Last().Y;
+        }
+
+        // Rebuild time axis labels (5 labels across the time window)
+        TimeAxisLabels.Clear();
+        if (count > 0)
+        {
+            int step = Math.Max(1, (count - 1) / 4);
+            for (int i = 0; i < count; i += step)
+            {
+                TimeAxisLabels.Add(RealtimeTrafficPoints[i].ShortTimeText);
+                if (TimeAxisLabels.Count == 5) break;
+            }
+            while (TimeAxisLabels.Count < 5 && count > 0)
+            {
+                TimeAxisLabels.Add(RealtimeTrafficPoints.Last().ShortTimeText);
+            }
+        }
+    }
+
+    private static (Geometry Line, Geometry Area) BuildCurveGeometry(List<Point> points, double canvasHeight, double canvasWidth)
+    {
+        if (points.Count == 0)
+        {
+            return (Geometry.Parse("M 0,180 L 100,180"), Geometry.Parse($"M 0,{canvasHeight} L {canvasWidth},{canvasHeight} Z"));
+        }
+
+        var lineGeometry = new PathGeometry();
+        var lineFigure = new PathFigure
+        {
+            StartPoint = points[0],
+            IsClosed = false,
+            IsFilled = false
+        };
+
+        var areaGeometry = new PathGeometry();
+        var areaFigure = new PathFigure
+        {
+            StartPoint = new Point(points[0].X, canvasHeight),
+            IsClosed = true,
+            IsFilled = true
+        };
+        areaFigure.Segments!.Add(new LineSegment { Point = points[0] });
+
+        if (points.Count == 1)
+        {
+            lineFigure.Segments!.Add(new LineSegment { Point = new Point(canvasWidth, points[0].Y) });
+            areaFigure.Segments!.Add(new LineSegment { Point = new Point(canvasWidth, points[0].Y) });
+        }
+        else
+        {
+            for (int i = 0; i < points.Count - 1; i++)
+            {
+                var p0 = points[i];
+                var p1 = points[i + 1];
+                double midX = (p0.X + p1.X) / 2.0;
+
+                var segment = new QuadraticBezierSegment
+                {
+                    Point1 = new Point(midX, p0.Y),
+                    Point2 = p1
+                };
+                lineFigure.Segments!.Add(segment);
+                areaFigure.Segments!.Add(segment);
+            }
+        }
+
+        areaFigure.Segments.Add(new LineSegment { Point = new Point(points.Last().X, canvasHeight) });
+        areaFigure.Segments.Add(new LineSegment { Point = new Point(points[0].X, canvasHeight) });
+
+        lineGeometry.Figures!.Add(lineFigure);
+        areaGeometry.Figures!.Add(areaFigure);
+
+        return (lineGeometry, areaGeometry);
+    }
+
+    public void UpdateRealtimeHover(double mouseX)
+    {
+        if (RealtimeTrafficPoints.Count == 0)
+        {
+            IsHoveringRealtimeGraph = false;
+            HoveredRealtimePoint = null;
+            return;
+        }
+
+        var closest = RealtimeTrafficPoints.OrderBy(p => Math.Abs(p.CanvasX - mouseX)).FirstOrDefault();
+        if (closest != null)
+        {
+            HoveredRealtimePoint = closest;
+            HoverLineX = closest.CanvasX;
+            IsHoveringRealtimeGraph = true;
+        }
+    }
+
+    public void ClearRealtimeHover()
+    {
+        IsHoveringRealtimeGraph = false;
+        HoveredRealtimePoint = null;
     }
 
     private void UpdateLiveValues(
@@ -804,16 +1120,39 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             });
 
             // Load Top Processes (Historical Profiles)
-            var topProcessesList = (await _applicationAnalyticsService.GetTopApplicationsAsync(5)).ToList();
+            var rawTop = (await _applicationAnalyticsService.GetTopApplicationsAsync(5)).ToList();
+            var topProcessesList = rawTop
+                .GroupBy(p => p.ProcessName.Trim().ToLowerInvariant())
+                .Select(g =>
+                {
+                    var first = g.First();
+                    return new ApplicationHistoricalProfile
+                    {
+                        ProcessName = first.ProcessName,
+                        Pid = first.Pid,
+                        ExecutablePath = first.ExecutablePath,
+                        UserName = first.UserName,
+                        DataSource = first.DataSource,
+                        DownloadBytes = g.Sum(x => x.DownloadBytes),
+                        UploadBytes = g.Sum(x => x.UploadBytes),
+                        TodayBytes = g.Sum(x => x.TodayBytes),
+                        YesterdayBytes = g.Sum(x => x.YesterdayBytes),
+                        SevenDayTotalBytes = g.Sum(x => x.SevenDayTotalBytes),
+                        ThirtyDayTotalBytes = g.Sum(x => x.ThirtyDayTotalBytes)
+                    };
+                })
+                .OrderByDescending(p => p.TotalBytes)
+                .Take(5)
+                .ToList();
             
             // Fallback to active live process telemetry if database process table has no records yet
             if (topProcessesList.Count == 0 && LiveProcessTraffic.Count > 0)
             {
                 var liveGrouped = LiveProcessTraffic
-                    .GroupBy(p => p.ProcessIdentifier)
+                    .GroupBy(p => p.ProcessIdentifier.Trim().ToLowerInvariant())
                     .Select(g => new ApplicationHistoricalProfile
                     {
-                        ProcessName = g.Key,
+                        ProcessName = g.First().ProcessIdentifier,
                         DownloadBytes = g.Sum(x => x.DownloadBytes),
                         UploadBytes = g.Sum(x => x.UploadBytes),
                         TodayBytes = g.Sum(x => x.DownloadBytes + x.UploadBytes),

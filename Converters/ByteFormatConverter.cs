@@ -18,6 +18,12 @@ public class ByteFormatConverter : IValueConverter
             return ByteFormatter.FormatBytes(bytes);
         if (value is int intBytes)
             return ByteFormatter.FormatBytes(intBytes);
+        if (value is double doubleBytes)
+            return ByteFormatter.FormatBytes((long)Math.Max(0, Math.Round(doubleBytes)));
+        if (value is float floatBytes)
+            return ByteFormatter.FormatBytes((long)Math.Max(0, Math.Round(floatBytes)));
+        if (value is decimal decBytes)
+            return ByteFormatter.FormatBytes((long)Math.Max(0, decimal.ToInt64(decBytes)));
         return "—";
     }
 

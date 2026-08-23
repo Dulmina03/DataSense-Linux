@@ -244,11 +244,51 @@ public partial class ApplicationAnalyticsService
         int limit = 10, bool byDownload = false, bool byUpload = false)
     {
         var profiles = await GetApplicationProfilesAsync();
+
+        var groupedProfiles = profiles
+            .GroupBy(p => p.ProcessName.Trim().ToLowerInvariant())
+            .Select(g =>
+            {
+                var first = g.First();
+                long dl = g.Sum(x => x.DownloadBytes);
+                long ul = g.Sum(x => x.UploadBytes);
+                long today = g.Sum(x => x.TodayBytes);
+                long yest = g.Sum(x => x.YesterdayBytes);
+                long w7 = g.Sum(x => x.SevenDayTotalBytes);
+                long w30 = g.Sum(x => x.ThirtyDayTotalBytes);
+
+                return new ApplicationHistoricalProfile
+                {
+                    ProcessName = first.ProcessName,
+                    Pid = first.Pid,
+                    StartTimeTicks = first.StartTimeTicks,
+                    ExecutablePath = first.ExecutablePath,
+                    UserName = first.UserName,
+                    DataSource = first.DataSource,
+                    TodayBytes = today,
+                    YesterdayBytes = yest,
+                    SevenDayTotalBytes = w7,
+                    ThirtyDayTotalBytes = w30,
+                    DownloadBytes = dl,
+                    UploadBytes = ul,
+                    PercentageOfTotal = g.Sum(x => x.PercentageOfTotal),
+                    TrendState = first.TrendState,
+                    TrendPercentage = first.TrendPercentage,
+                    HasSufficientData = g.Any(x => x.HasSufficientData),
+                    FirstSeen = g.Min(x => x.FirstSeen),
+                    LastSeen = g.Max(x => x.LastSeen),
+                    ActiveDays = g.Max(x => x.ActiveDays),
+                    ActivityStatus = g.Max(x => x.ActivityStatus),
+                    IsCurrentlyActive = g.Any(x => x.IsCurrentlyActive)
+                };
+            });
+
         IEnumerable<ApplicationHistoricalProfile> ordered = byDownload
-            ? profiles.OrderByDescending(p => p.DownloadBytes).ThenBy(p => p.ProcessName)
+            ? groupedProfiles.OrderByDescending(p => p.DownloadBytes).ThenBy(p => p.ProcessName)
             : byUpload
-                ? profiles.OrderByDescending(p => p.UploadBytes).ThenBy(p => p.ProcessName)
-                : profiles.OrderByDescending(p => p.TotalBytes).ThenBy(p => p.ProcessName);
+                ? groupedProfiles.OrderByDescending(p => p.UploadBytes).ThenBy(p => p.ProcessName)
+                : groupedProfiles.OrderByDescending(p => p.TotalBytes).ThenBy(p => p.ProcessName);
+
         return ordered.Take(limit);
     }
 }

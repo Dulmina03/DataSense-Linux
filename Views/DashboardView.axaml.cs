@@ -34,4 +34,21 @@ public partial class DashboardView : UserControl
             vm.InsightTappedCommand.Execute(insight);
         }
     }
+
+    private void RealtimeGraph_PointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (DataContext is DashboardViewModel vm && sender is Control control)
+        {
+            var pos = e.GetPosition(control);
+            vm.UpdateRealtimeHover(pos.X);
+        }
+    }
+
+    private void RealtimeGraph_PointerExited(object? sender, PointerEventArgs e)
+    {
+        if (DataContext is DashboardViewModel vm)
+        {
+            vm.ClearRealtimeHover();
+        }
+    }
 }

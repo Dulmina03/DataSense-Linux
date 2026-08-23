@@ -101,22 +101,25 @@ public partial class App : Application
             
             trayViewModel.PropertyChanged += (s, e) =>
             {
-                if (e.PropertyName == nameof(TrayIconViewModel.TooltipText))
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    trayIcon.ToolTipText = trayViewModel.TooltipText;
-                }
-                else if (e.PropertyName == nameof(TrayIconViewModel.TrayIconImage))
-                {
-                    trayIcon.Icon = trayViewModel.TrayIconImage;
-                }
-                else if (e.PropertyName == nameof(TrayIconViewModel.SpeedText))
-                {
-                    speedMenuItem.Header = $"Speed: {trayViewModel.SpeedText}";
-                }
-                else if (e.PropertyName == nameof(TrayIconViewModel.TopProcessText))
-                {
-                    topProcessMenuItem.Header = trayViewModel.TopProcessText;
-                }
+                    if (e.PropertyName == nameof(TrayIconViewModel.TooltipText))
+                    {
+                        trayIcon.ToolTipText = trayViewModel.TooltipText;
+                    }
+                    else if (e.PropertyName == nameof(TrayIconViewModel.TrayIconImage))
+                    {
+                        trayIcon.Icon = trayViewModel.TrayIconImage;
+                    }
+                    else if (e.PropertyName == nameof(TrayIconViewModel.SpeedText))
+                    {
+                        speedMenuItem.Header = $"Speed: {trayViewModel.SpeedText}";
+                    }
+                    else if (e.PropertyName == nameof(TrayIconViewModel.TopProcessText))
+                    {
+                        topProcessMenuItem.Header = trayViewModel.TopProcessText;
+                    }
+                });
             };
 
             var icons = new Avalonia.Controls.TrayIcons { trayIcon };

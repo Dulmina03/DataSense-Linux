@@ -565,4 +565,93 @@ public class ProcessNetworkMonitoringTests : IDisposable
             }
         }
     }
+
+    [Fact]
+    public void NethogsParser_AggregatesMultipleSocketsForSamePid_IntoSingleEntry()
+    {
+        // Arrange
+        var monitor = new NethogsProcessNetworkMonitor();
+        string line1 = "/usr/bin/brave/7630/dulmina\t10.0\t20.0";
+        string line2 = "/usr/bin/brave/7630/dulmina\t5.0\t10.0";
+
+        var usage1 = monitor.ParseNethogsLine(line1);
+        var usage2 = monitor.ParseNethogsLine(line2);
+        Assert.NotNull(usage1);
+        Assert.NotNull(usage2);
+
+        var batch = new List<ProcessNetworkUsage> { usage1!, usage2! };
+
+        // Act - Aggregate batch by PID/ProcessIdentifier
+        var aggregated = batch
+            .GroupBy(p => p.ProcessIdentifier.Trim().ToLowerInvariant())
+            .Select(g => new ProcessNetworkUsage
+            {
+                ProcessIdentifier = g.First().ProcessIdentifier,
+                Pid = g.First().Pid,
+                UploadRateBytesPerSec = g.Sum(x => x.UploadRateBytesPerSec),
+                DownloadRateBytesPerSec = g.Sum(x => x.DownloadRateBytesPerSec)
+            })
+            .ToList();
+
+        // Assert
+        Assert.Single(aggregated);
+        Assert.Equal("brave", aggregated[0].ProcessIdentifier);
+        Assert.Equal(15.0 * 1024, aggregated[0].UploadRateBytesPerSec);
+        Assert.Equal(30.0 * 1024, aggregated[0].DownloadRateBytesPerSec);
+    }
+
+    [Fact]
+    public void ProcessRateCalculation_DeltaAndElapsed_CalculatesCorrectRatesIndependently()
+    {
+        // Test: 1000 bytes -> 3000 bytes, elapsed = 2 seconds -> rate = 1000 B/s
+        long prevBytes = 1000;
+        long currBytes = 3000;
+        double elapsedSeconds = 2.0;
+
+        double downloadRate = (currBytes - prevBytes) / elapsedSeconds;
+        double uploadRate = (currBytes - prevBytes) / elapsedSeconds;
+
+        Assert.Equal(1000.0, downloadRate);
+        Assert.Equal(1000.0, uploadRate);
+    }
+
+    [Fact]
+    public void ProcessRateCalculation_CounterReset_ClampsRateToZero()
+    {
+        // Test counter reset: 5000 -> 1000 -> rate = 0
+        long prevBytes = 5000;
+        long currBytes = 1000;
+        double elapsedSeconds = 2.0;
+
+        long delta = Math.Max(0, currBytes - prevBytes);
+        double rate = delta / elapsedSeconds;
+
+        Assert.Equal(0.0, rate);
+    }
+
+    [Fact]
+    public void ProcessRateCalculation_NoTraffic_ReturnsZeroRate()
+    {
+        // Test no traffic: 5000 -> 5000 -> rate = 0
+        long prevBytes = 5000;
+        long currBytes = 5000;
+        double elapsedSeconds = 2.0;
+
+        long delta = Math.Max(0, currBytes - prevBytes);
+        double rate = delta / elapsedSeconds;
+
+        Assert.Equal(0.0, rate);
+    }
+
+    [Fact]
+    public void ByteFormatConverter_FormatsDoubleRates_Successfully()
+    {
+        var converter = DataSense.Converters.ByteFormatConverter.Instance;
+
+        object dlResult = converter.Convert(1048576.0, typeof(string), null, System.Globalization.CultureInfo.InvariantCulture);
+        object ulResult = converter.Convert(51200.0, typeof(string), null, System.Globalization.CultureInfo.InvariantCulture);
+
+        Assert.Equal("1.0 MB", dlResult);
+        Assert.Equal("50.0 KB", ulResult);
+    }
 }

@@ -109,7 +109,7 @@ public class NethogsProcessNetworkMonitor : IProcessNetworkMonitor
                 // Yield the previous batch and start a new one
                 if (currentBatch.Count > 0)
                 {
-                    yield return new List<ProcessNetworkUsage>(currentBatch);
+                    yield return AggregateBatch(currentBatch);
                     currentBatch.Clear();
                 }
                 continue;
@@ -124,8 +124,33 @@ public class NethogsProcessNetworkMonitor : IProcessNetworkMonitor
 
         if (currentBatch.Count > 0)
         {
-            yield return currentBatch;
+            yield return AggregateBatch(currentBatch);
         }
+    }
+
+    private static List<ProcessNetworkUsage> AggregateBatch(List<ProcessNetworkUsage> rawBatch)
+    {
+        return rawBatch
+            .GroupBy(p => p.Pid > 0 ? p.Pid.ToString() : p.ProcessIdentifier.Trim().ToLowerInvariant())
+            .Select(g =>
+            {
+                var first = g.First();
+                return new ProcessNetworkUsage
+                {
+                    ProcessIdentifier = first.ProcessIdentifier,
+                    ExecutablePath = first.ExecutablePath,
+                    Pid = first.Pid,
+                    User = first.User,
+                    DownloadRateBytesPerSec = g.Sum(x => x.DownloadRateBytesPerSec),
+                    UploadRateBytesPerSec = g.Sum(x => x.UploadRateBytesPerSec),
+                    DownloadBytes = g.Sum(x => x.DownloadBytes),
+                    UploadBytes = g.Sum(x => x.UploadBytes),
+                    Timestamp = g.Max(x => x.Timestamp),
+                    DataSource = first.DataSource,
+                    ProcessIdentityKey = first.ProcessIdentityKey
+                };
+            })
+            .ToList();
     }
 
     /// <summary>
