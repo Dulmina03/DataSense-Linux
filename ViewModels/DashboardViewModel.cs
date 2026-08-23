@@ -253,9 +253,17 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     public override string Title => "Dashboard";
 
+    // ── Charting ────────────────────────────────────────────────────────────
+
+    [ObservableProperty] private bool _isTodayChartLoading = true;
+    [ObservableProperty] private bool _hasTodayChartData = false;
+    public ObservableCollection<LiveChartsCore.ISeries> TodayTopConsumerSeries { get; } = new();
+
     // ────────────────────────────────────────────────────────────────────────
     // Construction
     // ────────────────────────────────────────────────────────────────────────
+
+    private readonly IChartDataService _chartDataService;
 
     public DashboardViewModel(
         INetworkMonitorWorker    networkMonitorWorker,
@@ -270,7 +278,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         IUnifiedIntelligenceService     unifiedIntelligenceService,
         IApplicationAnalyticsService    applicationAnalyticsService,
         IUnifiedAnalyticsIntelligenceService unifiedAnalyticsIntelligenceService,
-        NetworkSessionManager           sessionManager)
+        NetworkSessionManager           sessionManager,
+        IChartDataService               chartDataService)
     {
         _networkMonitorWorker   = networkMonitorWorker   ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
         _repository             = repository             ?? throw new ArgumentNullException(nameof(repository));
@@ -285,6 +294,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         _applicationAnalyticsService = applicationAnalyticsService ?? throw new ArgumentNullException(nameof(applicationAnalyticsService));
         _unifiedAnalyticsIntelligenceService = unifiedAnalyticsIntelligenceService ?? throw new ArgumentNullException(nameof(unifiedAnalyticsIntelligenceService));
         _sessionManager         = sessionManager         ?? throw new ArgumentNullException(nameof(sessionManager));
+        _chartDataService       = chartDataService       ?? throw new ArgumentNullException(nameof(chartDataService));
 
         // Populate live card with current worker state immediately
         UpdateLiveValues(
