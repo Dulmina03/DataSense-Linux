@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.datasense-speed-meter" path="/org/gnome/shell/extensions/datasense-speed-meter/">
+    <key name="show-download" type="b">
+      <default>true</default>
+      <summary>Show download speed</summary>
+    </key>
+    <key name="show-upload" type="b">
+      <default>true</default>
+      <summary>Show upload speed</summary>
+    </key>
+    <key name="update-interval" type="i">
+      <default>1000</default>
+      <summary>Update interval in milliseconds</summary>
+    </key>
+    <key name="compact-mode" type="b">
+      <default>true</default>
+      <summary>Compact mode</summary>
+    </key>
+  </schema>
+</schemalist>

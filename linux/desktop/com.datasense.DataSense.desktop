@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=DataSense
+Comment=Monitor your network usage and application telemetry
+Icon=com.datasense.DataSense
+Exec=/opt/DataSense/DataSense
+Terminal=false
+Categories=Network;Monitor;System;
+StartupNotify=true
+StartupWMClass=DataSense
+X-GNOME-SingleWindow=true

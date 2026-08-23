@@ -1,0 +1,14 @@
+{
+  "name": "DataSense Speed Meter",
+  "description": "Live network speed indicator on the GNOME top bar",
+  "uuid": "datasense-speed-meter@dulmina.dev",
+  "shell-version": [
+    "42",
+    "43",
+    "44",
+    "45",
+    "46"
+  ],
+  "settings-schema": "org.gnome.shell.extensions.datasense-speed-meter",
+  "url": ""
+}
