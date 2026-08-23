@@ -69,43 +69,43 @@
             </Border>
 
             <!-- ══ Live Metric Cards ══ -->
-            <Grid ColumnDefinitions="1.2*,12,*,12,*,12,*,12,*">
+            <WrapPanel Margin="-6">
                 <!-- Network Info -->
-                <Border Grid.Column="0" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
+                <Border Margin="6" MinWidth="180" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
                     <StackPanel Spacing="10">
                         <TextBlock Text="{Binding NetworkTypeText}" FontSize="12" Foreground="#888899"/>
                         <TextBlock Text="{Binding NetworkIdentityText}" FontSize="18" FontWeight="Bold" Foreground="#CCCCEE" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                 </Border>
                 <!-- Download Speed -->
-                <Border Grid.Column="2" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
+                <Border Margin="6" MinWidth="180" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
                     <StackPanel Spacing="10">
                         <TextBlock Text="Download Speed" FontSize="12" Foreground="#888899"/>
                         <TextBlock Text="{Binding DownloadSpeedText}" FontSize="18" FontWeight="Bold" Foreground="#00D2FF"/>
                     </StackPanel>
                 </Border>
                 <!-- Upload Speed -->
-                <Border Grid.Column="4" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
+                <Border Margin="6" MinWidth="180" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
                     <StackPanel Spacing="10">
                         <TextBlock Text="Upload Speed" FontSize="12" Foreground="#888899"/>
                         <TextBlock Text="{Binding UploadSpeedText}" FontSize="18" FontWeight="Bold" Foreground="#00E676"/>
                     </StackPanel>
                 </Border>
                 <!-- Total Downloaded -->
-                <Border Grid.Column="6" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
+                <Border Margin="6" MinWidth="180" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
                     <StackPanel Spacing="10">
                         <TextBlock Text="Total Downloaded" FontSize="12" Foreground="#888899"/>
                         <TextBlock Text="{Binding TotalDownloadedText}" FontSize="18" FontWeight="Bold" Foreground="#AB47BC"/>
                     </StackPanel>
                 </Border>
                 <!-- Total Uploaded -->
-                <Border Grid.Column="8" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
+                <Border Margin="6" MinWidth="180" Background="#1E1E24" BorderBrush="#2D2D38" BorderThickness="1" CornerRadius="10" Padding="18">
                     <StackPanel Spacing="10">
                         <TextBlock Text="Total Uploaded" FontSize="12" Foreground="#888899"/>
                         <TextBlock Text="{Binding TotalUploadedText}" FontSize="18" FontWeight="Bold" Foreground="#FF9800"/>
                     </StackPanel>
                 </Border>
-            </Grid>
+            </WrapPanel>
 
             <!-- ══ Current Session Card ══ -->
             <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1" CornerRadius="10" Padding="20,16">
@@ -125,38 +125,38 @@
                         </StackPanel>
                     </Border>
 
-                    <Grid ColumnDefinitions="*,12,*,12,*,12,*,12,*" IsVisible="{Binding HasCurrentSession}">
-                        <Border Grid.Column="0" Classes="stat-card">
+                    <WrapPanel Margin="-4" IsVisible="{Binding HasCurrentSession}">
+                        <Border Margin="4" MinWidth="130" Classes="stat-card">
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Network" Foreground="#888899" FontSize="10"/>
                                 <TextBlock Text="{Binding CurrentSessionNetwork}" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
                             </StackPanel>
                         </Border>
-                        <Border Grid.Column="2" Classes="stat-card">
+                        <Border Margin="4" MinWidth="130" Classes="stat-card">
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Duration" Foreground="#888899" FontSize="10"/>
                                 <TextBlock Text="{Binding CurrentSessionDuration}" FontSize="16" FontWeight="Bold" Foreground="#E2E8F0"/>
                             </StackPanel>
                         </Border>
-                        <Border Grid.Column="4" Classes="stat-card">
+                        <Border Margin="4" MinWidth="130" Classes="stat-card">
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Download" Foreground="#888899" FontSize="10"/>
                                 <TextBlock Text="{Binding CurrentSessionDownload}" FontSize="16" FontWeight="Bold" Foreground="#38BDF8"/>
                             </StackPanel>
                         </Border>
-                        <Border Grid.Column="6" Classes="stat-card">
+                        <Border Margin="4" MinWidth="130" Classes="stat-card">
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Upload" Foreground="#888899" FontSize="10"/>
                                 <TextBlock Text="{Binding CurrentSessionUpload}" FontSize="16" FontWeight="Bold" Foreground="#C084FC"/>
                             </StackPanel>
                         </Border>
-                        <Border Grid.Column="8" Classes="stat-card" Background="#1A1A3A" BorderBrush="#3535AA">
+                        <Border Margin="4" MinWidth="130" Classes="stat-card" Background="#1A1A3A" BorderBrush="#3535AA">
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Total Usage" Foreground="#7777BB" FontSize="10"/>
                                 <TextBlock Text="{Binding CurrentSessionTotal}" FontSize="16" FontWeight="Bold" Foreground="#8888FF"/>
                             </StackPanel>
                         </Border>
-                    </Grid>
+                    </WrapPanel>
                 </StackPanel>
             </Border>
 

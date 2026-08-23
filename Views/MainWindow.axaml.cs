@@ -8,4 +8,14 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
     }
+
+    protected override void OnSizeChanged(Avalonia.Controls.SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+        if (DataContext is DataSense.ViewModels.MainWindowViewModel vm)
+        {
+            // Auto-collapse sidebar if window gets narrow (e.g., below 900px wide)
+            vm.IsSidebarExpanded = e.NewSize.Width >= 900;
+        }
+    }
 }

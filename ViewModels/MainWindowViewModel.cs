@@ -58,6 +58,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isUnifiedIntelligenceActive;
 
+    [ObservableProperty]
+    private bool _isSidebarExpanded = true;
+
     public MainWindowViewModel()
     {
         // Default to Dashboard
