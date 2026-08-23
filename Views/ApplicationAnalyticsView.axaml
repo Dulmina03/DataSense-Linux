@@ -436,6 +436,109 @@
                                     </Grid>
                                 </StackPanel>
                             </Border>
+
+                            <!-- ══ Historical Intelligence (Phase 11.31) ══ -->
+
+                            <!-- Surge Warning Banner -->
+                            <Border IsVisible="{Binding IsUsageSurging}"
+                                    Background="#2A1800" BorderBrush="#FF9800" BorderThickness="1"
+                                    CornerRadius="8" Padding="14,10">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Text="⚠" FontSize="16" Foreground="#FF9800" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding SurgeText}" Foreground="#FF9800"
+                                               FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Trend Badge Card -->
+                            <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1"
+                                    CornerRadius="10" Padding="20,14">
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,8,Auto,8,Auto">
+                                    <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                                               Text="Usage Trend (7-day vs prior 7-day)"
+                                               FontSize="13" FontWeight="Bold" Foreground="#E0E0E0"/>
+
+                                    <!-- Trend badge -->
+                                    <Border Grid.Row="2" Grid.Column="0"
+                                            Background="#0D0D18" CornerRadius="6" Padding="12,6"
+                                            HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding TrendBadgeText}"
+                                                   Foreground="{Binding TrendBadgeColor}"
+                                                   FontSize="14" FontWeight="Bold"/>
+                                    </Border>
+
+                                    <!-- Rank badge -->
+                                    <Border Grid.Row="2" Grid.Column="1"
+                                            Background="#0D0D18" CornerRadius="6" Padding="12,6">
+                                        <TextBlock Text="{Binding RankText}"
+                                                   Foreground="#7777FF" FontSize="12" FontWeight="SemiBold"/>
+                                    </Border>
+
+                                    <TextBlock Grid.Row="4" Grid.ColumnSpan="2"
+                                               Text="{Binding SevenDayComparisonText}"
+                                               Foreground="{Binding SevenDayComparisonColor}"
+                                               FontSize="11"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Historical Averages + Projections -->
+                            <Border Background="#13131F" BorderBrush="#1E1E30" BorderThickness="1"
+                                    CornerRadius="10" Padding="20,14">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="Historical Averages &amp; Projections"
+                                               FontSize="13" FontWeight="Bold" Foreground="#E0E0E0"/>
+
+                                    <!-- Insufficient data notice -->
+                                    <TextBlock Text="{Binding InsufficientDataText}"
+                                               Foreground="#FF9800" FontSize="11" FontStyle="Italic"
+                                               IsVisible="{Binding !HasSufficientHistory}"/>
+
+                                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,10,Auto,10,Auto">
+                                        <!-- 7-day average -->
+                                        <Border Grid.Row="0" Grid.Column="0" Classes="stat-card" Margin="0,0,6,0">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="7-Day Avg / Day" Classes="insight-label"/>
+                                                <TextBlock Text="{Binding SevenDayAverageText}" Classes="insight-value" Foreground="#00D2FF"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- 30-day average -->
+                                        <Border Grid.Row="0" Grid.Column="1" Classes="stat-card" Margin="6,0,0,0">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="30-Day Avg / Day" Classes="insight-label"/>
+                                                <TextBlock Text="{Binding ThirtyDayAverageText}" Classes="insight-value" Foreground="#00E676"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Monthly projection -->
+                                        <Border Grid.Row="2" Grid.ColumnSpan="2" Classes="stat-card">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="4">
+                                                    <TextBlock Text="Monthly Projection" Classes="insight-label"/>
+                                                    <TextBlock Text="{Binding MonthlyProjectionText}" Classes="insight-value" Foreground="#8888FF"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding TodayVsYesterdayText}" Foreground="#888899" FontSize="11"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                        <!-- Peak day -->
+                                        <Border Grid.Row="4" Grid.Column="0" Classes="stat-card" Margin="0,0,6,0">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="Peak Day" Classes="insight-label"/>
+                                                <TextBlock Text="{Binding PeakDayText}" Classes="insight-value" Foreground="#FFD600"/>
+                                                <TextBlock Text="{Binding PeakDayBytesText}" Foreground="#888899" FontSize="11"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Peak hour -->
+                                        <Border Grid.Row="4" Grid.Column="1" Classes="stat-card" Margin="6,0,0,0">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="Peak Hour (UTC)" Classes="insight-label"/>
+                                                <TextBlock Text="{Binding PeakHourText}" Classes="insight-value" Foreground="#FFD600"/>
+                                                <TextBlock Text="{Binding PeakHourBytesText}" Foreground="#888899" FontSize="11"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
 
                         <!-- Daily Usage Table -->

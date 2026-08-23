@@ -175,6 +175,27 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
     public ObservableCollection<ApplicationUsageTimelinePoint> DailyHistoryItems { get; } = new();
     [ObservableProperty] private bool _isHistoryTableEmpty = true;
 
+    // ── Phase 11.31 Historical Intelligence fields ────────────────────────────
+    [ObservableProperty] private string _sevenDayAverageText   = "—";
+    [ObservableProperty] private string _thirtyDayAverageText  = "—";
+    [ObservableProperty] private string _monthlyProjectionText = "—";
+    [ObservableProperty] private string _peakDayText           = "—";
+    [ObservableProperty] private string _peakDayBytesText      = "—";
+    [ObservableProperty] private string _peakHourText          = "—";
+    [ObservableProperty] private string _peakHourBytesText     = "—";
+    [ObservableProperty] private string _rankText              = "—";
+    [ObservableProperty] private string _trendBadgeText        = "—";
+    [ObservableProperty] private string _trendBadgeColor       = "#888899";
+    [ObservableProperty] private string _surgeText             = string.Empty;
+    [ObservableProperty] private bool   _isUsageSurging        = false;
+    [ObservableProperty] private bool   _hasSufficientHistory  = false;
+    [ObservableProperty] private string _insufficientDataText  = string.Empty;
+    // Comparison: Today vs Yesterday
+    [ObservableProperty] private string _todayVsYesterdayText  = "—";
+    // Comparison: 7-day vs prev 7-day
+    [ObservableProperty] private string _sevenDayComparisonText = "—";
+    [ObservableProperty] private string _sevenDayComparisonColor = "#888899";
+
     // Application Intelligence & Smart Recommendations
     [ObservableProperty] private ApplicationUsageProfile? _currentProfile;
     [ObservableProperty] private ApplicationNetworkProfile? _networkProfile;
@@ -481,6 +502,19 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
             var recs    = (await _appIntelligenceService.GetProcessRecommendationsAsync(processName)).ToList();
             var processProfiles = (await _processNetworkIntelligenceService.GetProcessNetworkUsageAsync(processName, pid, startTimeTicks)).ToList();
 
+            // ── Phase 11.31 Historical Profile ───────────────────────────────
+            ApplicationHistoricalProfile? histProfile = null;
+            IEnumerable<ApplicationHistoricalProfile>? allProfiles = null;
+            try
+            {
+                histProfile = await _applicationAnalyticsService.GetApplicationProfileAsync(processName, pid, startTimeTicks);
+                allProfiles = await _applicationAnalyticsService.GetApplicationProfilesAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Historical profile load failed: {ex.Message}");
+            }
+
             Dispatcher.UIThread.Post(() =>
             {
                 CurrentProfile = profile;
@@ -513,6 +547,110 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
                     HighestDownloadNetwork = "—";
                     HighestUploadNetwork = "—";
                     NetworkTrendText = "No network telemetry recorded";
+                }
+
+                // ── Populate historical intelligence fields ───────────────────
+                if (histProfile != null)
+                {
+                    HasSufficientHistory  = histProfile.HasSufficientData;
+                    InsufficientDataText  = histProfile.HasSufficientData ? string.Empty
+                        : "Insufficient historical data (< 3 active days).";
+
+                    SevenDayAverageText   = histProfile.SevenDayAverageBytes.HasValue
+                        ? ByteFormatter.FormatBytes((long)histProfile.SevenDayAverageBytes.Value) + " / day"
+                        : "Insufficient Data";
+
+                    ThirtyDayAverageText  = histProfile.ThirtyDayAverageBytes.HasValue
+                        ? ByteFormatter.FormatBytes((long)histProfile.ThirtyDayAverageBytes.Value) + " / day"
+                        : "Insufficient Data";
+
+                    MonthlyProjectionText = histProfile.MonthlyProjectedBytes.HasValue
+                        ? ByteFormatter.FormatBytes(histProfile.MonthlyProjectedBytes.Value)
+                        : "Insufficient Data";
+
+                    PeakDayText       = histProfile.PeakDay?.ToString("MMM d, yyyy") ?? "—";
+                    PeakDayBytesText  = histProfile.PeakDayBytes > 0 ? ByteFormatter.FormatBytes(histProfile.PeakDayBytes) : "—";
+                    PeakHourText      = histProfile.PeakHour.HasValue ? $"{histProfile.PeakHour:D2}:00 UTC" : "—";
+                    PeakHourBytesText = histProfile.PeakHourBytes > 0 ? ByteFormatter.FormatBytes(histProfile.PeakHourBytes) : "—";
+
+                    // Trend badge
+                    (TrendBadgeText, TrendBadgeColor) = histProfile.TrendState switch
+                    {
+                        "Increasing"       => (histProfile.TrendPercentage.HasValue ? $"↗ +{histProfile.TrendPercentage.Value:F1}%" : "↗ Increasing", "#FF9800"),
+                        "Decreasing"       => (histProfile.TrendPercentage.HasValue ? $"↘ {histProfile.TrendPercentage.Value:F1}%"  : "↘ Decreasing", "#00E676"),
+                        "Stable"           => ("→ Stable", "#888899"),
+                        _                  => ("— Insufficient Data", "#555577")
+                    };
+
+                    // Surge
+                    IsUsageSurging = histProfile.IsUsageSurging;
+                    SurgeText = histProfile.IsUsageSurging && histProfile.SurgePercentage.HasValue
+                        ? $"⚠ Surge: {histProfile.SurgePercentage.Value:F0}% above baseline"
+                        : string.Empty;
+
+                    // Rank
+                    if (allProfiles != null)
+                    {
+                        var ranked  = allProfiles.OrderByDescending(p => p.TotalBytes).ToList();
+                        int rankIdx = ranked.FindIndex(p => p.ProcessName == processName && p.Pid == pid && p.StartTimeTicks == startTimeTicks);
+                        RankText = rankIdx >= 0
+                            ? $"#{rankIdx + 1} of {ranked.Count} applications"
+                            : "—";
+                    }
+
+                    // 7-day vs prev-7-day comparison text
+                    if (histProfile.TrendPercentage.HasValue)
+                    {
+                        double pct = histProfile.TrendPercentage.Value;
+                        string arrow = pct > 0 ? "↑" : pct < 0 ? "↓" : "→";
+                        SevenDayComparisonText  = $"{arrow} {Math.Abs(pct):F1}% vs previous 7 days";
+                        SevenDayComparisonColor = pct > 10 ? "#FF9800" : pct < -10 ? "#00E676" : "#888899";
+                    }
+                    else
+                    {
+                        SevenDayComparisonText  = "Insufficient history for comparison";
+                        SevenDayComparisonColor = "#555577";
+                    }
+
+                    // Today vs Yesterday
+                    if (histProfile.TodayBytes > 0 || histProfile.YesterdayBytes > 0)
+                    {
+                        if (histProfile.YesterdayBytes > 0)
+                        {
+                            double diff = (double)(histProfile.TodayBytes - histProfile.YesterdayBytes) / histProfile.YesterdayBytes * 100.0;
+                            string arrow = diff > 0 ? "↑" : diff < 0 ? "↓" : "→";
+                            TodayVsYesterdayText = $"{arrow} {Math.Abs(diff):F1}% vs yesterday";
+                        }
+                        else
+                        {
+                            TodayVsYesterdayText = histProfile.TodayBytes > 0 ? "New activity today" : "No activity today";
+                        }
+                    }
+                    else
+                    {
+                        TodayVsYesterdayText = "No data";
+                    }
+                }
+                else
+                {
+                    // histProfile null — reset all fields
+                    HasSufficientHistory  = false;
+                    InsufficientDataText  = "Historical data unavailable.";
+                    SevenDayAverageText   = "Unavailable";
+                    ThirtyDayAverageText  = "Unavailable";
+                    MonthlyProjectionText = "Unavailable";
+                    PeakDayText           = "—";
+                    PeakDayBytesText      = "—";
+                    PeakHourText          = "—";
+                    PeakHourBytesText     = "—";
+                    TrendBadgeText        = "— Insufficient Data";
+                    TrendBadgeColor       = "#555577";
+                    RankText              = "—";
+                    SurgeText             = string.Empty;
+                    IsUsageSurging        = false;
+                    SevenDayComparisonText  = "Insufficient history";
+                    SevenDayComparisonColor = "#555577";
+                    TodayVsYesterdayText    = "—";
                 }
 
                 if (showLoading) IsLoading = false;
