@@ -5,57 +5,65 @@
              xmlns:conv="using:DataSense.Converters"
              x:DataType="vm:DashboardViewModel"
              x:Class="DataSense.Views.DashboardView">
-             
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
-        <StackPanel Spacing="{DynamicResource Spacing.XXL}">
-            
-            <!-- HEADER & LIVE HERO -->
-            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
-                <StackPanel Spacing="{DynamicResource Spacing.XS}">
-                    <TextBlock Text="Overview" Classes="PageTitle" />
-                    <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}">
-                        <Ellipse Width="8" Height="8" Fill="{Binding StatusDotColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding StatusText}" Classes="BodySecondary" />
-                        <TextBlock Text="•" Classes="BodySecondary" />
-                        <TextBlock Text="{Binding ConnectionType}" Classes="BodySecondary" />
-                        <TextBlock Text="•" Classes="BodySecondary" IsVisible="{Binding HasWifi}" />
-                        <TextBlock Text="{Binding WifiSsid}" Classes="BodySecondary" Foreground="{DynamicResource Brush.Accent}" IsVisible="{Binding HasWifi}" />
+        <StackPanel Spacing="{DynamicResource Spacing.XXXL}">
+
+            <!-- HEADER -->
+            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,0">
+                <StackPanel Spacing="{DynamicResource Spacing.Tight}">
+                    <TextBlock Text="Network Overview" Classes="PageTitle" />
+
+                    <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}" Margin="0,4,0,0">
+                        <Border Classes="StatusPill">
+                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}">
+                                <Ellipse Classes="LiveIndicator" Fill="{Binding StatusDotColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding StatusText}" Classes="Caption" Foreground="{DynamicResource Brush.TextPrimary}" />
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding ConnectionType}" Classes="BodySecondary" />
+                            <TextBlock Text="•" Classes="BodySecondary" IsVisible="{Binding HasWifi}" />
+                            <TextBlock Text="{Binding WifiSsid}" Classes="BodySecondary" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="SemiBold" IsVisible="{Binding HasWifi}" />
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
             </Grid>
 
             <!-- HERO METRICS -->
-            <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,0">
-                <Grid.Styles>
-                    <Style Selector="Border.HeroBox">
-                        <Setter Property="Padding" Value="0" />
-                        <Setter Property="Margin" Value="0,0,24,0" />
-                    </Style>
-                </Grid.Styles>
-                
-                <Border Grid.Column="0" Classes="HeroBox">
-                    <StackPanel Spacing="{DynamicResource Spacing.XS}">
+            <Grid ColumnDefinitions="*,*,1.5*">
+
+                <!-- Download -->
+                <Border Grid.Column="0" Classes="MetricSurface" Margin="0,0,16,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.Tight}">
                         <TextBlock Text="Download" Classes="SectionTitle" />
                         <TextBlock Text="{Binding DownloadSpeedText}" Classes="DisplayMetric" Foreground="{DynamicResource Brush.Download}" />
                     </StackPanel>
                 </Border>
-                <Border Grid.Column="1" Classes="HeroBox">
-                    <StackPanel Spacing="{DynamicResource Spacing.XS}">
+
+                <!-- Upload -->
+                <Border Grid.Column="1" Classes="MetricSurface" Margin="0,0,24,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.Tight}">
                         <TextBlock Text="Upload" Classes="SectionTitle" />
                         <TextBlock Text="{Binding UploadSpeedText}" Classes="DisplayMetric" Foreground="{DynamicResource Brush.Upload}" />
                     </StackPanel>
                 </Border>
-                <Border Grid.Column="2" Classes="HeroBox" Margin="0">
-                    <StackPanel Spacing="{DynamicResource Spacing.XS}">
+
+                <!-- Today's Total (Asymmetric visual anchor) -->
+                <Border Grid.Column="2" Classes="HeroSurface" VerticalAlignment="Center" Padding="{DynamicResource Padding.Large}">
+                    <StackPanel Spacing="{DynamicResource Spacing.Tight}">
                         <TextBlock Text="Today's Usage" Classes="SectionTitle" />
                         <TextBlock Text="{Binding TodayTotalText}" Classes="DisplayMetric" Foreground="{DynamicResource Brush.TextPrimary}" />
-                        <TextBlock Text="{Binding TodayVsYesterdayText}" Classes="Caption" IsVisible="{Binding HasTodayDelta}" Foreground="{Binding TodayDeltaColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" />
+                        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.XS}" IsVisible="{Binding HasTodayDelta}">
+                            <TextBlock Text="{Binding TodayVsYesterdayText}" Classes="Caption" FontWeight="SemiBold" Foreground="{Binding TodayDeltaColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
             </Grid>
 
-            <!-- PRIMARY CHART -->
-            <Border Classes="CardHero">
+            <!-- PRIMARY CHART (Usage Trend) -->
+            <Border Classes="AnalyticsSurface">
                 <StackPanel Spacing="{DynamicResource Spacing.LG}">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0" Text="Usage Trend" Classes="SectionTitle" VerticalAlignment="Center"/>
@@ -65,36 +73,38 @@
                             <Button Content="30 Days" Command="{Binding SelectPeriodCommand}" CommandParameter="Last30Days" Classes="Ghost"/>
                         </StackPanel>
                     </Grid>
-                    
-                    <StackPanel Classes="EmptyState" IsVisible="{Binding IsChartEmpty}">
+
+                    <StackPanel Classes="EmptyState" IsVisible="{Binding IsChartEmpty}" Margin="0,32">
                         <TextBlock Text="📈" Classes="EmptyStateIcon" />
                         <TextBlock Text="No usage data available" Classes="EmptyStateTitle" />
                     </StackPanel>
-                    <Border Classes="SkeletonBlock" Height="200" IsVisible="{Binding IsAnalyticsLoading}" />
+                    <Border Classes="SkeletonBlock" Height="240" IsVisible="{Binding IsAnalyticsLoading}" />
 
                     <StackPanel IsVisible="{Binding !IsChartEmpty}" Spacing="0">
-                        <Grid Height="160" SizeChanged="ChartContainer_SizeChanged">
+                        <Grid Height="200" SizeChanged="ChartContainer_SizeChanged">
+                            <!-- Subtle grid lines -->
                             <Canvas>
-                                <Line StartPoint="0,0"   EndPoint="4000,0"   Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.5"/>
-                                <Line StartPoint="0,40"  EndPoint="4000,40"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.3"/>
-                                <Line StartPoint="0,80"  EndPoint="4000,80"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.3"/>
-                                <Line StartPoint="0,120" EndPoint="4000,120" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.3"/>
-                                <Line StartPoint="0,160" EndPoint="4000,160" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.5"/>
+                                <Line StartPoint="0,0"   EndPoint="4000,0"   Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.3"/>
+                                <Line StartPoint="0,50"  EndPoint="4000,50"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.15"/>
+                                <Line StartPoint="0,100" EndPoint="4000,100" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.15"/>
+                                <Line StartPoint="0,150" EndPoint="4000,150" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.15"/>
+                                <Line StartPoint="0,200" EndPoint="4000,200" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.3"/>
                             </Canvas>
                             <ItemsControl ItemsSource="{Binding DailyChartItems}">
                                 <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate><Canvas Height="160"/></ItemsPanelTemplate>
+                                    <ItemsPanelTemplate><Canvas Height="200"/></ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="vm:DailyChartBarViewModel">
                                         <Canvas>
-                                            <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}" Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}" Fill="{DynamicResource Brush.Upload}" Opacity="0.9" RadiusX="2" RadiusY="2" ToolTip.Tip="{Binding Tooltip}"/>
-                                            <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}" Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}" Fill="{DynamicResource Brush.Download}" Opacity="0.9" ToolTip.Tip="{Binding Tooltip}"/>
+                                            <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}" Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}" Fill="{DynamicResource Brush.Upload}" Opacity="0.95" RadiusX="2" RadiusY="2" ToolTip.Tip="{Binding Tooltip}"/>
+                                            <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}" Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}" Fill="{DynamicResource Brush.Download}" Opacity="0.95" ToolTip.Tip="{Binding Tooltip}"/>
                                         </Canvas>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </Grid>
+                        <!-- Chart X-Axis Labels -->
                         <ItemsControl ItemsSource="{Binding DailyChartItems}" Margin="0,12,0,0">
                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="28"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
@@ -107,18 +117,18 @@
                 </StackPanel>
             </Border>
 
-            <!-- SECONDARY ANALYTICS (Consumers & Distribution) -->
-            <Grid ColumnDefinitions="*,*">
-                <!-- Top Consumers -->
-                <Border Grid.Column="0" Classes="CardInteractive" Margin="0,0,16,0">
+            <!-- ROW 2: CONSUMERS & DISTRIBUTION -->
+            <Grid ColumnDefinitions="3*,2*">
+
+                <!-- Top Consumers (Left, larger column) -->
+                <Border Grid.Column="0" Classes="CardInteractive" Margin="0,0,24,0">
                     <StackPanel Spacing="{DynamicResource Spacing.MD}">
-                        <TextBlock Text="Top Data Consumers" Classes="SectionTitle" />
-                        
-                        <StackPanel Classes="EmptyState" IsVisible="{Binding !HasTopProcesses}" Margin="0,32">
-                            <TextBlock Text="📱" Classes="EmptyStateIcon" />
-                            <TextBlock Text="No application traffic available" Classes="EmptyStateTitle" />
+                        <TextBlock Text="Top Application Consumers" Classes="SectionTitle" />
+
+                        <StackPanel Classes="EmptyState" IsVisible="{Binding !HasTopProcesses}" Margin="0,24">
+                            <TextBlock Text="No application traffic recorded" Classes="Caption" />
                         </StackPanel>
-                        
+
                         <ItemsControl ItemsSource="{Binding TopProcesses}" IsVisible="{Binding HasTopProcesses}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -128,7 +138,7 @@
                                                 <TextBlock Text="{Binding ProcessName}" Classes="Body" FontWeight="SemiBold" />
                                                 <TextBlock Text="{Binding DataSource}" Classes="Caption" />
                                             </StackPanel>
-                                            <TextBlock Grid.Column="1" Text="{Binding TodayBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="MetricSmall" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding TodayBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="Metric" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center" />
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -136,18 +146,20 @@
                         </ItemsControl>
                     </StackPanel>
                 </Border>
-                
-                <!-- Distribution & Session -->
+
+                <!-- Month Distribution & Session (Right, smaller column) -->
                 <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.XL}">
-                    
-                    <!-- Month Ratio -->
+
+                    <!-- Distribution Visualization -->
                     <Border Classes="Card">
                         <StackPanel Spacing="{DynamicResource Spacing.MD}">
-                            <TextBlock Text="Month Distribution" Classes="SectionTitle" />
-                            <TextBlock Text="No data recorded this month." Classes="BodySecondary" IsVisible="{Binding !HasMonthData}" />
-                            
-                            <StackPanel IsVisible="{Binding HasMonthData}" Spacing="16">
-                                <Border CornerRadius="{DynamicResource Radius.Pill}" ClipToBounds="True" Height="8" Background="{DynamicResource Brush.SurfaceElevated}">
+                            <TextBlock Text="Data Distribution" Classes="SectionTitle" />
+
+                            <TextBlock Text="No data recorded this month." Classes="Caption" IsVisible="{Binding !HasMonthData}" Margin="0,12" />
+
+                            <StackPanel IsVisible="{Binding HasMonthData}" Spacing="{DynamicResource Spacing.LG}" Margin="0,8,0,0">
+                                <!-- Ratio Bar -->
+                                <Border CornerRadius="{DynamicResource Radius.Pill}" ClipToBounds="True" Height="6" Background="{DynamicResource Brush.SurfaceElevated}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="{Binding DownloadColumnWidth}"/>
@@ -157,44 +169,45 @@
                                         <Rectangle Grid.Column="1" Fill="{DynamicResource Brush.Upload}" />
                                     </Grid>
                                 </Border>
+
                                 <Grid ColumnDefinitions="*,*">
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{Binding DownloadActualText}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Download}"/>
+                                    <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.Tight}">
                                         <TextBlock Text="Downloaded" Classes="Caption" />
+                                        <TextBlock Text="{Binding DownloadActualText}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Download}"/>
                                     </StackPanel>
-                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding UploadActualText}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Upload}" TextAlignment="Right"/>
+                                    <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.Tight}" HorizontalAlignment="Right">
                                         <TextBlock Text="Uploaded" Classes="Caption" TextAlignment="Right"/>
+                                        <TextBlock Text="{Binding UploadActualText}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Upload}" TextAlignment="Right"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
                         </StackPanel>
                     </Border>
-                    
-                    <!-- Session -->
+
+                    <!-- Live Session Inspector -->
                     <Border Classes="CardInteractive">
                         <StackPanel Spacing="{DynamicResource Spacing.MD}">
                             <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Grid.Column="0" Text="Current Session" Classes="SectionTitle" />
+                                <TextBlock Grid.Column="0" Text="Session Inspector" Classes="SectionTitle" />
                                 <Button Grid.Column="1" Content="➔" Classes="Icon" Command="{Binding OpenTimelineCommand}"/>
                             </Grid>
-                            
+
                             <StackPanel IsVisible="{Binding !HasCurrentSession}" Margin="0,16">
-                                <TextBlock Text="No active network session" Classes="BodySecondary" />
+                                <TextBlock Text="No active network session." Classes="Caption" />
                             </StackPanel>
-                            
-                            <StackPanel IsVisible="{Binding HasCurrentSession}" Spacing="12">
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0" Text="Network:" Classes="BodySecondary" Width="80"/>
+
+                            <StackPanel IsVisible="{Binding HasCurrentSession}" Spacing="{DynamicResource Spacing.MD}">
+                                <Grid ColumnDefinitions="90,*">
+                                    <TextBlock Grid.Column="0" Text="Network" Classes="Caption" />
                                     <TextBlock Grid.Column="1" Text="{Binding CurrentSessionNetwork}" Classes="Body" FontWeight="SemiBold" />
                                 </Grid>
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0" Text="Duration:" Classes="BodySecondary" Width="80"/>
+                                <Grid ColumnDefinitions="90,*">
+                                    <TextBlock Grid.Column="0" Text="Duration" Classes="Caption" />
                                     <TextBlock Grid.Column="1" Text="{Binding CurrentSessionDuration}" Classes="Body" />
                                 </Grid>
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0" Text="Traffic:" Classes="BodySecondary" Width="80"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding CurrentSessionTotal}" Classes="Body" />
+                                <Grid ColumnDefinitions="90,*">
+                                    <TextBlock Grid.Column="0" Text="Traffic" Classes="Caption" />
+                                    <TextBlock Grid.Column="1" Text="{Binding CurrentSessionTotal}" Classes="MetricSmall" Foreground="{DynamicResource Brush.TextPrimary}" />
                                 </Grid>
                             </StackPanel>
                         </StackPanel>
@@ -202,28 +215,28 @@
                 </StackPanel>
             </Grid>
 
-            <!-- TERTIARY: INTELLIGENCE & FORECAST -->
-            <Grid ColumnDefinitions="*,*">
-                
-                <!-- Insights / Health -->
-                <Border Grid.Column="0" Classes="CardInteractive" Margin="0,0,16,0">
+            <!-- ROW 3: INTELLIGENCE, BUDGET, FORECAST -->
+            <Grid ColumnDefinitions="*,*,*">
+
+                <!-- Network Health / Intelligence -->
+                <Border Grid.Column="0" Classes="CardInteractive" Margin="0,0,24,0">
                     <StackPanel Spacing="{DynamicResource Spacing.MD}">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Network Health" Classes="SectionTitle" />
+                            <TextBlock Grid.Column="0" Text="System Health" Classes="SectionTitle" />
                             <Button Grid.Column="1" Content="➔" Classes="Icon" Command="{Binding NavigateToUnifiedIntelligenceCommand}"/>
                         </Grid>
-                        
+
                         <StackPanel Classes="EmptyState" IsVisible="{Binding !HasInsights}" Margin="0,32">
-                            <TextBlock Text="Everything looks normal" Classes="EmptyStateTitle" />
+                            <TextBlock Text="System operates nominally." Classes="Caption" />
                         </StackPanel>
-                        
+
                         <ItemsControl ItemsSource="{Binding Insights}" IsVisible="{Binding HasInsights}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="0,12">
-                                        <StackPanel>
+                                        <StackPanel Spacing="{DynamicResource Spacing.Tight}">
                                             <TextBlock Text="{Binding Title}" Classes="Body" FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding Description}" Classes="Caption" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                            <TextBlock Text="{Binding Description}" Classes="Caption" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>
@@ -231,63 +244,67 @@
                         </ItemsControl>
                     </StackPanel>
                 </Border>
-                
-                <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.XL}">
-                    <!-- Budget -->
-                    <Border Classes="Card">
-                        <StackPanel Spacing="{DynamicResource Spacing.MD}">
-                            <TextBlock Text="Data Budget" Classes="SectionTitle" />
-                            <StackPanel IsVisible="{Binding !HasBudget}" Margin="0,16">
-                                <TextBlock Text="No active data budget" Classes="BodySecondary" />
-                            </StackPanel>
-                            
-                            <StackPanel IsVisible="{Binding HasBudget}" Spacing="12">
-                                <TextBlock Text="{Binding BudgetStatusText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Warning}" />
-                                <ProgressBar Value="{Binding BudgetProgressValue}" Minimum="0" Maximum="100" Height="8" CornerRadius="4" BorderThickness="0" Foreground="{DynamicResource Brush.Warning}" Background="{DynamicResource Brush.SurfaceElevated}" />
-                                <Grid ColumnDefinitions="*,*">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding BudgetUsedText}" Classes="MetricSmall" />
-                                        <TextBlock Text="Used" Classes="Caption" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding BudgetRemainingText}" Classes="MetricSmall" TextAlignment="Right" />
-                                        <TextBlock Text="Remaining" Classes="Caption" TextAlignment="Right"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
+
+                <!-- Budget Monitor -->
+                <Border Grid.Column="1" Classes="Card" Margin="0,0,24,0">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                        <TextBlock Text="Data Budget" Classes="SectionTitle" />
+
+                        <StackPanel IsVisible="{Binding !HasBudget}" Margin="0,24">
+                            <TextBlock Text="No active data budget." Classes="Caption" />
                         </StackPanel>
-                    </Border>
-                    
-                    <!-- Forecast -->
-                    <Border Classes="Card">
-                        <StackPanel Spacing="{DynamicResource Spacing.MD}">
-                            <TextBlock Text="Forecast" Classes="SectionTitle" />
-                            <StackPanel IsVisible="{Binding !HasForecast}" Margin="0,16">
-                                <TextBlock Text="Building your forecast baseline" Classes="BodySecondary" />
+
+                        <StackPanel IsVisible="{Binding HasBudget}" Spacing="{DynamicResource Spacing.LG}" Margin="0,8,0,0">
+                            <StackPanel Spacing="{DynamicResource Spacing.XS}">
+                                <TextBlock Text="{Binding BudgetStatusText}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Warning}" />
+                                <ProgressBar Value="{Binding BudgetProgressValue}" Minimum="0" Maximum="100" Height="6" CornerRadius="3" BorderThickness="0" Foreground="{DynamicResource Brush.Warning}" Background="{DynamicResource Brush.SurfaceElevated}" />
                             </StackPanel>
-                            
-                            <StackPanel IsVisible="{Binding HasForecast}" Spacing="12">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding ForecastProjectedText}" Classes="LargeMetric" Foreground="{DynamicResource Brush.Accent}" />
-                                    <TextBlock Text="Projected Month-End" Classes="Caption" />
+
+                            <Grid ColumnDefinitions="*,*">
+                                <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.Tight}">
+                                    <TextBlock Text="Used" Classes="Caption" />
+                                    <TextBlock Text="{Binding BudgetUsedText}" Classes="MetricSmall" />
                                 </StackPanel>
-                                <Grid ColumnDefinitions="*,*">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding ForecastAvgDailyText}" Classes="Body" FontWeight="SemiBold" />
-                                        <TextBlock Text="Avg Daily" Classes="Caption" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding ForecastConfidenceText}" Classes="Body" FontWeight="SemiBold" TextAlignment="Right"/>
-                                        <TextBlock Text="Confidence" Classes="Caption" TextAlignment="Right"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.Tight}" HorizontalAlignment="Right">
+                                    <TextBlock Text="Remaining" Classes="Caption" TextAlignment="Right"/>
+                                    <TextBlock Text="{Binding BudgetRemainingText}" Classes="MetricSmall" TextAlignment="Right" />
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
-                    </Border>
-                </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Forecast -->
+                <Border Grid.Column="2" Classes="Card">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                        <TextBlock Text="Forecast" Classes="SectionTitle" />
+
+                        <StackPanel IsVisible="{Binding !HasForecast}" Margin="0,24">
+                            <TextBlock Text="Building your forecast baseline..." Classes="Caption" />
+                        </StackPanel>
+
+                        <StackPanel IsVisible="{Binding HasForecast}" Spacing="{DynamicResource Spacing.LG}">
+                            <StackPanel Spacing="{DynamicResource Spacing.Tight}">
+                                <TextBlock Text="Projected Month-End" Classes="Caption" />
+                                <TextBlock Text="{Binding ForecastProjectedText}" Classes="LargeMetric" Foreground="{DynamicResource Brush.Accent}" />
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*,*">
+                                <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.Tight}">
+                                    <TextBlock Text="Avg Daily" Classes="Caption" />
+                                    <TextBlock Text="{Binding ForecastAvgDailyText}" Classes="MetricSmall" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.Tight}" HorizontalAlignment="Right">
+                                    <TextBlock Text="Confidence" Classes="Caption" TextAlignment="Right"/>
+                                    <TextBlock Text="{Binding ForecastConfidenceText}" Classes="MetricSmall" TextAlignment="Right"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
 
             </Grid>
-            
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>
