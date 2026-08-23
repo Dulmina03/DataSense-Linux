@@ -22,7 +22,7 @@ public partial class PerformanceViewModel : ViewModelBase
     [ObservableProperty] private string _threadsText  = "—";
     [ObservableProperty] private string _managedHeapText = "—";
     [ObservableProperty] private string _statusText  = "Optimal";
-    [ObservableProperty] private string _statusColor = "#00E676";
+    [ObservableProperty] private string _statusColor = "Success";
     [ObservableProperty] private string _reportText  = string.Empty;
     [ObservableProperty] private bool   _showReportDialog = false;
 
@@ -56,17 +56,17 @@ public partial class PerformanceViewModel : ViewModelBase
                     if (snap.ProcessCpuPercentage > 70)
                     {
                         StatusText  = "Elevated CPU";
-                        StatusColor = "#FF5252";
+                        StatusColor = "Danger";
                     }
                     else if (snap.WorkingSetBytes > 500 * 1024 * 1024)
                     {
                         StatusText  = "High Memory";
-                        StatusColor = "#FF9800";
+                        StatusColor = "Warning";
                     }
                     else
                     {
                         StatusText  = "Optimal";
-                        StatusColor = "#00E676";
+                        StatusColor = "Success";
                     }
 
                     Metrics.Clear();
