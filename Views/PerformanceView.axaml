@@ -6,81 +6,84 @@
              x:DataType="vm:PerformanceViewModel"
              xmlns:conv="using:DataSense.Converters">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
-        <StackPanel Spacing="{DynamicResource Spacing.XL}">
-            
-            <!-- Toolbar Header -->
-            <Border Classes="CardElevated">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Panel>
+            <StackPanel Spacing="{DynamicResource Spacing.XXL}" Margin="{DynamicResource Padding.Large}">
+
+                <!-- ── HEADER ──────────────────────────────────────────────────────── -->
                 <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.SM}">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="⚡ Performance &amp; Resource Monitor" Classes="PageTitle"/>
-                            <Border Classes="Badge">
-                                <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" Classes="Body" FontWeight="SemiBold"/>
+                    <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}">
+                        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}" VerticalAlignment="Center">
+                            <TextBlock Text="Performance &amp; Resource Monitor" Classes="PageTitle"/>
+                            <Border Classes="StatusPill" Padding="12,4" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" Classes="Caption" FontWeight="SemiBold"/>
                             </Border>
                         </StackPanel>
                         <TextBlock Text="Real-time DataSense process CPU, working set, thread counts, and operation latencies." Classes="BodySecondary"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}" VerticalAlignment="Center">
-                        <Button Content="⏯ Toggle Sampling" Command="{Binding ToggleMonitoringCommand}" Classes="Secondary"/>
-                        <Button Content="🧹 Clear Metrics" Command="{Binding ClearHistoryCommand}" Classes="Secondary"/>
-                        <Button Content="📋 Export Report" Command="{Binding ExportReportCommand}" Classes="Secondary"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}" VerticalAlignment="Center">
+                        <Button Content="Toggle Sampling" Command="{Binding ToggleMonitoringCommand}" Classes="Secondary"/>
+                        <Button Content="Clear Metrics" Command="{Binding ClearHistoryCommand}" Classes="Secondary"/>
+                        <Button Content="Export Report" Command="{Binding ExportReportCommand}" Classes="Secondary"/>
                     </StackPanel>
                 </Grid>
-            </Border>
 
-            <!-- Main Content Area -->
-            <StackPanel Spacing="{DynamicResource Spacing.XL}">
-                <!-- Metrics Summary Cards -->
-                <Grid ColumnDefinitions="*,*,*,*">
-                    <Border Grid.Column="0" Classes="CardInteractive" Margin="0,0,16,0">
-                        <StackPanel Spacing="{DynamicResource Spacing.SM}">
-                            <TextBlock Text="💻 Process CPU" Classes="Caption" Foreground="{DynamicResource Brush.Download}"/>
-                            <TextBlock Text="{Binding CpuText}" Classes="MetricLarge" Foreground="{DynamicResource Brush.Download}"/>
-                            <TextBlock Text="DataSense process load" Classes="Caption"/>
+                <!-- ── METRICS SUMMARY HERO ───────────────────────────────────────────── -->
+                <Border Classes="HeroSurface">
+                    <Grid ColumnDefinitions="*,*,*,*">
+                        <!-- Process CPU -->
+                        <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,24,0">
+                            <TextBlock Text="PROCESS CPU" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding CpuText}" Classes="DisplayMetric" Foreground="{DynamicResource Brush.Download}"/>
+                            <TextBlock Text="DataSense process load" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
                         </StackPanel>
-                    </Border>
-                    <Border Grid.Column="1" Classes="Card" Margin="0,0,16,0">
-                        <StackPanel Spacing="{DynamicResource Spacing.SM}">
-                            <TextBlock Text="🧠 Working Set" Classes="Caption" Foreground="{DynamicResource Brush.Success}"/>
-                            <TextBlock Text="{Binding MemoryText}" Classes="MetricLarge" Foreground="{DynamicResource Brush.Success}"/>
-                            <TextBlock Text="Total physical memory" Classes="Caption"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Grid.Column="2" Classes="Card" Margin="0,0,16,0">
-                        <StackPanel Spacing="{DynamicResource Spacing.SM}">
-                            <TextBlock Text="📦 Managed Heap" Classes="Caption" Foreground="{DynamicResource Brush.Accent}"/>
-                            <TextBlock Text="{Binding ManagedHeapText}" Classes="MetricLarge" Foreground="{DynamicResource Brush.Accent}"/>
-                            <TextBlock Text=".NET GC allocated bytes" Classes="Caption"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Grid.Column="3" Classes="Card">
-                        <StackPanel Spacing="{DynamicResource Spacing.SM}">
-                            <TextBlock Text="🧵 Active Threads" Classes="Caption" Foreground="{DynamicResource Brush.Warning}"/>
-                            <TextBlock Text="{Binding ThreadsText}" Classes="MetricLarge" Foreground="{DynamicResource Brush.Warning}"/>
-                            <TextBlock Text="Active execution threads" Classes="Caption"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>
 
-                <!-- Recommendations Section -->
-                <Border Classes="Card">
+                        <!-- Working Set -->
+                        <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,24,0">
+                            <TextBlock Text="WORKING SET" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding MemoryText}" Classes="LargeMetric" Foreground="{DynamicResource Brush.Success}"/>
+                            <TextBlock Text="Total physical memory" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                        </StackPanel>
+
+                        <!-- Managed Heap -->
+                        <StackPanel Grid.Column="2" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,24,0">
+                            <TextBlock Text="MANAGED HEAP" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding ManagedHeapText}" Classes="LargeMetric" Foreground="{DynamicResource Brush.Accent}"/>
+                            <TextBlock Text=".NET GC allocated bytes" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                        </StackPanel>
+
+                        <!-- Active Threads -->
+                        <StackPanel Grid.Column="3" Spacing="{DynamicResource Spacing.XS}">
+                            <TextBlock Text="ACTIVE THREADS" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding ThreadsText}" Classes="LargeMetric" Foreground="{DynamicResource Brush.Warning}"/>
+                            <TextBlock Text="Active execution threads" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ── RECOMMENDATIONS SECTION ──────────────────────────────────────── -->
+                <Border Classes="AnalyticsSurface" Padding="{DynamicResource Padding.Large}">
                     <StackPanel Spacing="{DynamicResource Spacing.MD}">
-                        <TextBlock Text="💡 Optimization Recommendations" Classes="SectionTitle"/>
+                        <TextBlock Text="OPTIMIZATION RECOMMENDATIONS" Classes="PanelTitle"/>
+
+                        <StackPanel Classes="EmptyState" IsVisible="{Binding !Recommendations.Count}" Margin="0,16">
+                            <TextBlock Text="No active optimization recommendations." Classes="BodySecondary" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
                         <ItemsControl ItemsSource="{Binding Recommendations}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="models:PerformanceRecommendation">
-                                    <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="12" Margin="0,2">
+                                    <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="16" Margin="0,0,0,8">
                                         <Grid RowDefinitions="Auto,Auto">
-                                            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-                                                <TextBlock Text="⚠️" FontSize="12" VerticalAlignment="Center"/>
-                                                <TextBlock Text="{Binding Title}" Classes="Body" FontWeight="Bold"/>
+                                            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <TextBlock Text="⚠️" Classes="Caption" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Title}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Row="1" Spacing="2" Margin="20,4,0,0">
-                                                <TextBlock Text="{Binding Description}" Classes="Caption"/>
-                                                <TextBlock Text="{Binding Evidence}" Classes="Caption" Opacity="0.8"/>
-                                                <TextBlock Text="{Binding Recommendation}" Classes="Caption" Foreground="{DynamicResource Brush.Success}" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                                            <StackPanel Grid.Row="1" Spacing="4" Margin="24,6,0,0">
+                                                <TextBlock Text="{Binding Description}" Classes="BodySecondary"/>
+                                                <TextBlock Text="{Binding Evidence}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                                <TextBlock Text="{Binding Recommendation}" Classes="Caption" Foreground="{DynamicResource Brush.Success}" FontWeight="SemiBold" Margin="0,4,0,0"/>
                                             </StackPanel>
                                         </Grid>
                                     </Border>
@@ -90,28 +93,34 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Operation Performance Table -->
-                <Border Classes="Card">
-                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
-                        <TextBlock Text="⏱ Operation Latency &amp; Duration Metrics" Classes="SectionTitle"/>
+                <!-- ── OPERATION PERFORMANCE TABLE ─────────────────────────────────── -->
+                <Border Classes="AnalyticsSurface" Padding="0">
+                    <Grid RowDefinitions="Auto,Auto,*">
+                        <Grid Grid.Row="0" Margin="20,16">
+                            <TextBlock Text="OPERATION LATENCY &amp; DURATION METRICS" Classes="PanelTitle" VerticalAlignment="Center"/>
+                        </Grid>
 
-                        <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="12,8">
-                            <Grid ColumnDefinitions="*,100,100,100,100">
-                                <TextBlock Grid.Column="0" Text="Operation" Classes="Caption" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="1" Text="Category" Classes="Caption" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="2" Text="Last (ms)" Classes="Caption" Foreground="{DynamicResource Brush.Download}" FontWeight="Bold" HorizontalAlignment="Right"/>
-                                <TextBlock Grid.Column="3" Text="Avg (ms)" Classes="Caption" Foreground="{DynamicResource Brush.Success}" FontWeight="Bold" HorizontalAlignment="Right"/>
-                                <TextBlock Grid.Column="4" Text="Calls" Classes="Caption" Foreground="{DynamicResource Brush.Accent}" FontWeight="Bold" HorizontalAlignment="Right"/>
+                        <Border Grid.Row="1" Background="{DynamicResource Brush.SurfaceHover}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,1" Padding="16,12">
+                            <Grid ColumnDefinitions="*,120,100,100,100">
+                                <TextBlock Grid.Column="0" Text="OPERATION" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
+                                <TextBlock Grid.Column="1" Text="CATEGORY" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
+                                <TextBlock Grid.Column="2" Text="LAST (MS)" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="3" Text="AVG (MS)" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="4" Text="CALLS" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5" HorizontalAlignment="Right"/>
                             </Grid>
                         </Border>
 
-                        <ItemsControl ItemsSource="{Binding Metrics}">
+                        <StackPanel Grid.Row="2" Classes="EmptyState" IsVisible="{Binding !Metrics.Count}" Margin="0,32">
+                            <TextBlock Text="No operation metrics recorded." Classes="BodySecondary" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <ItemsControl Grid.Row="2" ItemsSource="{Binding Metrics}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="models:PerformanceMetric">
-                                    <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="12,8" Margin="0,2">
-                                        <Grid ColumnDefinitions="*,100,100,100,100">
-                                            <TextBlock Grid.Column="0" Text="{Binding Name}" Classes="Body" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding Category}" Classes="Caption" VerticalAlignment="Center"/>
+                                    <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="16,12">
+                                        <Grid ColumnDefinitions="*,120,100,100,100">
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" Classes="Body" FontWeight="Medium" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Category}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="2" Text="{Binding LastDurationMs, StringFormat='{}{0:F1}'}" Classes="Body" Foreground="{DynamicResource Brush.Download}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="3" Text="{Binding AverageDurationMs, StringFormat='{}{0:F1}'}" Classes="Body" Foreground="{DynamicResource Brush.Success}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="4" Text="{Binding InvocationCount}" Classes="Body" Foreground="{DynamicResource Brush.Accent}" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
@@ -120,9 +129,10 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </StackPanel>
+                    </Grid>
                 </Border>
+
             </StackPanel>
-        </StackPanel>
+        </Panel>
     </ScrollViewer>
 </UserControl>
