@@ -1,206 +1,249 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DataSense.ViewModels"
-             xmlns:m="using:DataSense.Models"
-             xmlns:s="using:DataSense.Services"
              xmlns:conv="using:DataSense.Converters"
              x:Class="DataSense.Views.NetworkAnalyticsView"
              x:DataType="vm:NetworkAnalyticsViewModel">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
-        <StackPanel Spacing="{DynamicResource Spacing.XL}">
-            
-            <!-- ══ Header ══ -->
-            <Border Classes="CardElevated">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <Button Grid.Column="0" Content="← Back" Command="{Binding NavigateBackCommand}" Classes="Secondary" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                    
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}" VerticalAlignment="Center">
-                        <Border Classes="Badge">
-                            <TextBlock Text="🌐" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Panel>
+            <!-- Loading State -->
+            <Border IsVisible="{Binding IsLoading}" Classes="HeroSurface" Height="200" Margin="{DynamicResource Padding.Large}" />
+
+            <!-- Empty State -->
+            <StackPanel IsVisible="{Binding HasNoNetworks}" Classes="EmptyState" Margin="0,100" HorizontalAlignment="Center">
+                <TextBlock Text="No networks available in history." Classes="EmptyStateTitle"/>
+            </StackPanel>
+
+            <!-- Main Layout -->
+            <StackPanel IsVisible="{Binding !IsLoading}" Margin="{DynamicResource Padding.Large}" Spacing="{DynamicResource Spacing.XXL}">
+
+                <!-- NETWORK HERO -->
+                <Border Classes="HeroSurface">
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,*">
+
+                        <!-- Top Navigation & Identity -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}" VerticalAlignment="Top">
+                            <Button Content="←" Command="{Binding NavigateBackCommand}" Classes="Icon" ToolTip.Tip="Back to Dashboard" />
+                            <StackPanel Spacing="{DynamicResource Spacing.XS}">
+                                <TextBlock Text="Network Analytics" Classes="PageTitle" />
+                                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}">
+                                    <TextBlock Text="Select Network:" Classes="Caption" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}" />
+                                    <ComboBox ItemsSource="{Binding AvailableNetworks}" SelectedItem="{Binding SelectedNetwork}" MinWidth="150" Classes="Secondary" />
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Live Status Pill -->
+                        <Border Grid.Row="0" Grid.Column="1" Classes="StatusPill" Padding="12,8" IsVisible="{Binding IsCurrentlyConnected}">
+                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.LG}">
+                                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}">
+                                    <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Success}" />
+                                    <TextBlock Text="CONNECTED NOW" Classes="Caption" Foreground="{DynamicResource Brush.Success}" FontWeight="Bold" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}">
+                                    <TextBlock Text="⬇" Foreground="{DynamicResource Brush.Download}" Classes="Caption" />
+                                    <TextBlock Text="{Binding LiveDownloadSpeed}" Foreground="{DynamicResource Brush.TextPrimary}" Classes="MetricSmall" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}">
+                                    <TextBlock Text="⬆" Foreground="{DynamicResource Brush.Upload}" Classes="Caption" />
+                                    <TextBlock Text="{Binding LiveUploadSpeed}" Foreground="{DynamicResource Brush.TextPrimary}" Classes="MetricSmall" />
+                                </StackPanel>
+                            </StackPanel>
                         </Border>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Network Analytics" Classes="PageTitle"/>
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Select Network:" Classes="Caption" VerticalAlignment="Center"/>
-                                <ComboBox ItemsSource="{Binding AvailableNetworks}" SelectedItem="{Binding SelectedNetwork}" MinWidth="150" Height="28"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </StackPanel>
-                    
-                    <!-- Live indicator -->
-                    <Border Grid.Column="2" Classes="Badge" IsVisible="{Binding IsCurrentlyConnected}">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center"/>
-                            <TextBlock Text="Connected Now" Foreground="{DynamicResource Brush.Success}" Classes="Body" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="8,0,0,0">
-                                <TextBlock Text="⬇" Foreground="{DynamicResource Brush.Download}" FontSize="10" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding LiveDownloadSpeed}" Foreground="{DynamicResource Brush.Download}" Classes="Body" FontWeight="Bold" VerticalAlignment="Center"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                <TextBlock Text="⬆" Foreground="{DynamicResource Brush.Upload}" FontSize="10" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding LiveUploadSpeed}" Foreground="{DynamicResource Brush.Upload}" Classes="Body" FontWeight="Bold" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-                    <TextBlock Grid.Column="2" Text="Currently disconnected" Classes="Caption" VerticalAlignment="Center" IsVisible="{Binding !IsCurrentlyConnected}"/>
-                </Grid>
-            </Border>
 
-            <!-- ══ Loading State ══ -->
-            <Border IsVisible="{Binding IsLoading}" Classes="SkeletonBlock" Height="100"/>
+                        <Border Grid.Row="0" Grid.Column="1" Classes="StatusPill" Padding="12,8" IsVisible="{Binding !IsCurrentlyConnected}">
+                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}">
+                                <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.TextMuted}" />
+                                <TextBlock Text="DISCONNECTED" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" FontWeight="Bold" />
+                            </StackPanel>
+                        </Border>
 
-            <!-- ══ Empty State ══ -->
-            <Border IsVisible="{Binding HasNoNetworks}" Classes="Card">
-                <StackPanel Classes="EmptyState">
-                    <TextBlock Text="📭" Classes="EmptyStateIcon"/>
-                    <TextBlock Text="No networks available in history." Classes="EmptyStateTitle"/>
-                </StackPanel>
-            </Border>
+                        <!-- Metric Overview (Hero Metrics) -->
+                        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="0,32,0,0">
+                            <!-- Column 1 -->
+                            <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,48,0">
+                                <TextBlock Text="TOTAL USAGE" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding TotalUsageText}" Classes="DisplayMetric" Foreground="{DynamicResource Brush.Accent}" />
+                            </StackPanel>
 
-            <!-- ══ Main Content ══ -->
-            <StackPanel Spacing="{DynamicResource Spacing.XL}" IsVisible="{Binding !IsLoading}">
-                <!-- Period Selector & Summary Cards -->
-                <Border Classes="Card">
-                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Usage Summary" Classes="SectionTitle" VerticalAlignment="Center"/>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                <Button Content="Today" Command="{Binding SelectPeriodCommand}" CommandParameter="Today" Classes="Secondary"/>
-                                <Button Content="7 Days" Command="{Binding SelectPeriodCommand}" CommandParameter="Last7Days" Classes="Secondary"/>
-                                <Button Content="30 Days" Command="{Binding SelectPeriodCommand}" CommandParameter="Last30Days" Classes="Secondary"/>
-                                <Button Content="This Month" Command="{Binding SelectPeriodCommand}" CommandParameter="ThisMonth" Classes="Secondary"/>
+                            <!-- Column 2 -->
+                            <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,48,0">
+                                <TextBlock Text="DOWNLOAD" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding TotalDownloadedText}" Classes="LargeMetric" Foreground="{DynamicResource Brush.Download}" />
+                            </StackPanel>
+
+                            <!-- Column 3 -->
+                            <StackPanel Grid.Column="2" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,48,0">
+                                <TextBlock Text="UPLOAD" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding TotalUploadedText}" Classes="LargeMetric" Foreground="{DynamicResource Brush.Upload}" />
+                            </StackPanel>
+
+                            <!-- Column 4 -->
+                            <StackPanel Grid.Column="3" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,48,0">
+                                <TextBlock Text="SESSIONS" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding TotalSessionsText}" Classes="LargeMetric" Foreground="{DynamicResource Brush.TextPrimary}" />
+                            </StackPanel>
+
+                            <!-- Column 5 -->
+                            <StackPanel Grid.Column="4" Spacing="{DynamicResource Spacing.XS}">
+                                <TextBlock Text="TIME CONNECTED" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding ConnectionTimeText}" Classes="LargeMetric" Foreground="{DynamicResource Brush.TextPrimary}" />
                             </StackPanel>
                         </Grid>
-
-                        <Grid ColumnDefinitions="*,*,*,*,*">
-                            <StackPanel Grid.Column="0" Spacing="6">
-                                <TextBlock Text="⬇ Downloaded" Classes="Caption" Foreground="{DynamicResource Brush.Download}"/>
-                                <TextBlock Text="{Binding TotalDownloadedText}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Download}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Spacing="6">
-                                <TextBlock Text="⬆ Uploaded" Classes="Caption" Foreground="{DynamicResource Brush.Upload}"/>
-                                <TextBlock Text="{Binding TotalUploadedText}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Upload}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" Spacing="6">
-                                <TextBlock Text="Total Usage" Classes="Caption" Foreground="{DynamicResource Brush.Accent}"/>
-                                <TextBlock Text="{Binding TotalUsageText}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Accent}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="3" Spacing="6">
-                                <TextBlock Text="Connection Time" Classes="Caption"/>
-                                <TextBlock Text="{Binding ConnectionTimeText}" Classes="Body" FontWeight="Bold"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="4" Spacing="6">
-                                <TextBlock Text="Total Sessions" Classes="Caption"/>
-                                <TextBlock Text="{Binding TotalSessionsText}" Classes="Body" FontWeight="Bold"/>
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
+                    </Grid>
                 </Border>
 
-                <!-- ══ Chart Area ══ -->
-                <Border Classes="Card">
-                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
-                        <TextBlock Text="Usage Timeline" Classes="SectionTitle"/>
-                        <StackPanel Classes="EmptyState" IsVisible="{Binding IsChartEmpty}">
-                            <TextBlock Text="📭" Classes="EmptyStateIcon"/>
-                            <TextBlock Text="No usage data for the selected period." Classes="EmptyStateTitle"/>
-                        </StackPanel>
-                        <StackPanel IsVisible="{Binding !IsChartEmpty}" Spacing="0">
-                            <Grid Height="160">
-                                <Canvas>
-                                    <Line StartPoint="0,0"   EndPoint="2000,0"   Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.6"/>
-                                    <Line StartPoint="0,40"  EndPoint="2000,40"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.4"/>
-                                    <Line StartPoint="0,80"  EndPoint="2000,80"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.4"/>
-                                    <Line StartPoint="0,120" EndPoint="2000,120" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.4"/>
-                                    <Line StartPoint="0,160" EndPoint="2000,160" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.6"/>
-                                </Canvas>
-                                <ItemsControl ItemsSource="{Binding PeriodChartItems}" IsVisible="{Binding !IsHourlyChart}">
-                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="160"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <!-- ANALYTICS CONTENT -->
+                <StackPanel Spacing="{DynamicResource Spacing.XXL}">
+
+                    <!-- PERIOD & CHART SECTION -->
+                    <Border Classes="AnalyticsSurface">
+                        <StackPanel Spacing="{DynamicResource Spacing.LG}">
+                            <!-- Section Header -->
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="USAGE TIMELINE" Classes="PanelTitle" VerticalAlignment="Center"/>
+                                <Border Grid.Column="1" Classes="StatusPill" Padding="4">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <Button Content="Today" Command="{Binding SelectPeriodCommand}" CommandParameter="Today" Classes="Ghost" />
+                                        <Button Content="7D" Command="{Binding SelectPeriodCommand}" CommandParameter="Last7Days" Classes="Ghost" />
+                                        <Button Content="30D" Command="{Binding SelectPeriodCommand}" CommandParameter="Last30Days" Classes="Ghost" />
+                                        <Button Content="Month" Command="{Binding SelectPeriodCommand}" CommandParameter="ThisMonth" Classes="Ghost" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- Main Chart -->
+                            <StackPanel>
+                                <Grid Height="160" SizeChanged="ChartContainer_SizeChanged" Margin="0,16,0,0">
+                                    <Canvas>
+                                        <Line StartPoint="0,0"   EndPoint="4000,0"   Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.3"/>
+                                        <Line StartPoint="0,40"  EndPoint="4000,40"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.15"/>
+                                        <Line StartPoint="0,80"  EndPoint="4000,80"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.15"/>
+                                        <Line StartPoint="0,120" EndPoint="4000,120" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.15"/>
+                                        <Line StartPoint="0,160" EndPoint="4000,160" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.3"/>
+                                    </Canvas>
+
+                                    <StackPanel Classes="EmptyState" IsVisible="{Binding IsChartEmpty}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <TextBlock Text="No usage recorded in this period." Classes="BodySecondary" />
+                                    </StackPanel>
+
+                                    <!-- Daily Chart Items -->
+                                    <ItemsControl ItemsSource="{Binding PeriodChartItems}" IsVisible="{Binding !IsHourlyChart}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><Canvas Height="160"/></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="vm:DailyChartBarViewModel">
+                                                <Canvas>
+                                                    <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}" Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}" Fill="{DynamicResource Brush.Download}" Opacity="0.95" ToolTip.Tip="{Binding Tooltip}" RadiusX="2" RadiusY="2"/>
+                                                    <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}" Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}" Fill="{DynamicResource Brush.Upload}" Opacity="0.95" ToolTip.Tip="{Binding Tooltip}" RadiusX="2" RadiusY="2"/>
+                                                </Canvas>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Hourly Chart Items -->
+                                    <ItemsControl ItemsSource="{Binding HourlyChartItems}" IsVisible="{Binding IsHourlyChart}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><Canvas Height="160"/></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="vm:HourlyChartBarViewModel">
+                                                <Canvas>
+                                                    <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}" Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}" Fill="{DynamicResource Brush.Download}" Opacity="0.95" ToolTip.Tip="{Binding Tooltip}" RadiusX="2" RadiusY="2"/>
+                                                    <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}" Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}" Fill="{DynamicResource Brush.Upload}" Opacity="0.95" ToolTip.Tip="{Binding Tooltip}" RadiusX="2" RadiusY="2"/>
+                                                </Canvas>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+
+                                <!-- Chart X-Axis Labels Daily -->
+                                <ItemsControl ItemsSource="{Binding PeriodChartItems}" IsVisible="{Binding !IsHourlyChart}" Margin="0,12,0,0">
+                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="28"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="vm:DailyChartBarViewModel">
-                                            <Canvas>
-                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}" Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}" Fill="{DynamicResource Brush.Upload}" Opacity="0.85" RadiusX="2" RadiusY="2" ToolTip.Tip="{Binding Tooltip}"/>
-                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}" Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}" Fill="{DynamicResource Brush.Download}" Opacity="0.85" ToolTip.Tip="{Binding Tooltip}"/>
-                                            </Canvas>
+                                            <TextBlock Canvas.Left="{Binding BarX}" Canvas.Top="0" Text="{Binding DayLabel}" Classes="Caption" Width="{Binding BarWidth}" TextAlignment="Center"/>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                                <ItemsControl ItemsSource="{Binding HourlyChartItems}" IsVisible="{Binding IsHourlyChart}">
-                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="160"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+
+                                <!-- Chart X-Axis Labels Hourly -->
+                                <ItemsControl ItemsSource="{Binding HourlyChartItems}" IsVisible="{Binding IsHourlyChart}" Margin="0,12,0,0">
+                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas Height="28"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="vm:HourlyChartBarViewModel">
-                                            <Canvas>
-                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding UploadBarY}" Width="{Binding BarWidth}" Height="{Binding UploadBarHeight}" Fill="{DynamicResource Brush.Upload}" Opacity="0.85" RadiusX="2" RadiusY="2" ToolTip.Tip="{Binding Tooltip}"/>
-                                                <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding DownloadBarY}" Width="{Binding BarWidth}" Height="{Binding DownloadBarHeight}" Fill="{DynamicResource Brush.Download}" Opacity="0.85" ToolTip.Tip="{Binding Tooltip}"/>
-                                            </Canvas>
+                                            <TextBlock Canvas.Left="{Binding BarX}" Canvas.Top="0" Text="{Binding Hour, StringFormat='\{0:D2\}'}" Classes="Caption" Width="{Binding BarWidth}" TextAlignment="Center"/>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                            </Grid>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <Grid ColumnDefinitions="*,*">
-                    <!-- Global Network Comparison -->
-                    <Border Grid.Column="0" Classes="CardInteractive" Margin="0,0,16,0">
-                        <StackPanel Spacing="{DynamicResource Spacing.MD}">
-                            <TextBlock Text="Network Summary (All Time)" Classes="SectionTitle"/>
-                            <StackPanel Spacing="16">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <StackPanel Grid.Column="0" Spacing="4">
-                                        <TextBlock Text="🔥 Most Used Network" Classes="Caption"/>
-                                        <TextBlock Text="{Binding MostUsedNetworkName}" Classes="Body" FontWeight="Bold"/>
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="1" Text="{Binding MostUsedNetworkUsage}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
-                                </Grid>
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <StackPanel Grid.Column="0" Spacing="4">
-                                        <TextBlock Text="⏱ Longest Connected" Classes="Caption"/>
-                                        <TextBlock Text="{Binding MostConnectedNetworkName}" Classes="Body" FontWeight="Bold"/>
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="1" Text="{Binding MostConnectedNetworkTime}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
-                                </Grid>
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <StackPanel Grid.Column="0" Spacing="4">
-                                        <TextBlock Text="🏆 Best Performing" Classes="Caption"/>
-                                        <TextBlock Text="{Binding BestNetworkName}" Classes="Body" FontWeight="Bold"/>
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="1" Text="{Binding BestNetworkAvgDl}" Classes="MetricSmall" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center"/>
-                                </Grid>
                             </StackPanel>
                         </StackPanel>
                     </Border>
-                    
-                    <!-- Session Table -->
-                    <Border Grid.Column="1" Classes="Card">
-                        <StackPanel Spacing="{DynamicResource Spacing.MD}">
-                            <TextBlock Text="Recent Sessions" Classes="SectionTitle"/>
-                            <StackPanel Classes="EmptyState" IsVisible="{Binding IsSessionHistoryEmpty}">
-                                <TextBlock Text="No sessions found." Classes="EmptyStateTitle"/>
-                            </StackPanel>
-                            <ScrollViewer Height="180" VerticalScrollBarVisibility="Auto" IsVisible="{Binding !IsSessionHistoryEmpty}">
-                                <ItemsControl ItemsSource="{Binding SessionHistoryItems}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="12,8">
-                                                <Grid ColumnDefinitions="*,100,100,100">
-                                                    <TextBlock Grid.Column="0" Text="{Binding StartTime, StringFormat=\{0:MMM d HH:mm\}}" Classes="Body" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Duration, StringFormat=\{0:hh\\:mm\\:ss\}}" Classes="Caption" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="2" Text="{Binding ConnectionType}" Classes="Caption" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="3" Text="{Binding TotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </StackPanel>
-                    </Border>
-                </Grid>
 
+                    <!-- TWO COLUMN ASYMMETRIC METRICS -->
+                    <Grid ColumnDefinitions="3*,48,2*">
+
+                        <!-- Column 1: Network Profile & Performance -->
+                        <Border Grid.Column="0" Classes="MetricSurface">
+                            <StackPanel Spacing="{DynamicResource Spacing.LG}">
+                                <TextBlock Text="GLOBAL NETWORK PROFILE" Classes="PanelTitle" />
+
+                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Margin="0,8,0,0">
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,0,24">
+                                        <TextBlock Text="MOST USED NETWORK" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" />
+                                        <TextBlock Text="{Binding MostUsedNetworkName}" Classes="Metric" Foreground="{DynamicResource Brush.TextPrimary}" />
+                                        <TextBlock Text="{Binding MostUsedNetworkUsage}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,0,24">
+                                        <TextBlock Text="LONGEST CONNECTED" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" />
+                                        <TextBlock Text="{Binding MostConnectedNetworkName}" Classes="Metric" Foreground="{DynamicResource Brush.TextPrimary}" />
+                                        <TextBlock Text="{Binding MostConnectedNetworkTime}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Spacing="{DynamicResource Spacing.XS}">
+                                        <TextBlock Text="BEST PERFORMING" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" />
+                                        <TextBlock Text="{Binding BestNetworkName}" Classes="Metric" Foreground="{DynamicResource Brush.TextPrimary}" />
+                                        <TextBlock Text="{Binding BestNetworkAvgDl, StringFormat='\{0\} avg. download'}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Column 2: Recent Sessions -->
+                        <Border Grid.Column="2" Classes="MetricSurface">
+                            <StackPanel Spacing="{DynamicResource Spacing.LG}">
+                                <TextBlock Text="RECENT SESSIONS" Classes="PanelTitle" />
+
+                                <StackPanel Classes="EmptyState" IsVisible="{Binding IsSessionHistoryEmpty}" Margin="0,16">
+                                    <TextBlock Text="No recent sessions found." Classes="BodySecondary" />
+                                </StackPanel>
+
+                                <ScrollViewer Height="180" VerticalScrollBarVisibility="Auto" IsVisible="{Binding !IsSessionHistoryEmpty}" Margin="0,8,0,0">
+                                    <ItemsControl ItemsSource="{Binding SessionHistoryItems}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="0,12">
+                                                    <Grid ColumnDefinitions="*,100,100,100">
+                                                        <TextBlock Grid.Column="0" Text="{Binding StartTime, StringFormat=\{0:MMM d HH:mm\}}" Classes="Body" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Duration, StringFormat=\{0:hh\\:mm\\:ss\}}" Classes="BodySecondary" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="2" Text="{Binding ConnectionType}" Classes="BodySecondary" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="3" Text="{Binding TotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="Body" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+
+                    </Grid>
+
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
+        </Panel>
     </ScrollViewer>
 </UserControl>
