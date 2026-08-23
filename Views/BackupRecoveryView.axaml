@@ -5,50 +5,88 @@
              x:Class="DataSense.Views.BackupRecoveryView"
              x:DataType="vm:BackupRecoveryViewModel">
 
-    <!-- Global semantic styles are applied by default -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Panel>
+            <StackPanel Spacing="{DynamicResource Spacing.XXL}" Margin="{DynamicResource Padding.Large}">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20" Background="{DynamicResource Brush.AppBackground}">
-        <StackPanel Spacing="20" MaxWidth="1100">
-            <!-- Top Banner -->
-            <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="🛡️ Automated Backup &amp; Disaster Recovery" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
-                    <TextBlock Text="Local, offline database recovery points with SHA-256 integrity validation." FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                </StackPanel>
-                <Button Grid.Column="1" Content="💾 Create Backup Now" Command="{Binding CreateBackupNowCommand}" Classes="Primary" VerticalAlignment="Center"/>
-            </Grid>
+                <!-- ── HEADER ──────────────────────────────────────────────────────── -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}">
+                        <TextBlock Text="Automated Backup &amp; Disaster Recovery" Classes="PageTitle"/>
+                        <TextBlock Text="Local, offline database recovery points with SHA-256 integrity validation." Classes="BodySecondary"/>
+                    </StackPanel>
 
-            <!-- Status Card -->
-            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="16">
-                <StackPanel Spacing="8">
-                    <TextBlock Text="System Protection Status" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="Bold" FontSize="14"/>
-                    <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Brush.Success}" FontSize="13"/>
-                    <ProgressBar IsIndeterminate="{Binding IsProcessing}" IsVisible="{Binding IsProcessing}" Height="4"/>
-                </StackPanel>
-            </Border>
+                    <Button Grid.Column="1" Content="💾 Create Backup Now"
+                            Command="{Binding CreateBackupNowCommand}"
+                            IsEnabled="{Binding !IsProcessing}"
+                            Classes="Primary" VerticalAlignment="Center"/>
+                </Grid>
 
-            <!-- Recovery Points Table -->
-            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="16">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="Available Recovery Points" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="Bold" FontSize="14"/>
-                    <ItemsControl ItemsSource="{Binding RecoveryPoints}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="models:RecoveryPoint">
-                                <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,4">
-                                    <Grid ColumnDefinitions="*,Auto,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
-                                            <TextBlock Text="{Binding FilePath}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="12" FontWeight="Bold"/>
-                                            <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:u}'}" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="10"/>
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{Binding SizeBytes, StringFormat='{}{0} bytes'}" Foreground="{DynamicResource Brush.Download}" FontSize="11" Margin="0,0,20,0" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="✓ Validated" Foreground="{DynamicResource Brush.Success}" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
-        </StackPanel>
+                <!-- ── STATUS HERO SURFACE ──────────────────────────────────────────── -->
+                <Border Classes="HeroSurface">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                        <Grid ColumnDefinitions="*,*">
+                            <!-- System Protection Status -->
+                            <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,24,0">
+                                <TextBlock Text="SYSTEM PROTECTION STATUS" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding StatusText}" Classes="DisplayMetric" Foreground="{DynamicResource Brush.Success}"/>
+                                <TextBlock Text="Local database disaster recovery health" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                            </StackPanel>
+
+                            <!-- Recovery Points Count -->
+                            <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.XS}">
+                                <TextBlock Text="RECOVERY POINTS AVAILABLE" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding RecoveryPoints.Count}" Classes="LargeMetric" Foreground="{DynamicResource Brush.Accent}"/>
+                                <TextBlock Text="Validated offline restore points" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <ProgressBar Height="4" IsIndeterminate="{Binding IsProcessing}" IsVisible="{Binding IsProcessing}"
+                                     Foreground="{DynamicResource Brush.Accent}" Background="{DynamicResource Brush.SurfaceHover}"
+                                     CornerRadius="{DynamicResource Radius.Small}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── RECOVERY POINTS TABLE SURFACE ───────────────────────────────── -->
+                <Border Classes="AnalyticsSurface" Padding="0">
+                    <Grid RowDefinitions="Auto,Auto,*">
+                        <Grid Grid.Row="0" Margin="20,16">
+                            <TextBlock Text="AVAILABLE RECOVERY POINTS" Classes="PanelTitle" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <Border Grid.Row="1" Background="{DynamicResource Brush.SurfaceHover}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,1" Padding="16,12">
+                            <Grid ColumnDefinitions="*,180,140,120">
+                                <TextBlock Grid.Column="0" Text="FILE PATH &amp; LOCATION" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
+                                <TextBlock Grid.Column="1" Text="CREATED AT" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
+                                <TextBlock Grid.Column="2" Text="SIZE" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
+                                <TextBlock Grid.Column="3" Text="STATUS" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </Border>
+
+                        <StackPanel Grid.Row="2" Classes="EmptyState" IsVisible="{Binding !RecoveryPoints.Count}" Margin="0,32">
+                            <TextBlock Text="No local recovery points found." Classes="BodySecondary" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <ItemsControl Grid.Row="2" ItemsSource="{Binding RecoveryPoints}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="models:RecoveryPoint">
+                                    <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="16,12">
+                                        <Grid ColumnDefinitions="*,180,140,120">
+                                            <TextBlock Grid.Column="0" Text="{Binding FilePath}" Classes="Body" FontWeight="Medium" Foreground="{DynamicResource Brush.TextPrimary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding CreatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding SizeBytes, StringFormat='{}{0:N0} bytes'}" Classes="Body" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
+                                            <Border Grid.Column="3" Classes="StatusPill" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                <TextBlock Text="✓ Validated" Classes="Caption" Foreground="{DynamicResource Brush.Success}" FontWeight="SemiBold"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </Border>
+
+            </StackPanel>
+        </Panel>
     </ScrollViewer>
 </UserControl>

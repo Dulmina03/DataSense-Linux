@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DataSense.ViewModels"
+             x:Class="DataSense.Views.AppearanceView"
+             x:DataType="vm:SettingsViewModel">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Panel>
+            <StackPanel Spacing="{DynamicResource Spacing.XXL}" Margin="{DynamicResource Padding.Large}">
+
+                <!-- ── HEADER ──────────────────────────────────────────────────────── -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}">
+                        <TextBlock Text="Appearance &amp; Personalization" Classes="PageTitle"/>
+                        <TextBlock Text="Customize theme styles, visual density, color accents, and desktop interface preferences." Classes="BodySecondary"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- ── SUMMARY HERO SURFACE ────────────────────────────────────────── -->
+                <Border Classes="HeroSurface">
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,24,0">
+                            <TextBlock Text="CURRENT THEME MODE" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                            <TextBlock Text="Fluent Dark" Classes="DisplayMetric" Foreground="{DynamicResource Brush.Accent}"/>
+                            <TextBlock Text="System accent sync active" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.XS}">
+                            <TextBlock Text="INTERFACE DENSITY" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                            <TextBlock Text="Compact Desktop" Classes="LargeMetric" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                            <TextBlock Text="Optimized for standard and 4K displays" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ── THEME & COLOR SELECTION ────────────────────────────────────── -->
+                <Border Classes="AnalyticsSurface" Padding="{DynamicResource Padding.Large}">
+                    <StackPanel Spacing="{DynamicResource Spacing.LG}">
+                        <TextBlock Text="THEME &amp; COLOR MODE" Classes="PanelTitle"/>
+
+                        <!-- Application Theme Selection -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="Color Theme" Classes="Body" FontWeight="Medium" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                <TextBlock Text="Select your preferred desktop application theme palette." Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" SelectedIndex="0" MinWidth="200" Classes="Secondary">
+                                <ComboBoxItem Content="Fluent Dark (Default)"/>
+                                <ComboBoxItem Content="Fluent Light"/>
+                                <ComboBoxItem Content="System Auto Sync"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource Brush.Border}"/>
+
+                        <!-- UI Scaling & Density -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="Interface Scaling &amp; Density" Classes="Body" FontWeight="Medium" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                <TextBlock Text="Adjust visual density for multi-monitor desktop environments." Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" SelectedIndex="1" MinWidth="200" Classes="Secondary">
+                                <ComboBoxItem Content="Compact (High Density)"/>
+                                <ComboBoxItem Content="Standard Desktop (Default)"/>
+                                <ComboBoxItem Content="Comfortable (Touch / Large)"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource Brush.Border}"/>
+
+                        <!-- Desktop Notifications Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="Enable Desktop Notifications" Classes="Body" FontWeight="Medium" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                <TextBlock Text="Display native Ubuntu desktop notification toasts for system events." Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" IsChecked="{Binding EnableNotifications}" Content="Active" VerticalAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── SAVE ACTIONS & FEEDBACK ──────────────────────────────────────── -->
+                <Border Classes="AnalyticsSurface" Padding="{DynamicResource Padding.Large}">
+                    <StackPanel Spacing="{DynamicResource Spacing.MD}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button Content="Save Preferences" Command="{Binding SaveBudgetCommand}" IsEnabled="{Binding !IsSaving}" Classes="Primary"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding SaveStatusText}" Foreground="{DynamicResource Brush.Success}" Classes="Caption" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </Panel>
+    </ScrollViewer>
+</UserControl>

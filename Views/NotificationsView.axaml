@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DataSense.ViewModels"
              xmlns:models="using:DataSense.Models"
-             x:Class="DataSense.Views.EventCenterView"
+             x:Class="DataSense.Views.NotificationsView"
              x:DataType="vm:EventCenterViewModel">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -13,12 +13,12 @@
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}">
                         <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}" VerticalAlignment="Center">
-                            <TextBlock Text="Event &amp; Alert Center" Classes="PageTitle"/>
+                            <TextBlock Text="Notifications &amp; Alerts" Classes="PageTitle"/>
                             <Border Classes="Badge" Background="{DynamicResource Brush.Danger}" IsVisible="{Binding UnreadCount}" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding UnreadCount, StringFormat='{}{0} Unread'}" Classes="Caption" FontWeight="Bold"/>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="Centralized notifications, system alerts, usage anomalies, and background events." Classes="BodySecondary"/>
+                        <TextBlock Text="Real-time system notifications, network alert logs, and background event tracking." Classes="BodySecondary"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}" VerticalAlignment="Center">
@@ -27,26 +27,26 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- ── HERO SURFACE ────────────────────────────────────────────────── -->
+                <!-- ── SUMMARY HERO SURFACE ────────────────────────────────────────── -->
                 <Border Classes="HeroSurface">
                     <Grid ColumnDefinitions="*,*">
                         <!-- Unread Count -->
                         <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,24,0">
                             <TextBlock Text="UNREAD NOTIFICATIONS" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding UnreadCount}" Classes="DisplayMetric" Foreground="{DynamicResource Brush.Accent}"/>
-                            <TextBlock Text="Events requiring user attention or review" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                            <TextBlock Text="Active items requiring attention" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
                         </StackPanel>
 
                         <!-- Filter Scope -->
                         <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.XS}">
                             <TextBlock Text="ACTIVE SEVERITY FILTER" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding FilterSeverity}" Classes="LargeMetric" Foreground="{DynamicResource Brush.TextPrimary}"/>
-                            <TextBlock Text="Current event filtering scope" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                            <TextBlock Text="Current view severity scope" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
                         </StackPanel>
                     </Grid>
                 </Border>
 
-                <!-- ── FILTER CONTROLS SURFACE ────────────────────────────────────── -->
+                <!-- ── FILTERS SURFACE ────────────────────────────────────────────── -->
                 <Border Classes="AnalyticsSurface" Padding="{DynamicResource Padding.Large}">
                     <StackPanel Spacing="{DynamicResource Spacing.MD}">
                         <TextBlock Text="FILTER BY SEVERITY" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
@@ -60,17 +60,17 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ── EVENTS LIST SURFACE ─────────────────────────────────────────── -->
+                <!-- ── NOTIFICATIONS LIST SURFACE ──────────────────────────────────── -->
                 <Border Classes="AnalyticsSurface" Padding="0">
                     <Grid RowDefinitions="Auto,Auto,*">
                         <Grid Grid.Row="0" Margin="20,16">
-                            <TextBlock Text="ACTIVE NOTIFICATIONS &amp; ALERTS" Classes="PanelTitle" VerticalAlignment="Center"/>
+                            <TextBlock Text="NOTIFICATION LOG" Classes="PanelTitle" VerticalAlignment="Center"/>
                         </Grid>
 
                         <Border Grid.Row="1" Background="{DynamicResource Brush.SurfaceHover}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,1" Padding="16,12">
                             <Grid ColumnDefinitions="110,*,140,160,160">
                                 <TextBlock Grid.Column="0" Text="SEVERITY" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
-                                <TextBlock Grid.Column="1" Text="EVENT DETAILS" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
+                                <TextBlock Grid.Column="1" Text="DETAILS" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
                                 <TextBlock Grid.Column="2" Text="SOURCE" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
                                 <TextBlock Grid.Column="3" Text="TIMESTAMP" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
                                 <TextBlock Grid.Column="4" Text="ACTIONS" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5" HorizontalAlignment="Right"/>
@@ -78,7 +78,7 @@
                         </Border>
 
                         <StackPanel Grid.Row="2" Classes="EmptyState" IsVisible="{Binding !Events.Count}" Margin="0,32">
-                            <TextBlock Text="No active notifications or alerts for the selected filter." Classes="BodySecondary" HorizontalAlignment="Center"/>
+                            <TextBlock Text="No notifications found matching the active filter." Classes="BodySecondary" HorizontalAlignment="Center"/>
                         </StackPanel>
 
                         <ItemsControl Grid.Row="2" ItemsSource="{Binding Events}">
@@ -91,7 +91,7 @@
                                                 <TextBlock Text="{Binding Severity}" Classes="Caption" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </Border>
 
-                                            <!-- Event Details -->
+                                            <!-- Details -->
                                             <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center" Margin="0,0,16,0">
                                                 <TextBlock Text="{Binding Title}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}"/>
                                                 <TextBlock Text="{Binding Description}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" TextWrapping="Wrap"/>

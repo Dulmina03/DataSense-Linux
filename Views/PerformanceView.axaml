@@ -101,7 +101,7 @@
                         </Grid>
 
                         <Border Grid.Row="1" Background="{DynamicResource Brush.SurfaceHover}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,1" Padding="16,12">
-                            <Grid ColumnDefinitions="*,120,100,100,100">
+                            <Grid ColumnDefinitions="*,140,120,120,100">
                                 <TextBlock Grid.Column="0" Text="OPERATION" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
                                 <TextBlock Grid.Column="1" Text="CATEGORY" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
                                 <TextBlock Grid.Column="2" Text="LAST (MS)" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5" HorizontalAlignment="Right"/>
@@ -118,7 +118,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="models:PerformanceMetric">
                                     <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="16,12">
-                                        <Grid ColumnDefinitions="*,120,100,100,100">
+                                        <Grid ColumnDefinitions="*,140,120,120,100">
                                             <TextBlock Grid.Column="0" Text="{Binding Name}" Classes="Body" FontWeight="Medium" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                             <TextBlock Grid.Column="1" Text="{Binding Category}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="2" Text="{Binding LastDurationMs, StringFormat='{}{0:F1}'}" Classes="Body" Foreground="{DynamicResource Brush.Download}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
