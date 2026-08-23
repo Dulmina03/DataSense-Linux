@@ -1,7 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
         
-    <!-- Base Card -->
+    <!-- Base Panel (Clean, implicit structure) -->
     <Style Selector="Border.Card">
         <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
@@ -10,22 +10,39 @@
         <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
     </Style>
 
-    <!-- Elevated Card -->
+    <!-- Elevated Panel (Floating effect) -->
     <Style Selector="Border.CardElevated">
         <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
+        <!-- Subtle shadow/elevation effect handled natively by background depth in this design -->
     </Style>
 
-    <!-- Interactive Card -->
+    <!-- Hero Panel (Large central focal point) -->
+    <Style Selector="Border.CardHero">
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
+        <Setter Property="Padding" Value="{DynamicResource Padding.Hero}" />
+    </Style>
+
+    <!-- Interactive Panel -->
     <Style Selector="Border.CardInteractive">
         <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
+        <!-- Avalonia fast Transitions -->
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="Border.CardInteractive:pointerover">
         <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
@@ -34,7 +51,7 @@
 
     <!-- Status Cards -->
     <Style Selector="Border.CardSuccess">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.SuccessSurface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
@@ -50,7 +67,7 @@
     </Style>
 
     <Style Selector="Border.CardDanger">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.DangerSurface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />

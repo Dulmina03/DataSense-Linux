@@ -1,18 +1,25 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="using:System">
+    <!-- Grid System & Gaps -->
     <sys:Double x:Key="Spacing.XS">4</sys:Double>
     <sys:Double x:Key="Spacing.SM">8</sys:Double>
     <sys:Double x:Key="Spacing.MD">12</sys:Double>
     <sys:Double x:Key="Spacing.LG">16</sys:Double>
     <sys:Double x:Key="Spacing.XL">24</sys:Double>
     <sys:Double x:Key="Spacing.XXL">32</sys:Double>
+    <sys:Double x:Key="Spacing.Section">48</sys:Double>
 
+    <!-- Component Internal Padding -->
+    <Thickness x:Key="Padding.Micro">4,2</Thickness>
     <Thickness x:Key="Padding.Small">8</Thickness>
     <Thickness x:Key="Padding.Medium">16</Thickness>
     <Thickness x:Key="Padding.Large">24</Thickness>
+    <Thickness x:Key="Padding.Hero">32</Thickness>
 
+    <!-- Radii -->
     <CornerRadius x:Key="Radius.Small">4</CornerRadius>
     <CornerRadius x:Key="Radius.Medium">8</CornerRadius>
     <CornerRadius x:Key="Radius.Large">12</CornerRadius>
+    <CornerRadius x:Key="Radius.Pill">9999</CornerRadius>
 </ResourceDictionary>
