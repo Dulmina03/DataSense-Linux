@@ -6,116 +6,137 @@
              x:Class="DataSense.Views.UnifiedIntelligenceView"
              x:DataType="vm:UnifiedIntelligenceViewModel">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="{DynamicResource Padding.Large}">
-        <StackPanel Spacing="{DynamicResource Spacing.XL}">
-            <!-- Header -->
-            <Border Classes="CardElevated">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Panel>
+            <StackPanel Spacing="{DynamicResource Spacing.XXL}" Margin="{DynamicResource Padding.Large}">
+
+                <!-- ── HEADER ──────────────────────────────────────────────────────── -->
                 <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.SM}">
+                    <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}">
                         <TextBlock Text="Unified Intelligence Center" Classes="PageTitle"/>
                         <TextBlock Text="Cross-domain deterministic correlations across your applications and networks." Classes="BodySecondary"/>
                     </StackPanel>
+
                     <Button Grid.Column="1" Content="Refresh Analysis" Command="{Binding RefreshDataCommand}" Classes="Secondary" VerticalAlignment="Center"/>
                 </Grid>
-            </Border>
 
-            <!-- Loading State -->
-            <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoading}" Height="2" Margin="0,10" Foreground="{DynamicResource Brush.Accent}"/>
+                <!-- ── LOADING BAR ──────────────────────────────────────────────────── -->
+                <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoading}" Height="4" Margin="0,-12,0,0" Foreground="{DynamicResource Brush.Accent}"/>
 
-            <!-- System Summary -->
-            <Border Classes="Card">
-                <StackPanel Spacing="{DynamicResource Spacing.MD}">
-                    <TextBlock Text="Current System Status" Classes="SectionTitle"/>
+                <!-- ── SYSTEM SUMMARY HERO ───────────────────────────────────────────── -->
+                <Border Classes="HeroSurface">
                     <Grid ColumnDefinitions="*,*,*,*">
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Intelligence Engine" Classes="Caption"/>
-                            <TextBlock Text="{Binding SystemSummary.OverallIntelligenceStatus}" Classes="Body" Foreground="{DynamicResource Brush.Success}" FontWeight="SemiBold"/>
+                        <!-- Intelligence Engine Status -->
+                        <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,24,0">
+                            <TextBlock Text="INTELLIGENCE STATUS" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding SystemSummary.OverallIntelligenceStatus}" Classes="LargeMetric" Foreground="{DynamicResource Brush.Success}"/>
+                            <TextBlock Text="Engine online &amp; active" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="4">
-                            <TextBlock Text="Today's Top App" Classes="Caption"/>
-                            <TextBlock Text="{Binding SystemSummary.TodayTopApplication}" Classes="Body" Foreground="{DynamicResource Brush.Download}" FontWeight="SemiBold"/>
+
+                        <!-- Today's Top App -->
+                        <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,24,0">
+                            <TextBlock Text="TODAY'S TOP APP" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding SystemSummary.TodayTopApplication}" Classes="LargeMetric" Foreground="{DynamicResource Brush.Download}" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="Highest bandwidth consumer" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="2" Spacing="4">
-                            <TextBlock Text="Current Network" Classes="Caption"/>
-                            <TextBlock Text="{Binding SystemSummary.CurrentNetwork}" Classes="Body" FontWeight="SemiBold"/>
+
+                        <!-- Current Network -->
+                        <StackPanel Grid.Column="2" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,24,0">
+                            <TextBlock Text="CURRENT NETWORK" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding SystemSummary.CurrentNetwork}" Classes="LargeMetric" Foreground="{DynamicResource Brush.TextPrimary}" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="Active interface connection" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="3" Spacing="4">
-                            <TextBlock Text="Total Usage Today" Classes="Caption"/>
-                            <TextBlock Text="{Binding SystemSummary.TodayTotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="Body" Foreground="{DynamicResource Brush.Upload}" FontWeight="SemiBold"/>
+
+                        <!-- Total Usage Today -->
+                        <StackPanel Grid.Column="3" Spacing="{DynamicResource Spacing.XS}">
+                            <TextBlock Text="TOTAL USAGE TODAY" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding SystemSummary.TodayTotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="DisplayMetric" Foreground="{DynamicResource Brush.Upload}"/>
+                            <TextBlock Text="Aggregated cross-domain data" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
                         </StackPanel>
                     </Grid>
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <!-- Filters -->
-            <Border Classes="Card">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Category" Classes="Caption"/>
-                            <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding CategoryFilter}" Width="150"/>
+                <!-- ── FILTER BAR ──────────────────────────────────────────────────────── -->
+                <Border Classes="AnalyticsSurface" Padding="{DynamicResource Padding.Medium}">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}" VerticalAlignment="Center">
+                                <TextBlock Text="Category:" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
+                                <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding CategoryFilter}" MinWidth="150" Classes="Secondary"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.SM}" VerticalAlignment="Center">
+                                <TextBlock Text="Severity:" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
+                                <ComboBox ItemsSource="{Binding Severities}" SelectedItem="{Binding SeverityFilter}" MinWidth="130" Classes="Secondary"/>
+                            </StackPanel>
                         </StackPanel>
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Severity" Classes="Caption"/>
-                            <ComboBox ItemsSource="{Binding Severities}" SelectedItem="{Binding SeverityFilter}" Width="120"/>
-                        </StackPanel>
-                    </StackPanel>
-                    <TextBlock Grid.Column="2" Text="{Binding FilteredInsights.Count, StringFormat='{}{0} Insights Found'}" Classes="Caption" VerticalAlignment="Bottom"/>
-                </Grid>
-            </Border>
 
-            <!-- Insights List -->
-            <ItemsControl ItemsSource="{Binding FilteredInsights}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Classes="Card" Margin="0,0,0,12">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <!-- Severity Indicator -->
-                                <Border Grid.Column="0" Width="4" CornerRadius="2" Margin="0,0,12,0" Background="{Binding Severity, Converter={x:Static conv:UnifiedInsightSeverityColorConverter.Instance}}"/>
-                                
-                                <StackPanel Grid.Column="1" Spacing="6">
-                                    <!-- Title & Meta -->
-                                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Title}" Classes="Body" FontWeight="Bold"/>
-                                        <Border Classes="Badge">
-                                            <TextBlock Text="{Binding Category}" Foreground="{DynamicResource Brush.Accent}" />
-                                        </Border>
-                                    </StackPanel>
-                                    
-                                    <!-- Description -->
-                                    <TextBlock Text="{Binding Description}" Classes="Caption" TextWrapping="Wrap"/>
-                                    
-                                    <!-- Evidence Box -->
-                                    <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="12" Margin="0,4,0,0" IsVisible="{Binding Evidence.Count}">
-                                        <StackPanel>
-                                            <TextBlock Text="Supporting Evidence" Classes="Caption" FontWeight="Bold" Margin="0,0,0,6"/>
-                                            <ItemsControl ItemsSource="{Binding Evidence}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <TextBlock Text="{Binding}" Classes="Caption" Margin="0,2"/>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-
-                                <!-- Recommended Action -->
-                                <StackPanel Grid.Column="2" MaxWidth="250" Margin="16,0,0,0" Spacing="4">
-                                    <TextBlock Text="Recommended Action" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right"/>
-                                    <TextBlock Text="{Binding RecommendedAction}" Classes="Caption" Foreground="{DynamicResource Brush.Success}" TextWrapping="Wrap" HorizontalAlignment="Right" TextAlignment="Right"/>
-                                    <TextBlock Text="{Binding Confidence, StringFormat='{}Confidence: {0}'}" Classes="Caption" HorizontalAlignment="Right" Margin="0,8,0,0"/>
-                                </StackPanel>
-                            </Grid>
+                        <Border Grid.Column="2" Classes="StatusPill" Padding="12,6" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding FilteredInsights.Count, StringFormat='{}{0} Insights Found'}" Classes="Caption" Foreground="{DynamicResource Brush.Accent}" FontWeight="Bold"/>
                         </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            
-            <!-- Empty State -->
-            <StackPanel Classes="EmptyState" IsVisible="{Binding !FilteredInsights.Count}">
-                <TextBlock Text="No insights found matching the current filters." Classes="EmptyStateTitle"/>
+                    </Grid>
+                </Border>
+
+                <!-- ── INSIGHTS LIST ────────────────────────────────────────────────── -->
+                <StackPanel Spacing="{DynamicResource Spacing.MD}">
+
+                    <!-- Empty State -->
+                    <StackPanel Classes="EmptyState" IsVisible="{Binding !FilteredInsights.Count}" Margin="0,40">
+                        <TextBlock Text="No insights found matching the current filters." Classes="BodySecondary" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <ItemsControl ItemsSource="{Binding FilteredInsights}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Classes="AnalyticsSurface" Margin="0,0,0,12" Padding="20,16">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <!-- Severity Indicator Bar -->
+                                        <Border Grid.Column="0" Width="4" CornerRadius="2" Margin="0,0,16,0" Background="{Binding Severity, Converter={x:Static conv:UnifiedInsightSeverityColorConverter.Instance}}"/>
+
+                                        <!-- Content Body -->
+                                        <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.SM}">
+                                            <!-- Title & Category Badge -->
+                                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                                <Border Classes="Badge">
+                                                    <TextBlock Text="{Binding Category}" Foreground="{DynamicResource Brush.Accent}" Classes="Caption" FontWeight="Medium"/>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <!-- Description -->
+                                            <TextBlock Text="{Binding Description}" Classes="BodySecondary" TextWrapping="Wrap"/>
+
+                                            <!-- Supporting Evidence Box -->
+                                            <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="{DynamicResource Radius.Small}" Padding="12" Margin="0,4,0,0" IsVisible="{Binding Evidence.Count}">
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="Supporting Evidence" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
+                                                    <ItemsControl ItemsSource="{Binding Evidence}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" Margin="0,1"/>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <!-- Recommended Action & Confidence -->
+                                        <StackPanel Grid.Column="2" MaxWidth="280" Margin="24,0,0,0" Spacing="6" VerticalAlignment="Top">
+                                            <TextBlock Text="RECOMMENDED ACTION" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                            <TextBlock Text="{Binding RecommendedAction}" Classes="Caption" Foreground="{DynamicResource Brush.Success}" FontWeight="Medium" TextWrapping="Wrap" HorizontalAlignment="Right" TextAlignment="Right"/>
+                                            <Border Classes="StatusPill" Padding="8,4" HorizontalAlignment="Right" Margin="0,4,0,0">
+                                                <TextBlock Text="{Binding Confidence, StringFormat='{}Confidence: {0}'}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
             </StackPanel>
-        </StackPanel>
+        </Panel>
     </ScrollViewer>
 </UserControl>
