@@ -16,14 +16,14 @@ public class InsightSeverityColorConverter : IValueConverter
         {
             return severity switch
             {
-                InsightSeverity.Info => new SolidColorBrush(Color.Parse("#00D2FF")),
-                InsightSeverity.Success => new SolidColorBrush(Color.Parse("#00E676")),
-                InsightSeverity.Warning => new SolidColorBrush(Color.Parse("#FFB300")),
-                InsightSeverity.Critical => new SolidColorBrush(Color.Parse("#FF5252")),
-                _ => new SolidColorBrush(Color.Parse("#888899"))
+                InsightSeverity.Info => SemanticBrushConverter.Resolve("Info"),
+                InsightSeverity.Success => SemanticBrushConverter.Resolve("Success"),
+                InsightSeverity.Warning => SemanticBrushConverter.Resolve("Warning"),
+                InsightSeverity.Critical => SemanticBrushConverter.Resolve("Danger"),
+                _ => SemanticBrushConverter.Resolve("Muted")
             };
         }
-        return new SolidColorBrush(Color.Parse("#888899"));
+        return SemanticBrushConverter.Resolve("Muted");
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

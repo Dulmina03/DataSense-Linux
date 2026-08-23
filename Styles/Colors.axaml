@@ -19,8 +19,10 @@
             <SolidColorBrush x:Key="Brush.Accent">#007ACC</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.AccentHover">#0098FF</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Success">#4CAF50</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.SuccessSurface">#1A4CAF50</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Warning">#FFC107</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Danger">#F44336</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.DangerSurface">#1AF44336</SolidColorBrush>
             
             <SolidColorBrush x:Key="Brush.Download">#03A9F4</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Upload">#E91E63</SolidColorBrush>
@@ -45,8 +47,10 @@
             <SolidColorBrush x:Key="Brush.Accent">#005A9E</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.AccentHover">#0078D4</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Success">#2E7D32</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.SuccessSurface">#1A2E7D32</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Warning">#F57F17</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Danger">#C62828</SolidColorBrush>
+            <SolidColorBrush x:Key="Brush.DangerSurface">#1AC62828</SolidColorBrush>
             
             <SolidColorBrush x:Key="Brush.Download">#0288D1</SolidColorBrush>
             <SolidColorBrush x:Key="Brush.Upload">#C2185B</SolidColorBrush>

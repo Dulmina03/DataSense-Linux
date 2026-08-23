@@ -10,32 +10,55 @@ public class SemanticBrushConverter : IValueConverter
 {
     public static readonly SemanticBrushConverter Instance = new();
 
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public static IBrush? Resolve(string semanticKey)
     {
-        if (value is string semanticKey)
+        var resourceKey = semanticKey switch
         {
-            var resourceKey = semanticKey switch
-            {
-                "Success" => "Brush.Success",
-                "Warning" => "Brush.Warning",
-                "Danger"  => "Brush.Danger",
-                "Info"    => "Brush.Accent",
-                "Muted"   => "Brush.TextMuted",
-                "Download" => "Brush.Download",
-                "Upload"  => "Brush.Upload",
-                _         => "Brush.TextPrimary"
-            };
+            "Success"   => "Brush.Success",
+            "Warning"   => "Brush.Warning",
+            "Danger"    => "Brush.Danger",
+            "Info"      => "Brush.Accent",
+            "Muted"     => "Brush.TextMuted",
+            "Neutral"   => "Brush.TextSecondary",
+            "Download"  => "Brush.Download",
+            "Upload"    => "Brush.Upload",
 
-            if (Application.Current != null && Application.Current.TryGetResource(resourceKey, out var res) && res is IBrush brush)
-            {
-                return brush;
-            }
+            "SuccessSurface" => "Brush.SuccessSurface",
+            "DangerSurface"  => "Brush.DangerSurface",
+
+            _ => "Brush.TextPrimary"
+        };
+
+        if (Application.Current != null &&
+            Application.Current.TryGetResource(resourceKey, Application.Current.ActualThemeVariant, out var resource) &&
+            resource is IBrush brush)
+        {
+            return brush;
         }
+
         return null;
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object? Convert(
+        object? value,
+        Type targetType,
+        object? parameter,
+        CultureInfo culture)
     {
-        throw new NotImplementedException();
+        if (value is string semanticKey)
+        {
+            return Resolve(semanticKey);
+        }
+
+        return null;
+    }
+
+    public object? ConvertBack(
+        object? value,
+        Type targetType,
+        object? parameter,
+        CultureInfo culture)
+    {
+        throw new NotSupportedException();
     }
 }

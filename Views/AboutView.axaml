@@ -11,40 +11,40 @@
         <!-- Text details -->
         <StackPanel Grid.Column="0" Spacing="24">
             <StackPanel Spacing="8">
-                <TextBlock Text="DataSense Desktop" FontSize="28" FontWeight="Bold" Foreground="#FFFFFF" />
-                <TextBlock Text="Version 1.0.0-Beta (Core-Build)" FontSize="13" Foreground="#888888" />
+                <TextBlock Text="DataSense Desktop" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" />
+                <TextBlock Text="Version 1.0.0-Beta (Core-Build)" FontSize="13" Foreground="{DynamicResource Brush.TextSecondary}" />
             </StackPanel>
 
             <TextBlock Text="DataSense is a high-performance system utility and network telemetry aggregator engineered specifically for enterprise Ubuntu Linux workstations. It provides offline logs recording, real-time interface speed diagnostics, and local hardware monitoring metrics with zero web technologies, telemetry leakage, or third-party cloud requirements." 
                        TextWrapping="Wrap" 
                        LineHeight="20"
                        FontSize="13" 
-                       Foreground="#CCCCCC" />
+                       Foreground="{DynamicResource Brush.TextMuted}" />
 
             <!-- Tech Details Grid -->
             <StackPanel Spacing="12">
-                <TextBlock Text="Built With Modern Technologies" FontSize="14" FontWeight="Bold" Foreground="#007ACC" />
-                <Separator Height="1" Background="#242424" />
+                <TextBlock Text="Built With Modern Technologies" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}" />
+                <Separator Height="1" Background="{DynamicResource Brush.Border}" />
                 
                 <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto" Margin="0,4">
                     <!-- Row 0 -->
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Language Runtime:" Foreground="#666666" FontSize="13" Margin="0,0,0,8" />
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="C# 13 • .NET 10" Foreground="#E0E0E0" FontSize="13" Margin="0,0,0,8" />
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Language Runtime:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="13" Margin="0,0,0,8" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="C# 13 • .NET 10" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="13" Margin="0,0,0,8" />
 
                     <!-- Row 1 -->
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="UI Framework:" Foreground="#666666" FontSize="13" Margin="0,0,0,8" />
-                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Avalonia UI 11 (X11 &amp; Wayland native)" Foreground="#E0E0E0" FontSize="13" Margin="0,0,0,8" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="UI Framework:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="13" Margin="0,0,0,8" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Avalonia UI 11 (X11 &amp; Wayland native)" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="13" Margin="0,0,0,8" />
 
                     <!-- Row 2 -->
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Architecture:" Foreground="#666666" FontSize="13" />
-                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Pure MVVM &amp; Microsoft dependency injection" Foreground="#E0E0E0" FontSize="13" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Architecture:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="13" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Pure MVVM &amp; Microsoft dependency injection" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="13" />
                 </Grid>
             </StackPanel>
 
             <!-- Legal -->
             <TextBlock Text="© 2026 DataSense Core Team. Licensed under the MIT License." 
                        FontSize="11" 
-                       Foreground="#444444" />
+                       Foreground="{DynamicResource Brush.TextMuted}" />
         </StackPanel>
 
         <!-- Graphic Emblem (Right Side) -->

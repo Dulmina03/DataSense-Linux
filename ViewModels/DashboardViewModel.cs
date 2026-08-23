@@ -257,7 +257,6 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty] private bool _isTodayChartLoading = true;
     [ObservableProperty] private bool _hasTodayChartData = false;
-    public ObservableCollection<LiveChartsCore.ISeries> TodayTopConsumerSeries { get; } = new();
 
     // ────────────────────────────────────────────────────────────────────────
     // Construction

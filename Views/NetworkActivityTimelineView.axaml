@@ -14,82 +14,82 @@
             <!-- ── HEADER BAR ──────────────────────────────────────────────────────── -->
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="Network Activity Timeline &amp; Session Intelligence" FontSize="24" FontWeight="Bold" Foreground="#FFFFFF"/>
-                    <TextBlock Text="Real-time chronological session tracking, per-process attribution, network switches, and pattern analysis." FontSize="13" Foreground="#94A3B8"/>
+                    <TextBlock Text="Network Activity Timeline &amp; Session Intelligence" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                    <TextBlock Text="Real-time chronological session tracking, per-process attribution, network switches, and pattern analysis." FontSize="13" Foreground="{DynamicResource Brush.TextSecondary}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                    <Button Command="{Binding ExportSessionReportCommand}" Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="8" Padding="12,8">
+                    <Button Command="{Binding ExportSessionReportCommand}" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="12,8">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock Text="📥" FontSize="14"/>
-                            <TextBlock Text="Export Report" Foreground="#FFFFFF" FontWeight="SemiBold"/>
+                            <TextBlock Text="Export Report" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
-                    <Button Command="{Binding ResetFiltersCommand}" Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="8" Padding="12,8">
+                    <Button Command="{Binding ResetFiltersCommand}" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="12,8">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock Text="🔄" FontSize="14"/>
-                            <TextBlock Text="Reset Filters" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                            <TextBlock Text="Reset Filters" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
             </Grid>
 
             <!-- ── FILTER BAR ──────────────────────────────────────────────────────── -->
-            <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="16">
+            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Padding="16">
                 <WrapPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
                     
                     <!-- Time Range Buttons -->
                     <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,16,8">
-                        <TextBlock Text="Range:" Foreground="#64748B" FontSize="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <Button Command="{Binding SelectRangeCommand}" CommandParameter="Today" Content="Today" Padding="10,6" CornerRadius="6" Background="#2A2C3D" Foreground="#E2E8F0" FontSize="12"/>
-                        <Button Command="{Binding SelectRangeCommand}" CommandParameter="Yesterday" Content="Yesterday" Padding="10,6" CornerRadius="6" Background="#2A2C3D" Foreground="#E2E8F0" FontSize="12"/>
-                        <Button Command="{Binding SelectRangeCommand}" CommandParameter="7 Days" Content="7 Days" Padding="10,6" CornerRadius="6" Background="#2A2C3D" Foreground="#E2E8F0" FontSize="12"/>
-                        <Button Command="{Binding SelectRangeCommand}" CommandParameter="30 Days" Content="30 Days" Padding="10,6" CornerRadius="6" Background="#38BDF8" Foreground="#000000" FontWeight="Bold" FontSize="12"/>
-                        <Button Command="{Binding SelectRangeCommand}" CommandParameter="This Month" Content="This Month" Padding="10,6" CornerRadius="6" Background="#2A2C3D" Foreground="#E2E8F0" FontSize="12"/>
+                        <TextBlock Text="Range:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <Button Command="{Binding SelectRangeCommand}" CommandParameter="Today" Content="Today" Padding="10,6" CornerRadius="6" Background="{DynamicResource Brush.Border}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="12"/>
+                        <Button Command="{Binding SelectRangeCommand}" CommandParameter="Yesterday" Content="Yesterday" Padding="10,6" CornerRadius="6" Background="{DynamicResource Brush.Border}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="12"/>
+                        <Button Command="{Binding SelectRangeCommand}" CommandParameter="7 Days" Content="7 Days" Padding="10,6" CornerRadius="6" Background="{DynamicResource Brush.Border}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="12"/>
+                        <Button Command="{Binding SelectRangeCommand}" CommandParameter="30 Days" Content="30 Days" Padding="10,6" CornerRadius="6" Background="{DynamicResource Brush.Download}" Foreground="{DynamicResource Brush.Surface}" FontWeight="Bold" FontSize="12"/>
+                        <Button Command="{Binding SelectRangeCommand}" CommandParameter="This Month" Content="This Month" Padding="10,6" CornerRadius="6" Background="{DynamicResource Brush.Border}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="12"/>
                     </StackPanel>
 
                     <!-- Network Dropdown -->
                     <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,16,8">
-                        <TextBlock Text="Network:" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text="Network:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="12" VerticalAlignment="Center"/>
                         <ComboBox ItemsSource="{Binding NetworkFilterOptions}" SelectedItem="{Binding SelectedNetworkFilter}" Width="150" FontSize="12"/>
                     </StackPanel>
 
                     <!-- Connection Type -->
                     <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,16,8">
-                        <TextBlock Text="Type:" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text="Type:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="12" VerticalAlignment="Center"/>
                         <ComboBox ItemsSource="{Binding ConnectionTypeOptions}" SelectedItem="{Binding SelectedConnectionTypeFilter}" Width="110" FontSize="12"/>
                     </StackPanel>
 
                     <!-- Min Usage -->
                     <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,16,8">
-                        <TextBlock Text="Min Usage:" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text="Min Usage:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="12" VerticalAlignment="Center"/>
                         <ComboBox ItemsSource="{Binding MinUsageOptions}" SelectedItem="{Binding SelectedMinUsageFilter}" Width="110" FontSize="12"/>
                     </StackPanel>
 
                     <!-- Min Duration -->
                     <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,8">
-                        <TextBlock Text="Min Duration:" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text="Min Duration:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="12" VerticalAlignment="Center"/>
                         <ComboBox ItemsSource="{Binding MinDurationOptions}" SelectedItem="{Binding SelectedMinDurationFilter}" Width="110" FontSize="12"/>
                     </StackPanel>
                 </WrapPanel>
             </Border>
 
             <!-- Export Status Feedback -->
-            <TextBlock Text="{Binding ExportStatusMessage}" IsVisible="{Binding ExportStatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="#10B981" FontSize="12"/>
+            <TextBlock Text="{Binding ExportStatusMessage}" IsVisible="{Binding ExportStatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Foreground="{DynamicResource Brush.Success}" FontSize="12"/>
 
             <!-- ── MAIN SPLIT CONTENT ──────────────────────────────────────────────── -->
             <Grid ColumnDefinitions="420,*">
                 
                 <!-- LEFT COLUMN: SESSION CHRONOLOGICAL TIMELINE LIST -->
                 <StackPanel Grid.Column="0" Spacing="16" Margin="0,0,16,0">
-                    <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="16">
+                    <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Padding="16">
                         <StackPanel Spacing="12">
                             <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Session Timeline" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Sessions.Count, StringFormat='{}{0} Sessions'}" Foreground="#94A3B8" FontSize="12" VerticalAlignment="Center"/>
+                                <TextBlock Text="Session Timeline" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Sessions.Count, StringFormat='{}{0} Sessions'}" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="12" VerticalAlignment="Center"/>
                             </Grid>
 
                             <!-- Empty state -->
-                            <TextBlock Text="No network sessions found matching filters." IsVisible="{Binding NoSessionsFound}" Foreground="#64748B" FontSize="13" Margin="0,20"/>
+                            <TextBlock Text="No network sessions found matching filters." IsVisible="{Binding NoSessionsFound}" Foreground="{DynamicResource Brush.TextMuted}" FontSize="13" Margin="0,20"/>
 
                             <!-- Session List ScrollViewer -->
                             <ScrollViewer Height="520" VerticalScrollBarVisibility="Auto">
@@ -99,32 +99,32 @@
                                             <Button Command="{Binding $parent[UserControl].((vm:NetworkActivityTimelineViewModel)DataContext).SelectSessionCommand}"
                                                     CommandParameter="{Binding}"
                                                     Background="Transparent" Padding="0" Margin="0,0,0,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-                                                <Border Background="#12131C" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="10" Padding="12">
+                                                <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="10" Padding="12">
                                                     <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
                                                         
                                                         <!-- Line 1: Network Name & Status Badge -->
                                                         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="8">
                                                             <Border Width="8" Height="8" CornerRadius="4" Background="{Binding ColorHex}" VerticalAlignment="Center"/>
-                                                            <TextBlock Text="{Binding NetworkName}" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
-                                                            <TextBlock Text="{Binding ConnectionType, StringFormat='({0})'}" Foreground="#64748B" FontSize="11" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding NetworkName}" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="13"/>
+                                                            <TextBlock Text="{Binding ConnectionType, StringFormat='({0})'}" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                         
-                                                        <Border Grid.Row="0" Grid.Column="1" Background="#2A2C3D" CornerRadius="4" Padding="6,2">
-                                                            <TextBlock Text="{Binding StatusText}" Foreground="#38BDF8" FontSize="10" FontWeight="SemiBold"/>
+                                                        <Border Grid.Row="0" Grid.Column="1" Background="{DynamicResource Brush.Border}" CornerRadius="4" Padding="6,2">
+                                                            <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Brush.Download}" FontSize="10" FontWeight="SemiBold"/>
                                                         </Border>
 
                                                         <!-- Line 2: Start Time & Duration -->
                                                         <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" Margin="0,6,0,6">
-                                                            <TextBlock Text="{Binding StartTime, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Foreground="#94A3B8" FontSize="11"/>
-                                                            <TextBlock Text="{Binding FormattedDuration, StringFormat='⏱ {0}'}" Foreground="#E2E8F0" FontSize="11"/>
-                                                            <TextBlock Text="{Binding InterfaceName}" Foreground="#64748B" FontSize="11"/>
+                                                            <TextBlock Text="{Binding StartTime, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11"/>
+                                                            <TextBlock Text="{Binding FormattedDuration, StringFormat='⏱ {0}'}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="11"/>
+                                                            <TextBlock Text="{Binding InterfaceName}" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11"/>
                                                         </StackPanel>
 
                                                         <!-- Line 3: Download / Upload / Total Usage -->
                                                         <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="16">
-                                                            <TextBlock Text="{Binding FormattedDownload, StringFormat='↓ {0}'}" Foreground="#38BDF8" FontSize="12" FontWeight="SemiBold"/>
-                                                            <TextBlock Text="{Binding FormattedUpload, StringFormat='↑ {0}'}" Foreground="#C084FC" FontSize="12" FontWeight="SemiBold"/>
-                                                            <TextBlock Text="{Binding FormattedTotal, StringFormat='Σ {0}'}" Foreground="#FFFFFF" FontSize="12" FontWeight="Bold"/>
+                                                            <TextBlock Text="{Binding FormattedDownload, StringFormat='↓ {0}'}" Foreground="{DynamicResource Brush.Download}" FontSize="12" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding FormattedUpload, StringFormat='↑ {0}'}" Foreground="{DynamicResource Brush.Upload}" FontSize="12" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding FormattedTotal, StringFormat='Σ {0}'}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="12" FontWeight="Bold"/>
                                                         </StackPanel>
                                                     </Grid>
                                                 </Border>
@@ -137,18 +137,18 @@
                     </Border>
 
                     <!-- Network Switch Transitions Card -->
-                    <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="16">
+                    <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Padding="16">
                         <StackPanel Spacing="10">
-                            <TextBlock Text="Network Switch Timeline" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF"/>
+                            <TextBlock Text="Network Switch Timeline" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
                             <ScrollViewer Height="120" VerticalScrollBarVisibility="Auto">
                                 <ItemsControl ItemsSource="{Binding NetworkSwitches}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="m:NetworkSwitchItem">
-                                            <Border BorderBrush="#2A2C3D" BorderThickness="0,0,0,1" Padding="0,6">
+                                            <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="0,6">
                                                 <Grid ColumnDefinitions="Auto,*,Auto">
-                                                    <TextBlock Grid.Column="0" Text="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss}'}" Foreground="#94A3B8" FontSize="11" Margin="0,0,8,0"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding SummaryText}" Foreground="#38BDF8" FontSize="11" FontWeight="SemiBold"/>
-                                                    <TextBlock Grid.Column="2" Text="{Binding ConnectionType}" Foreground="#64748B" FontSize="10"/>
+                                                    <TextBlock Grid.Column="0" Text="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss}'}" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" Margin="0,0,8,0"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding SummaryText}" Foreground="{DynamicResource Brush.Download}" FontSize="11" FontWeight="SemiBold"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding ConnectionType}" Foreground="{DynamicResource Brush.TextMuted}" FontSize="10"/>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -163,72 +163,72 @@
                 <StackPanel Grid.Column="1" Spacing="16">
                     
                     <!-- Selected Session Overview & Summary Cards -->
-                    <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="20">
+                    <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Padding="20">
                         <StackPanel Spacing="16">
                             <Grid ColumnDefinitions="*,Auto">
                                 <StackPanel Grid.Column="0" Spacing="4">
                                     <StackPanel Orientation="Horizontal" Spacing="10">
-                                        <TextBlock Text="{Binding SelectedSession.NetworkName, FallbackValue='Select a Session'}" FontSize="20" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                        <Border Background="#2A2C3D" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding SelectedSession.ConnectionType, FallbackValue='—'}" Foreground="#38BDF8" FontSize="11" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding SelectedSession.NetworkName, FallbackValue='Select a Session'}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                        <Border Background="{DynamicResource Brush.Border}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding SelectedSession.ConnectionType, FallbackValue='—'}" Foreground="{DynamicResource Brush.Download}" FontSize="11" FontWeight="Bold"/>
                                         </Border>
                                     </StackPanel>
-                                    <TextBlock Text="{Binding SelectedSession.InterfaceName, StringFormat='Interface: {0}'}" Foreground="#94A3B8" FontSize="12"/>
+                                    <TextBlock Text="{Binding SelectedSession.InterfaceName, StringFormat='Interface: {0}'}" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="12"/>
                                 </StackPanel>
-                                <Border Grid.Column="1" Background="#12131C" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="8" Padding="10,6">
-                                    <TextBlock Text="{Binding SelectedSession.StatusText, FallbackValue='—'}" Foreground="#10B981" FontWeight="Bold" FontSize="12"/>
+                                <Border Grid.Column="1" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                    <TextBlock Text="{Binding SelectedSession.StatusText, FallbackValue='—'}" Foreground="{DynamicResource Brush.Success}" FontWeight="Bold" FontSize="12"/>
                                 </Border>
                             </Grid>
 
-                            <Separator Background="#2A2C3D"/>
+                            <Separator Background="{DynamicResource Brush.Border}"/>
 
                             <!-- Summary Metric Cards (6 Cards) -->
                             <UniformGrid Columns="3" Rows="2">
                                 <!-- Card 1: Duration -->
-                                <Border Background="#12131C" CornerRadius="8" Padding="12" Margin="4">
+                                <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Duration" Foreground="#64748B" FontSize="11"/>
-                                        <TextBlock Text="{Binding SelectedSession.FormattedDuration, FallbackValue='—'}" Foreground="#FFFFFF" FontSize="16" FontWeight="Bold"/>
+                                        <TextBlock Text="Duration" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11"/>
+                                        <TextBlock Text="{Binding SelectedSession.FormattedDuration, FallbackValue='—'}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="16" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Border>
 
                                 <!-- Card 2: Total Usage -->
-                                <Border Background="#12131C" CornerRadius="8" Padding="12" Margin="4">
+                                <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Total Usage" Foreground="#64748B" FontSize="11"/>
-                                        <TextBlock Text="{Binding SelectedSession.FormattedTotal, FallbackValue='—'}" Foreground="#FFFFFF" FontSize="16" FontWeight="Bold"/>
+                                        <TextBlock Text="Total Usage" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11"/>
+                                        <TextBlock Text="{Binding SelectedSession.FormattedTotal, FallbackValue='—'}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="16" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Border>
 
                                 <!-- Card 3: Download -->
-                                <Border Background="#12131C" CornerRadius="8" Padding="12" Margin="4">
+                                <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Download" Foreground="#64748B" FontSize="11"/>
-                                        <TextBlock Text="{Binding SelectedSession.FormattedDownload, FallbackValue='—'}" Foreground="#38BDF8" FontSize="16" FontWeight="Bold"/>
+                                        <TextBlock Text="Download" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11"/>
+                                        <TextBlock Text="{Binding SelectedSession.FormattedDownload, FallbackValue='—'}" Foreground="{DynamicResource Brush.Download}" FontSize="16" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Border>
 
                                 <!-- Card 4: Upload -->
-                                <Border Background="#12131C" CornerRadius="8" Padding="12" Margin="4">
+                                <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Upload" Foreground="#64748B" FontSize="11"/>
-                                        <TextBlock Text="{Binding SelectedSession.FormattedUpload, FallbackValue='—'}" Foreground="#C084FC" FontSize="16" FontWeight="Bold"/>
+                                        <TextBlock Text="Upload" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11"/>
+                                        <TextBlock Text="{Binding SelectedSession.FormattedUpload, FallbackValue='—'}" Foreground="{DynamicResource Brush.Upload}" FontSize="16" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Border>
 
                                 <!-- Card 5: Average Speed -->
-                                <Border Background="#12131C" CornerRadius="8" Padding="12" Margin="4">
+                                <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Avg Download Speed" Foreground="#64748B" FontSize="11"/>
-                                        <TextBlock Text="{Binding SelectedSession.FormattedAvgDownloadSpeed, FallbackValue='—'}" Foreground="#E2E8F0" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Avg Download Speed" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11"/>
+                                        <TextBlock Text="{Binding SelectedSession.FormattedAvgDownloadSpeed, FallbackValue='—'}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="14" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </Border>
 
                                 <!-- Card 6: Peak Speed -->
-                                <Border Background="#12131C" CornerRadius="8" Padding="12" Margin="4">
+                                <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Peak Download Speed" Foreground="#64748B" FontSize="11"/>
-                                        <TextBlock Text="{Binding SelectedSession.FormattedPeakDownloadSpeed, FallbackValue='—'}" Foreground="#F59E0B" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Peak Download Speed" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11"/>
+                                        <TextBlock Text="{Binding SelectedSession.FormattedPeakDownloadSpeed, FallbackValue='—'}" Foreground="{DynamicResource Brush.Warning}" FontSize="14" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </Border>
                             </UniformGrid>
@@ -236,20 +236,20 @@
                     </Border>
 
                     <!-- Session Application Breakdown Table -->
-                    <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="20">
+                    <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock Text="Session Application Attribution" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
+                            <TextBlock Text="Session Application Attribution" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
 
-                            <TextBlock Text="Per-process telemetry unavailable for this session." IsVisible="{Binding ProcessTelemetryUnavailable}" Foreground="#64748B" FontSize="12"/>
+                            <TextBlock Text="Per-process telemetry unavailable for this session." IsVisible="{Binding ProcessTelemetryUnavailable}" Foreground="{DynamicResource Brush.TextMuted}" FontSize="12"/>
 
-                            <Border Background="#12131C" CornerRadius="6" Padding="12,8" IsVisible="{Binding !ProcessTelemetryUnavailable}">
+                            <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="6" Padding="12,8" IsVisible="{Binding !ProcessTelemetryUnavailable}">
                                 <Grid ColumnDefinitions="2*,70,*,*,*,70">
-                                    <TextBlock Grid.Column="0" Text="Process" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Column="1" Text="PID" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Column="2" Text="Download" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Column="3" Text="Upload" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Column="4" Text="Total" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Column="5" Text="Share %" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Column="0" Text="Process" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Column="1" Text="PID" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Column="2" Text="Download" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Column="3" Text="Upload" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Column="4" Text="Total" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Column="5" Text="Share %" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" FontWeight="SemiBold"/>
                                 </Grid>
                             </Border>
 
@@ -257,14 +257,14 @@
                                 <ItemsControl ItemsSource="{Binding SelectedSessionProcesses}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="m:SessionProcessAttribution">
-                                            <Border BorderBrush="#2A2C3D" BorderThickness="0,0,0,1" Padding="12,8">
+                                            <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Padding="12,8">
                                                 <Grid ColumnDefinitions="2*,70,*,*,*,70">
-                                                    <TextBlock Grid.Column="0" Text="{Binding ProcessName}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Pid}" Foreground="#94A3B8" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="2" Text="{Binding FormattedDownload}" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="3" Text="{Binding FormattedUpload}" Foreground="#C084FC" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="4" Text="{Binding FormattedTotal}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="5" Text="{Binding PercentageOfSessionTraffic, StringFormat='{}{0:F1}%'}" Foreground="#F59E0B" FontSize="12" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="0" Text="{Binding ProcessName}" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Pid}" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="12" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding FormattedDownload}" Foreground="{DynamicResource Brush.Download}" FontSize="12" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="3" Text="{Binding FormattedUpload}" Foreground="{DynamicResource Brush.Upload}" FontSize="12" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="4" Text="{Binding FormattedTotal}" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="5" Text="{Binding PercentageOfSessionTraffic, StringFormat='{}{0:F1}%'}" Foreground="{DynamicResource Brush.Warning}" FontSize="12" VerticalAlignment="Center"/>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -277,15 +277,15 @@
                     <!-- Session Comparison & Historical Patterns Card -->
                     <Grid ColumnDefinitions="*,*">
                         <!-- Left: Comparison Card -->
-                        <Border Grid.Column="0" Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,8,0">
+                        <Border Grid.Column="0" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,8,0">
                             <StackPanel Spacing="10">
-                                <TextBlock Text="Session Comparison" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                <TextBlock Text="{Binding ComparisonResult.StatusMessage}" Foreground="#94A3B8" FontSize="11"/>
+                                <TextBlock Text="Session Comparison" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                <TextBlock Text="{Binding ComparisonResult.StatusMessage}" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11"/>
 
                                 <ItemsControl ItemsSource="{Binding ComparisonResult.ComparisonStatements}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="x:String">
-                                            <TextBlock Text="{Binding StringFormat='• {0}'}" Foreground="#38BDF8" FontSize="12" Margin="0,2"/>
+                                            <TextBlock Text="{Binding StringFormat='• {0}'}" Foreground="{DynamicResource Brush.Download}" FontSize="12" Margin="0,2"/>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
@@ -293,34 +293,34 @@
                         </Border>
 
                         <!-- Right: Network Pattern Card -->
-                        <Border Grid.Column="1" Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="16" Margin="8,0,0,0">
+                        <Border Grid.Column="1" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="8,0,0,0">
                             <StackPanel Spacing="10">
-                                <TextBlock Text="Network Pattern" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                <TextBlock Text="Network Pattern" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
                                 <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Typical Duration:" Foreground="#64748B" FontSize="11" Margin="0,0,8,4"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding NetworkPattern.FormattedTypicalDuration, FallbackValue='—'}" Foreground="#E2E8F0" FontSize="11" Margin="0,0,0,4"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Typical Duration:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11" Margin="0,0,8,4"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding NetworkPattern.FormattedTypicalDuration, FallbackValue='—'}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="11" Margin="0,0,0,4"/>
 
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Average Usage:" Foreground="#64748B" FontSize="11" Margin="0,0,8,4"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NetworkPattern.FormattedAverageUsage, FallbackValue='—'}" Foreground="#E2E8F0" FontSize="11" Margin="0,0,0,4"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Average Usage:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11" Margin="0,0,8,4"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NetworkPattern.FormattedAverageUsage, FallbackValue='—'}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="11" Margin="0,0,0,4"/>
 
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Typical Start Time:" Foreground="#64748B" FontSize="11" Margin="0,0,8,0"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NetworkPattern.TypicalStartTimeOfDay, FallbackValue='—'}" Foreground="#E2E8F0" FontSize="11"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Typical Start Time:" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11" Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NetworkPattern.TypicalStartTimeOfDay, FallbackValue='—'}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="11"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
                     </Grid>
 
                     <!-- Session Intelligence Insights Card -->
-                    <Border Background="#1E1F2E" BorderBrush="#2A2C3D" BorderThickness="1" CornerRadius="12" Padding="16">
+                    <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Padding="16">
                         <StackPanel Spacing="10">
-                            <TextBlock Text="Session Intelligence Insights" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF"/>
+                            <TextBlock Text="Session Intelligence Insights" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
                             <ItemsControl ItemsSource="{Binding SelectedSessionInsights}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="m:SessionIntelligenceInsight">
-                                        <Border Background="#12131C" CornerRadius="6" Padding="10,8" Margin="0,0,0,6">
+                                        <Border Background="{DynamicResource Brush.Surface}" CornerRadius="6" Padding="10,8" Margin="0,0,0,6">
                                             <StackPanel Spacing="2">
-                                                <TextBlock Text="{Binding Title}" Foreground="#38BDF8" FontWeight="Bold" FontSize="12"/>
-                                                <TextBlock Text="{Binding Description}" Foreground="#E2E8F0" FontSize="11"/>
+                                                <TextBlock Text="{Binding Title}" Foreground="{DynamicResource Brush.Download}" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Text="{Binding Description}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="11"/>
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>

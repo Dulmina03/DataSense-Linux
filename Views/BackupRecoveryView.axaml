@@ -5,58 +5,43 @@
              x:Class="DataSense.Views.BackupRecoveryView"
              x:DataType="vm:BackupRecoveryViewModel">
 
-    <UserControl.Styles>
-        <Style Selector="Border.card">
-            <Setter Property="Background" Value="#181824"/>
-            <Setter Property="BorderBrush" Value="#2A2A3D"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="16"/>
-        </Style>
-        <Style Selector="Button.action-btn">
-            <Setter Property="Background" Value="#00E676"/>
-            <Setter Property="Foreground" Value="#000000"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Padding" Value="16,8"/>
-            <Setter Property="CornerRadius" Value="6"/>
-        </Style>
-    </UserControl.Styles>
+    <!-- Global semantic styles are applied by default -->
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20" Background="#0F0F1A">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20" Background="{DynamicResource Brush.AppBackground}">
         <StackPanel Spacing="20" MaxWidth="1100">
             <!-- Top Banner -->
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="🛡️ Automated Backup &amp; Disaster Recovery" FontSize="20" FontWeight="Bold" Foreground="#FFFFFF"/>
-                    <TextBlock Text="Local, offline database recovery points with SHA-256 integrity validation." FontSize="12" Foreground="#8888AA"/>
+                    <TextBlock Text="🛡️ Automated Backup &amp; Disaster Recovery" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                    <TextBlock Text="Local, offline database recovery points with SHA-256 integrity validation." FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}"/>
                 </StackPanel>
-                <Button Grid.Column="1" Content="💾 Create Backup Now" Command="{Binding CreateBackupNowCommand}" Classes="action-btn" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Content="💾 Create Backup Now" Command="{Binding CreateBackupNowCommand}" Classes="Primary" VerticalAlignment="Center"/>
             </Grid>
 
             <!-- Status Card -->
-            <Border Classes="card">
+            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="16">
                 <StackPanel Spacing="8">
-                    <TextBlock Text="System Protection Status" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14"/>
-                    <TextBlock Text="{Binding StatusText}" Foreground="#00E676" FontSize="13"/>
+                    <TextBlock Text="System Protection Status" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="Bold" FontSize="14"/>
+                    <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Brush.Success}" FontSize="13"/>
                     <ProgressBar IsIndeterminate="{Binding IsProcessing}" IsVisible="{Binding IsProcessing}" Height="4"/>
                 </StackPanel>
             </Border>
 
             <!-- Recovery Points Table -->
-            <Border Classes="card">
+            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="16">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="Available Recovery Points" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14"/>
+                    <TextBlock Text="Available Recovery Points" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="Bold" FontSize="14"/>
                     <ItemsControl ItemsSource="{Binding RecoveryPoints}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="models:RecoveryPoint">
-                                <Border Background="#141422" BorderBrush="#222236" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,4">
+                                <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,4">
                                     <Grid ColumnDefinitions="*,Auto,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
-                                            <TextBlock Text="{Binding FilePath}" Foreground="#FFFFFF" FontSize="12" FontWeight="Bold"/>
-                                            <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:u}'}" Foreground="#8888AA" FontSize="10"/>
+                                            <TextBlock Text="{Binding FilePath}" Foreground="{DynamicResource Brush.TextPrimary}" FontSize="12" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:u}'}" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="10"/>
                                         </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{Binding SizeBytes, StringFormat='{}{0} bytes'}" Foreground="#00D2FF" FontSize="11" Margin="0,0,20,0" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="✓ Validated" Foreground="#00E676" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding SizeBytes, StringFormat='{}{0} bytes'}" Foreground="{DynamicResource Brush.Download}" FontSize="11" Margin="0,0,20,0" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="✓ Validated" Foreground="{DynamicResource Brush.Success}" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

@@ -16,13 +16,13 @@ public class UnifiedInsightSeverityColorConverter : IValueConverter
         {
             return severity switch
             {
-                UnifiedInsightSeverity.Critical => new SolidColorBrush(Color.Parse("#FF3366")),
-                UnifiedInsightSeverity.Warning  => new SolidColorBrush(Color.Parse("#FFB74D")),
-                UnifiedInsightSeverity.Success  => new SolidColorBrush(Color.Parse("#00E676")),
-                _                               => new SolidColorBrush(Color.Parse("#444466")),
+                UnifiedInsightSeverity.Critical => SemanticBrushConverter.Resolve("Danger"),
+                UnifiedInsightSeverity.Warning  => SemanticBrushConverter.Resolve("Warning"),
+                UnifiedInsightSeverity.Success  => SemanticBrushConverter.Resolve("Success"),
+                _                               => SemanticBrushConverter.Resolve("Muted"),
             };
         }
-        return new SolidColorBrush(Color.Parse("#444466"));
+        return SemanticBrushConverter.Resolve("Muted");
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

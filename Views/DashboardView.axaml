@@ -3,7 +3,6 @@
              xmlns:vm="using:DataSense.ViewModels"
              xmlns:m="using:DataSense.Models"
              xmlns:conv="using:DataSense.Converters"
-             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              x:DataType="vm:DashboardViewModel"
              x:Class="DataSense.Views.DashboardView">
              

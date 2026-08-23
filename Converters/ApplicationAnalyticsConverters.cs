@@ -15,13 +15,13 @@ public class TrendColorConverter : IValueConverter
         {
             return trend switch
             {
-                "Increasing" => SolidColorBrush.Parse("#FF4D4D"),
-                "Decreasing" => SolidColorBrush.Parse("#00E676"),
-                "Stable" => SolidColorBrush.Parse("#7777AA"),
-                _ => SolidColorBrush.Parse("#555577")
+                "Increasing" => SemanticBrushConverter.Resolve("Danger"),
+                "Decreasing" => SemanticBrushConverter.Resolve("Success"),
+                "Stable" => SemanticBrushConverter.Resolve("Muted"),
+                _ => SemanticBrushConverter.Resolve("Muted")
             };
         }
-        return SolidColorBrush.Parse("#555577");
+        return SemanticBrushConverter.Resolve("Muted");
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -36,9 +36,9 @@ public class RunningStatusBgConverter : IValueConverter
     {
         if (value is bool isRunning)
         {
-            return isRunning ? SolidColorBrush.Parse("#162C21") : SolidColorBrush.Parse("#241C1C");
+            return isRunning ? SemanticBrushConverter.Resolve("SuccessSurface") : SemanticBrushConverter.Resolve("DangerSurface");
         }
-        return SolidColorBrush.Parse("#241C1C");
+        return SemanticBrushConverter.Resolve("DangerSurface");
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -53,9 +53,9 @@ public class RunningStatusColorConverter : IValueConverter
     {
         if (value is bool isRunning)
         {
-            return isRunning ? SolidColorBrush.Parse("#00E676") : SolidColorBrush.Parse("#FF4D4D");
+            return isRunning ? SemanticBrushConverter.Resolve("Success") : SemanticBrushConverter.Resolve("Danger");
         }
-        return SolidColorBrush.Parse("#FF4D4D");
+        return SemanticBrushConverter.Resolve("Danger");
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

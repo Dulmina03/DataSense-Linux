@@ -1,2 +1,4 @@
 <Solution>
+  <Project Path="DataSense.csproj" />
+  <Project Path="DataSense.Tests/DataSense.Tests.csproj" />
 </Solution>
