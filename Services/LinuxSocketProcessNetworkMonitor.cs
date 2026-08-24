@@ -195,7 +195,7 @@ public class LinuxSocketProcessNetworkMonitor : IProcessNetworkMonitor
         return results;
     }
 
-    internal static void ParseSsOutput(string output, Dictionary<int, (string Name, long SentBytes, long RecvBytes)> processSockets)
+    public static void ParseSsOutput(string output, Dictionary<int, (string Name, long SentBytes, long RecvBytes)> processSockets)
     {
         var lines = output.Split('\n');
         List<(string Name, int Pid)> currentPids = new();
