@@ -175,6 +175,9 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _averageUsageTrendText = "Active days only";
     [ObservableProperty] private string _averageUsageTrendColor = "TextSecondary";
 
+    [ObservableProperty] private string _applicationBreakdownSubtitle = "Application network usage for the last 7 days";
+    [ObservableProperty] private string _usageExplorerSubtitle = "Application network usage for the last 7 days";
+
     // ── Chart #1 (Network Usage) State ─────────────────────────────────────────
 
     [ObservableProperty] private bool _hasHistoricalGraphData;
@@ -267,18 +270,18 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         switch (value)
         {
             case HistoryPeriodType.Today:
-                DownloadBarWidth = 18.0;
-                UploadBarWidth = 18.0;
-                BarGap = 4.0;
+                DownloadBarWidth = 28.0;
+                UploadBarWidth = 28.0;
+                BarGap = 8.0;
                 break;
             case HistoryPeriodType.Last7Days:
-                DownloadBarWidth = 32.0;
-                UploadBarWidth = 32.0;
+                DownloadBarWidth = 28.0;
+                UploadBarWidth = 28.0;
                 BarGap = 8.0;
                 break;
             case HistoryPeriodType.Month:
-                DownloadBarWidth = 8.0;
-                UploadBarWidth = 8.0;
+                DownloadBarWidth = 9.0;
+                UploadBarWidth = 9.0;
                 BarGap = 2.0;
                 break;
         }
@@ -372,15 +375,23 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         return SelectedPeriod switch
         {
             HistoryPeriodType.Today => (utcNow.Date, utcNow.Date.AddDays(1).AddTicks(-1)),
-            HistoryPeriodType.Last7Days => (utcNow.Date.AddDays(-6), utcNow.Date.AddDays(1).AddTicks(-1)),
+            HistoryPeriodType.Last7Days => GetMondayToSundayRange(utcNow.Date),
             HistoryPeriodType.Month =>
                 SelectedMonth != null
                     ? (new DateTime(SelectedMonth.Year, SelectedMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc),
                        new DateTime(SelectedMonth.Year, SelectedMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(1).AddTicks(-1))
                     : (new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc),
                        new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(1).AddTicks(-1)),
-            _ => (utcNow.Date.AddDays(-6), utcNow.Date.AddDays(1).AddTicks(-1))
+            _ => GetMondayToSundayRange(utcNow.Date)
         };
+    }
+
+    private static (DateTime start, DateTime end) GetMondayToSundayRange(DateTime date)
+    {
+        int diffToMonday = ((int)date.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+        var monday = date.AddDays(-diffToMonday);
+        var sunday = monday.AddDays(6);
+        return (monday, sunday.AddDays(1).AddTicks(-1));
     }
 
     public async Task LoadAsync(bool showLoading = true)
@@ -636,25 +647,29 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
         if (SelectedPeriod == HistoryPeriodType.Today)
         {
-            // Exactly 12 two-hour buckets: 00-02, 02-04, 04-06, ..., 22-24
+            // Exactly 6 four-hour buckets: 00–04, 04–08, 08–12, 12–16, 16–20, 20–24
             var hourlyDict = hourlyList.ToDictionary(h => h.Hour, h => h);
-            for (int b = 0; b < 12; b++)
+            for (int b = 0; b < 6; b++)
             {
-                int h0 = b * 2;
-                int h1 = b * 2 + 1;
+                int startHour = b * 4;
+                long bDl = 0;
+                long bUl = 0;
 
-                hourlyDict.TryGetValue(h0, out var r0);
-                hourlyDict.TryGetValue(h1, out var r1);
+                for (int h = startHour; h < startHour + 4; h++)
+                {
+                    if (hourlyDict.TryGetValue(h, out var rec))
+                    {
+                        bDl += rec.BytesDownloaded;
+                        bUl += rec.BytesUploaded;
+                    }
+                }
 
-                long bDl = (r0?.BytesDownloaded ?? 0) + (r1?.BytesDownloaded ?? 0);
-                long bUl = (r0?.BytesUploaded ?? 0) + (r1?.BytesUploaded ?? 0);
-
-                string bucketLabel = $"{h0:D2}–{h1 + 1:D2}";
+                string bucketLabel = $"{startHour:D2}–{startHour + 4:D2}";
                 chartPoints.Add(new HistoricalGraphSample
                 {
-                    Timestamp = start.Date.AddHours(h0),
+                    Timestamp = start.Date.AddHours(startHour),
                     Label = bucketLabel,
-                    FullTitle = $"Today, {bucketLabel}",
+                    FullTitle = $"Today, {startHour:D2}:00–{startHour + 4:D2}:00",
                     DownloadBytes = bDl,
                     UploadBytes = bUl
                 });
@@ -662,11 +677,11 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         }
         else if (SelectedPeriod == HistoryPeriodType.Last7Days)
         {
-            // Exactly 7 calendar days
+            // Exactly 7 calendar days normalized to Monday -> Sunday order
             var dailyDict = dailyList.ToDictionary(d => d.Day.Date, d => d);
-            for (int i = 6; i >= 0; i--)
+            for (int i = 0; i < 7; i++)
             {
-                var day = end.Date.AddDays(-i);
+                var day = start.Date.AddDays(i);
                 dailyDict.TryGetValue(day, out var rec);
                 chartPoints.Add(new HistoricalGraphSample
                 {
