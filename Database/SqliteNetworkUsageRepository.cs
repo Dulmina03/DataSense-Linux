@@ -163,6 +163,20 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             }
             catch (SqliteException) { /* Column already exists */ }
         }
+
+        // Clean invalid / placeholder NetworkName records in NetworkSessions
+        try
+        {
+            using var cleanCmd = connection.CreateCommand();
+            cleanCmd.CommandText = @"
+                UPDATE NetworkSessions 
+                SET NetworkName = 'Interface: ' || InterfaceName 
+                WHERE (NetworkName IS NULL OR TRIM(NetworkName) IN ('-', '--', '—', '–', '', 'Unknown', 'unknown', 'Unknown Network', 'Wi-Fi', 'Wifi', 'wifi', 'Wireless', 'Mobile Hotspot', 'Hotspot', 'Connected Network', 'Network', 'None', 'null'))
+                  AND InterfaceName IS NOT NULL AND InterfaceName NOT IN ('', 'None', 'Disconnected');
+            ";
+            await cleanCmd.ExecuteNonQueryAsync();
+        }
+        catch { }
     }
 
     public async Task SaveUsageAsync(NetworkUsage usage)

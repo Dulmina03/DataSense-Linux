@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace DataSense.Services;
 public class LinuxNetworkConnectionService : INetworkConnectionService
 {
     private readonly ILinuxPlatformService? _platformService;
+    private static readonly ConcurrentDictionary<string, string> _lastKnownNetworkCache = new(StringComparer.OrdinalIgnoreCase);
 
     public LinuxNetworkConnectionService(ILinuxPlatformService? platformService = null)
     {
@@ -103,8 +105,12 @@ public class LinuxNetworkConnectionService : INetworkConnectionService
             }
 
             // Wi-Fi specific details querying
-            if (details.ConnectionType.Equals("wifi", StringComparison.OrdinalIgnoreCase))
+            bool isWifi = details.ConnectionType.Equals("wifi", StringComparison.OrdinalIgnoreCase) ||
+                          interfaceName.StartsWith("wl", StringComparison.OrdinalIgnoreCase);
+
+            if (isWifi)
             {
+                details.ConnectionType = "wifi";
                 await PopulateWifiDetailsAsync(nmcliExec, details);
             }
             else
@@ -123,38 +129,140 @@ public class LinuxNetworkConnectionService : INetworkConnectionService
 
     private async Task PopulateWifiDetailsAsync(string nmcliExec, NetworkConnectionDetails details)
     {
+        string interfaceName = details.InterfaceName;
+
         try
         {
-            var result = await ProcessExecutionHelper.ExecuteAsync(nmcliExec, new[] { "-t", "-f", "ACTIVE,SSID,SIGNAL,RATE", "dev", "wifi" }, timeoutMs: 2000);
-            if (!result.Success || string.IsNullOrEmpty(result.StandardOutput)) return;
-
-            var wifiLines = result.StandardOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var line in wifiLines)
+            // 1. Primary Query: IN-USE (modern NetworkManager) / ACTIVE (older NetworkManager)
+            var result = await ProcessExecutionHelper.ExecuteAsync(nmcliExec, new[] { "-t", "-f", "IN-USE,SSID,SIGNAL,RATE,DEVICE", "dev", "wifi" }, timeoutMs: 2000);
+            if (!result.Success || string.IsNullOrEmpty(result.StandardOutput))
             {
-                if (line.StartsWith("yes:", StringComparison.OrdinalIgnoreCase))
-                {
-                    var parts = line.Split(':');
-                    if (parts.Length >= 4)
-                    {
-                        string rate = parts[^1].Trim();
-                        string signalStr = parts[^2].Trim();
-                        string ssid = string.Join(":", parts.Skip(1).Take(parts.Length - 3)).Trim();
+                result = await ProcessExecutionHelper.ExecuteAsync(nmcliExec, new[] { "-t", "-f", "ACTIVE,SSID,SIGNAL,RATE,DEVICE", "dev", "wifi" }, timeoutMs: 2000);
+            }
 
-                        details.WifiSsid = ssid;
-                        details.LinkSpeed = rate;
-                        if (int.TryParse(signalStr, out int signal))
+            if (result.Success && !string.IsNullOrEmpty(result.StandardOutput))
+            {
+                var wifiLines = result.StandardOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in wifiLines)
+                {
+                    // Split line on unescaped colons (in -t mode, colons in SSIDs are escaped as \:)
+                    var parts = Regex.Split(line, @"(?<!\\):");
+                    if (parts.Length >= 2)
+                    {
+                        string inUseFlag = parts[0].Trim();
+                        bool isInUse = inUseFlag == "*" ||
+                                       inUseFlag.Equals("yes", StringComparison.OrdinalIgnoreCase) ||
+                                       inUseFlag.Equals("true", StringComparison.OrdinalIgnoreCase);
+
+                        if (isInUse)
                         {
-                            details.WifiSignalStrength = signal;
+                            string rawSsid = parts[1].Replace(@"\:", ":").Trim();
+                            if (NetworkIdentityValidator.IsValidNetworkName(rawSsid))
+                            {
+                                details.WifiSsid = rawSsid;
+
+                                if (parts.Length >= 3 && int.TryParse(parts[2].Trim(), out int sig))
+                                    details.WifiSignalStrength = sig;
+
+                                if (parts.Length >= 4 && !string.IsNullOrWhiteSpace(parts[3]))
+                                    details.LinkSpeed = parts[3].Trim();
+
+                                _lastKnownNetworkCache[interfaceName] = rawSsid;
+                                return;
+                            }
                         }
-                        break;
                     }
                 }
+            }
+
+            // 2. Secondary Query: Check NetworkManager device status list
+            var devResult = await ProcessExecutionHelper.ExecuteAsync(nmcliExec, new[] { "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device" }, timeoutMs: 2000);
+            if (devResult.Success && !string.IsNullOrEmpty(devResult.StandardOutput))
+            {
+                var devLines = devResult.StandardOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in devLines)
+                {
+                    var parts = Regex.Split(line, @"(?<!\\):");
+                    if (parts.Length >= 4 && parts[0].Trim().Equals(interfaceName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        string connName = parts[3].Replace(@"\:", ":").Trim();
+                        if (NetworkIdentityValidator.IsValidNetworkName(connName))
+                        {
+                            details.WifiSsid = connName;
+                            if (string.IsNullOrWhiteSpace(details.ConnectionName) || details.ConnectionName == "None")
+                                details.ConnectionName = connName;
+
+                            _lastKnownNetworkCache[interfaceName] = connName;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // 3. Fallback: Linux native iw / iwgetid
+            string iwSsid = await QueryNativeWifiSsidAsync(interfaceName);
+            if (NetworkIdentityValidator.IsValidNetworkName(iwSsid))
+            {
+                details.WifiSsid = iwSsid;
+                _lastKnownNetworkCache[interfaceName] = iwSsid;
+                return;
+            }
+
+            // 4. Fallback: Connection profile name from device show
+            if (NetworkIdentityValidator.IsValidNetworkName(details.ConnectionName))
+            {
+                details.WifiSsid = details.ConnectionName;
+                _lastKnownNetworkCache[interfaceName] = details.ConnectionName;
+                return;
+            }
+
+            // 5. Fallback: Last-known cached identity for this interface (protect against temporary drops/roaming/DHCP renew)
+            if (_lastKnownNetworkCache.TryGetValue(interfaceName, out var cachedSsid) &&
+                NetworkIdentityValidator.IsValidNetworkName(cachedSsid))
+            {
+                details.WifiSsid = cachedSsid;
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error fetching wifi details: {ex.Message}");
+            if (_lastKnownNetworkCache.TryGetValue(interfaceName, out var cachedSsid) &&
+                NetworkIdentityValidator.IsValidNetworkName(cachedSsid))
+            {
+                details.WifiSsid = cachedSsid;
+            }
         }
+    }
+
+    private async Task<string> QueryNativeWifiSsidAsync(string interfaceName)
+    {
+        try
+        {
+            // Try iwgetid -r <interfaceName>
+            var iwgetId = await ProcessExecutionHelper.ExecuteAsync("iwgetid", new[] { "-r", interfaceName }, timeoutMs: 1500);
+            if (iwgetId.Success && !string.IsNullOrWhiteSpace(iwgetId.StandardOutput))
+            {
+                string ssid = iwgetId.StandardOutput.Trim();
+                if (NetworkIdentityValidator.IsValidNetworkName(ssid))
+                    return ssid;
+            }
+
+            // Try iw dev <interfaceName> link
+            var iwLink = await ProcessExecutionHelper.ExecuteAsync("iw", new[] { "dev", interfaceName, "link" }, timeoutMs: 1500);
+            if (iwLink.Success && !string.IsNullOrWhiteSpace(iwLink.StandardOutput))
+            {
+                var match = Regex.Match(iwLink.StandardOutput, @"SSID:\s*([^\r\n]+)");
+                if (match.Success)
+                {
+                    string ssid = match.Groups[1].Value.Trim();
+                    if (NetworkIdentityValidator.IsValidNetworkName(ssid))
+                        return ssid;
+                }
+            }
+        }
+        catch { }
+
+        return string.Empty;
     }
 
     private async Task PopulateEthernetSpeedAsync(string interfaceName, NetworkConnectionDetails details)

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using DataSense.Database;
+using DataSense.Helpers;
 using DataSense.Models;
 
 namespace DataSense.Services;
@@ -47,24 +48,15 @@ public class NetworkSessionManager : IDisposable
     public static string ResolveNetworkName(NetworkConnectionDetails details, string interfaceName)
     {
         // Priority 1 & 2: Active Wi-Fi SSID
-        if (!string.IsNullOrWhiteSpace(details.WifiSsid) &&
-            details.WifiSsid != "—" &&
-            details.WifiSsid != "None" &&
-            details.WifiSsid != "--" &&
-            !details.WifiSsid.Equals("Wi-Fi", StringComparison.OrdinalIgnoreCase))
+        if (NetworkIdentityValidator.IsValidNetworkName(details.WifiSsid))
         {
             return details.WifiSsid.Trim();
         }
 
-        // Priority 3: NetworkManager Connection Profile Name (e.g. SLT Fiber, Dialog 4G, Hotspot)
-        if (!string.IsNullOrWhiteSpace(details.ConnectionName) &&
-            details.ConnectionName != "—" &&
-            details.ConnectionName != "None" &&
-            details.ConnectionName != "--" &&
-            !details.ConnectionName.Equals("Wi-Fi", StringComparison.OrdinalIgnoreCase) &&
+        // Priority 3: NetworkManager Connection Profile Name
+        if (NetworkIdentityValidator.IsValidNetworkName(details.ConnectionName) &&
             !details.ConnectionName.StartsWith("Wired connection", StringComparison.OrdinalIgnoreCase) &&
-            !details.ConnectionName.StartsWith("Wired Connection", StringComparison.OrdinalIgnoreCase) &&
-            !details.ConnectionName.Equals("Ethernet", StringComparison.OrdinalIgnoreCase))
+            !details.ConnectionName.StartsWith("Wired Connection", StringComparison.OrdinalIgnoreCase))
         {
             return details.ConnectionName.Trim();
         }
@@ -78,7 +70,7 @@ public class NetworkSessionManager : IDisposable
         // Priority 4: Interface fallback
         if (!string.IsNullOrWhiteSpace(interfaceName) && interfaceName != "None" && interfaceName != "Disconnected")
         {
-            return $"Interface: {interfaceName}";
+            return $"Interface: {interfaceName.Trim()}";
         }
 
         return "Unknown Network";
@@ -103,7 +95,23 @@ public class NetworkSessionManager : IDisposable
                 try
                 {
                     details = await _connectionService.GetConnectionDetailsAsync(iface!);
-                    detectedNetworkName = ResolveNetworkName(details, iface!);
+                    var resolved = ResolveNetworkName(details, iface!);
+
+                    // If resolved identity is valid, update detected name
+                    if (NetworkIdentityValidator.IsValidNetworkName(resolved) || resolved == "Ethernet")
+                    {
+                        detectedNetworkName = resolved;
+                    }
+                    // If resolution temporarily failed or returned interface fallback, but we already had a valid network on this interface, preserve it
+                    else if (_currentInterface == iface && NetworkIdentityValidator.IsValidNetworkName(_currentNetworkName))
+                    {
+                        detectedNetworkName = _currentNetworkName;
+                    }
+                    else
+                    {
+                        detectedNetworkName = resolved;
+                    }
+
                     _lastNetworkCheck = now;
                 }
                 catch { }
@@ -125,7 +133,7 @@ public class NetworkSessionManager : IDisposable
 
                 if (!isDisconnected)
                 {
-                    if (details == null && _connectionService != null)
+                    if (string.IsNullOrEmpty(detectedNetworkName) && _connectionService != null)
                     {
                         try
                         {
@@ -136,7 +144,7 @@ public class NetworkSessionManager : IDisposable
                         catch { }
                     }
 
-                    string networkName = !string.IsNullOrEmpty(detectedNetworkName) ? detectedNetworkName : "Unknown Network";
+                    string networkName = NetworkIdentityValidator.NormalizeNetworkName(detectedNetworkName, iface);
                     string connType = details?.ConnectionType ?? (iface != null && (iface.StartsWith("wl") || iface.StartsWith("wlan")) ? "WiFi" : "Ethernet");
 
                     _currentSession = new NetworkSession

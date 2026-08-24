@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using DataSense.Database;
+using DataSense.Helpers;
 using DataSense.Models;
 using DataSense.Services;
 using DataSense.Tests.Helpers;
@@ -276,5 +277,101 @@ public class NetworkNameResolutionAndUsageTests : IDisposable
 
         // Verify that sumTotal equals sumDownloaded + sumUploaded
         Assert.Equal(sumTotal, sumDownloaded + sumUploaded);
+    }
+
+    [Theory]
+    [InlineData("-", false)]
+    [InlineData("--", false)]
+    [InlineData("—", false)]
+    [InlineData("", false)]
+    [InlineData("   ", false)]
+    [InlineData("Unknown", false)]
+    [InlineData("unknown network", false)]
+    [InlineData("Wi-Fi", false)]
+    [InlineData("wifi", false)]
+    [InlineData("Wireless", false)]
+    [InlineData("Mobile Hotspot", false)]
+    [InlineData("Hotspot", false)]
+    [InlineData("Connected Network", false)]
+    [InlineData("None", false)]
+    [InlineData("Disconnected", false)]
+    [InlineData("Interface: wlo1", false)]
+    [InlineData("uom.wireless", true)]
+    [InlineData("UoM.Wireless", true)]
+    [InlineData("SLT Fiber", true)]
+    [InlineData("Galaxy A04s", true)]
+    [InlineData("Dialog 4G", true)]
+    [InlineData("Café WiFi 5GHz", true)]
+    [InlineData("Pawan's Note 12", true)]
+    [InlineData("Vihangi's GALAXY S25", true)]
+    public void NetworkIdentityValidator_CorrectlyValidatesNames(string input, bool expectedValid)
+    {
+        bool isValid = NetworkIdentityValidator.IsValidNetworkName(input);
+        Assert.Equal(expectedValid, isValid);
+    }
+
+    [Fact]
+    public async Task HistoricalIntegrity_NetworkSwitch_AttributionToEachPeriod()
+    {
+        var today = DateTime.UtcNow.Date;
+
+        // Sequence: uom.wireless -> Galaxy A04s -> uom.wireless
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "uom.wireless",
+            InterfaceName = "wlo1",
+            ConnectionType = "wifi",
+            StartTime = today.AddHours(9),
+            EndTime = today.AddHours(12),
+            BytesDownloaded = 2_000_000,
+            BytesUploaded = 500_000
+        });
+
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Galaxy A04s",
+            InterfaceName = "wlo1",
+            ConnectionType = "wifi",
+            StartTime = today.AddHours(12),
+            EndTime = today.AddHours(14),
+            BytesDownloaded = 1_000_000,
+            BytesUploaded = 200_000
+        });
+
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "uom.wireless",
+            InterfaceName = "wlo1",
+            ConnectionType = "wifi",
+            StartTime = today.AddHours(14),
+            EndTime = today.AddHours(17),
+            BytesDownloaded = 3_000_000,
+            BytesUploaded = 800_000
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.Equal(2, vm.NetworkUsageItems.Count);
+
+        var uom = vm.NetworkUsageItems.FirstOrDefault(n => n.NetworkName == "uom.wireless");
+        Assert.NotNull(uom);
+        Assert.Equal(5_000_000, uom.BytesDownloaded); // 2M + 3M
+        Assert.Equal(1_300_000, uom.BytesUploaded);   // 500k + 800k
+        Assert.Equal(6_300_000, uom.TotalBytes);
+
+        var galaxy = vm.NetworkUsageItems.FirstOrDefault(n => n.NetworkName == "Galaxy A04s");
+        Assert.NotNull(galaxy);
+        Assert.Equal(1_000_000, galaxy.BytesDownloaded);
+        Assert.Equal(200_000, galaxy.BytesUploaded);
+        Assert.Equal(1_200_000, galaxy.TotalBytes);
     }
 }

@@ -613,9 +613,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
             // 7. Map Network Usage (Strictly aggregate data usage totals by network)
             var networkGrouped = sessions
-                .GroupBy(s => !string.IsNullOrWhiteSpace(s.NetworkName) && s.NetworkName != "Unknown Network"
-                    ? s.NetworkName
-                    : (!string.IsNullOrWhiteSpace(s.InterfaceName) ? $"Interface: {s.InterfaceName}" : "Unknown Network"))
+                .GroupBy(s => NetworkIdentityValidator.NormalizeNetworkName(s.NetworkName, s.InterfaceName))
                 .Select(g =>
                 {
                     var first = g.First();
