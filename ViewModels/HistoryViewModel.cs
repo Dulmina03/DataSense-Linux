@@ -550,9 +550,13 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 .OrderByDescending(a => a.TotalBytes)
                 .ToList();
 
+            long maxAppBytes = mappedApps.Count > 0 ? mappedApps.Max(a => a.TotalBytes) : 0;
             for (int i = 0; i < mappedApps.Count; i++)
             {
                 mappedApps[i].DisplayIndex = i;
+                mappedApps[i].RelativeUsagePercent = maxAppBytes > 0
+                    ? Math.Max((double)mappedApps[i].TotalBytes / maxAppBytes * 100.0, mappedApps[i].TotalBytes > 0 ? 3.0 : 0.0)
+                    : 0.0;
             }
 
             // 9. Build Chart #1 Samples (12 buckets for Today, 7 for 7-Days, 28-31 for Month)
@@ -638,30 +642,31 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             {
                 int h0 = b * 2;
                 int h1 = b * 2 + 1;
-                hourlyDict.TryGetValue(h0, out var rec0);
-                hourlyDict.TryGetValue(h1, out var rec1);
 
-                long dl = (rec0?.BytesDownloaded ?? 0) + (rec1?.BytesDownloaded ?? 0);
-                long ul = (rec0?.BytesUploaded ?? 0) + (rec1?.BytesUploaded ?? 0);
+                hourlyDict.TryGetValue(h0, out var r0);
+                hourlyDict.TryGetValue(h1, out var r1);
 
-                string label = $"{h0:D2}–{h1 + 1:D2}";
+                long bDl = (r0?.BytesDownloaded ?? 0) + (r1?.BytesDownloaded ?? 0);
+                long bUl = (r0?.BytesUploaded ?? 0) + (r1?.BytesUploaded ?? 0);
+
+                string bucketLabel = $"{h0:D2}–{h1 + 1:D2}";
                 chartPoints.Add(new HistoricalGraphSample
                 {
                     Timestamp = start.Date.AddHours(h0),
-                    Label = label,
-                    FullTitle = $"Today, {h0:D2}:00–{h1 + 1:D2}:00",
-                    DownloadBytes = dl,
-                    UploadBytes = ul
+                    Label = bucketLabel,
+                    FullTitle = $"Today, {bucketLabel}",
+                    DownloadBytes = bDl,
+                    UploadBytes = bUl
                 });
             }
         }
         else if (SelectedPeriod == HistoryPeriodType.Last7Days)
         {
-            // Exactly 7 daily buckets (Monday through Sunday)
+            // Exactly 7 calendar days
             var dailyDict = dailyList.ToDictionary(d => d.Day.Date, d => d);
             for (int i = 6; i >= 0; i--)
             {
-                var day = DateTime.UtcNow.Date.AddDays(-i);
+                var day = end.Date.AddDays(-i);
                 dailyDict.TryGetValue(day, out var rec);
                 chartPoints.Add(new HistoricalGraphSample
                 {
@@ -675,7 +680,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         }
         else // Month
         {
-            // Every day in the selected calendar month (28, 29, 30, or 31 days)
+            // 28, 29, 30, or 31 daily groups for every day in selected month
             int daysInMonth = DateTime.DaysInMonth(start.Year, start.Month);
             var dailyDict = dailyList.ToDictionary(d => d.Day.Date, d => d);
 
@@ -704,13 +709,13 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
         // 1. Scale Chart #1 (Network Usage)
         double maxObserved1 = chartPoints.Count > 0 ? chartPoints.Max(p => Math.Max(p.DownloadBytes, p.UploadBytes)) : 0;
-        double yMax1 = CalculateStableYMax(maxObserved1);
+        var axis1 = CalculateCleanYAxis(maxObserved1);
 
-        YAxisTopText = ByteFormatter.FormatBytes((long)yMax1);
-        YAxisMidHighText = ByteFormatter.FormatBytes((long)(yMax1 * 0.75));
-        YAxisMidText = ByteFormatter.FormatBytes((long)(yMax1 * 0.50));
-        YAxisMidLowText = ByteFormatter.FormatBytes((long)(yMax1 * 0.25));
-        YAxisMinText = "0 B";
+        YAxisTopText = axis1.top;
+        YAxisMidHighText = axis1.midHigh;
+        YAxisMidText = axis1.mid;
+        YAxisMidLowText = axis1.midLow;
+        YAxisMinText = axis1.min;
 
         double canvasWidth = Math.Max(ChartWidth, 200.0);
         int count1 = chartPoints.Count;
@@ -720,22 +725,22 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             var p = chartPoints[i];
             p.CanvasX = count1 == 1 ? canvasWidth / 2 : (double)i / (count1 - 1) * canvasWidth;
 
-            double dlRatio = yMax1 > 0 ? Math.Clamp((double)p.DownloadBytes / yMax1, 0.0, 1.0) : 0.0;
-            double ulRatio = yMax1 > 0 ? Math.Clamp((double)p.UploadBytes / yMax1, 0.0, 1.0) : 0.0;
+            double dlRatio = axis1.yMax > 0 ? Math.Clamp((double)p.DownloadBytes / axis1.yMax, 0.0, 1.0) : 0.0;
+            double ulRatio = axis1.yMax > 0 ? Math.Clamp((double)p.UploadBytes / axis1.yMax, 0.0, 1.0) : 0.0;
 
-            p.DownloadBarHeight = dlRatio * Chart1ContentHeight;
-            p.UploadBarHeight = ulRatio * Chart1ContentHeight;
+            p.DownloadBarHeight = p.DownloadBytes > 0 ? Math.Max(dlRatio * Chart1ContentHeight, 3.0) : 0.0;
+            p.UploadBarHeight = p.UploadBytes > 0 ? Math.Max(ulRatio * Chart1ContentHeight, 3.0) : 0.0;
         }
 
         // 2. Scale Chart #2 (Monthly Usage Breakdown - 12 Months)
         double maxObserved2 = twelveMonthSamples.Count > 0 ? twelveMonthSamples.Max(p => Math.Max(p.DownloadBytes, p.UploadBytes)) : 0;
-        double yMax2 = CalculateStableYMax(maxObserved2);
+        var axis2 = CalculateCleanYAxis(maxObserved2);
 
-        TwelveMonthYAxisTopText = ByteFormatter.FormatBytes((long)yMax2);
-        TwelveMonthYAxisMidHighText = ByteFormatter.FormatBytes((long)(yMax2 * 0.75));
-        TwelveMonthYAxisMidText = ByteFormatter.FormatBytes((long)(yMax2 * 0.50));
-        TwelveMonthYAxisMidLowText = ByteFormatter.FormatBytes((long)(yMax2 * 0.25));
-        TwelveMonthYAxisMinText = "0 B";
+        TwelveMonthYAxisTopText = axis2.top;
+        TwelveMonthYAxisMidHighText = axis2.midHigh;
+        TwelveMonthYAxisMidText = axis2.mid;
+        TwelveMonthYAxisMidLowText = axis2.midLow;
+        TwelveMonthYAxisMinText = axis2.min;
 
         int count2 = twelveMonthSamples.Count;
         for (int i = 0; i < count2; i++)
@@ -743,11 +748,11 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             var p = twelveMonthSamples[i];
             p.CanvasX = count2 == 1 ? canvasWidth / 2 : (double)i / (count2 - 1) * canvasWidth;
 
-            double dlRatio = yMax2 > 0 ? Math.Clamp((double)p.DownloadBytes / yMax2, 0.0, 1.0) : 0.0;
-            double ulRatio = yMax2 > 0 ? Math.Clamp((double)p.UploadBytes / yMax2, 0.0, 1.0) : 0.0;
+            double dlRatio = axis2.yMax > 0 ? Math.Clamp((double)p.DownloadBytes / axis2.yMax, 0.0, 1.0) : 0.0;
+            double ulRatio = axis2.yMax > 0 ? Math.Clamp((double)p.UploadBytes / axis2.yMax, 0.0, 1.0) : 0.0;
 
-            p.DownloadBarHeight = dlRatio * Chart2ContentHeight;
-            p.UploadBarHeight = ulRatio * Chart2ContentHeight;
+            p.DownloadBarHeight = p.DownloadBytes > 0 ? Math.Max(dlRatio * Chart2ContentHeight, 3.0) : 0.0;
+            p.UploadBarHeight = p.UploadBytes > 0 ? Math.Max(ulRatio * Chart2ContentHeight, 3.0) : 0.0;
         }
     }
 
@@ -817,38 +822,92 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         IsTwelveMonthHoverActive = false;
     }
 
-    private static double CalculateStableYMax(double maxObserved)
+    private static (double yMax, string top, string midHigh, string mid, string midLow, string min) CalculateCleanYAxis(double maxObserved)
     {
-        if (maxObserved <= 0) return 1024 * 1024; // 1 MB default headroom
-
-        double target = maxObserved * 1.20;
-        double[] steps = [
-            100 * 1024,
-            250 * 1024,
-            500 * 1024,
-            1024 * 1024,
-            5 * 1024 * 1024,
-            10 * 1024 * 1024,
-            25 * 1024 * 1024,
-            50 * 1024 * 1024,
-            100 * 1024 * 1024,
-            250 * 1024 * 1024,
-            500 * 1024 * 1024,
-            1024L * 1024 * 1024,
-            2L * 1024 * 1024 * 1024,
-            5L * 1024 * 1024 * 1024,
-            10L * 1024 * 1024 * 1024,
-            25L * 1024 * 1024 * 1024,
-            50L * 1024 * 1024 * 1024,
-            100L * 1024 * 1024 * 1024
-        ];
-
-        foreach (var step in steps)
+        if (maxObserved <= 0)
         {
-            if (target <= step) return step;
+            return (1024 * 1024, "1.0 MB", "750 KB", "500 KB", "250 KB", "0 B");
         }
 
-        return target;
+        // Determine unit
+        double unitBytes;
+        string unitSuffix;
+
+        if (maxObserved < 1024)
+        {
+            unitBytes = 1.0;
+            unitSuffix = "B";
+        }
+        else if (maxObserved < 1024 * 1024)
+        {
+            unitBytes = 1024.0;
+            unitSuffix = "KB";
+        }
+        else if (maxObserved < 1024.0 * 1024 * 1024)
+        {
+            unitBytes = 1024.0 * 1024.0;
+            unitSuffix = "MB";
+        }
+        else if (maxObserved < 1024.0 * 1024 * 1024 * 1024)
+        {
+            unitBytes = 1024.0 * 1024.0 * 1024.0;
+            unitSuffix = "GB";
+        }
+        else
+        {
+            unitBytes = 1024.0 * 1024.0 * 1024.0 * 1024.0;
+            unitSuffix = "TB";
+        }
+
+        double valInUnit = maxObserved / unitBytes;
+
+        // Clean candidate steps where 4 divisions (100%, 75%, 50%, 25%) are clean
+        double[] candidateSteps = [
+            1, 2, 4, 5, 8, 10, 12, 16, 20, 24, 28, 32, 40, 50, 60, 80, 100,
+            120, 160, 200, 240, 280, 320, 400, 500, 600, 800, 1000
+        ];
+
+        // Find smallest clean step where maxObserved occupies <= 90% (i.e. >= 10% headroom)
+        double chosenStep = 0;
+        foreach (var s in candidateSteps)
+        {
+            if (s >= valInUnit && (valInUnit / s) <= 0.90)
+            {
+                chosenStep = s;
+                break;
+            }
+        }
+
+        if (chosenStep == 0)
+        {
+            // If valInUnit is greater than 1000 or between steps with tight margins:
+            double rawStep = Math.Ceiling(valInUnit / 0.88);
+            chosenStep = Math.Ceiling(rawStep / 4.0) * 4.0;
+        }
+
+        double yMax = chosenStep * unitBytes;
+
+        // Format 5 clean levels
+        string FormatLevel(double fraction)
+        {
+            double levelVal = chosenStep * fraction;
+            if (Math.Abs(levelVal) < 0.001) return "0 B";
+
+            if (Math.Abs(levelVal - Math.Round(levelVal)) < 0.001)
+            {
+                return $"{(long)Math.Round(levelVal)} {unitSuffix}";
+            }
+            return $"{levelVal:0.##} {unitSuffix}";
+        }
+
+        return (
+            yMax,
+            FormatLevel(1.0),
+            FormatLevel(0.75),
+            FormatLevel(0.50),
+            FormatLevel(0.25),
+            "0 B"
+        );
     }
 
     // ── Search & Sorting Filters ───────────────────────────────────────────────

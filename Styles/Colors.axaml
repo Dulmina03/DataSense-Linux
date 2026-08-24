@@ -1,42 +1,52 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+    DATASENSE COLOR IDENTITY: DEEP SPACE BLACK/PURPLE + ELECTRIC NEON
+    ==================================================================
+    App Background:         #0B0B16 (Deep space black/purple)
+    Surface / Card:         #16162C (Deep midnight purple)
+    Surface Elevated:       #1B1C38 (Elevated purple container)
+    Border:                 #2D2B55 (Muted purple border)
+    Border Strong:          #4A4780 (High-contrast purple border)
+    Primary Accent:         #A100FF (Electric Purple / Violet)
+    Secondary Accent:       #00F0FF (Electric Cyan)
+    Glow Accent:            #D000FF (Neon Magenta Glow)
+    Download:               #00D8F6 (Electric Cyan)
+    Upload:                 #A855F7 (Electric Violet)
+    Success (Live/Health):  #10B981 (Restrained Healthy Green)
+    Warning:                #F59E0B (Amber Alert)
+    Text Primary:           #FFFFFF (Crisp Pure White)
+    Text Secondary:         #A0A0C0 (Soft Slate Lavender)
+    Text Muted:             #6E6E9B (Low-contrast Lavender/Gray)
+    -->
 
     <ResourceDictionary.ThemeDictionaries>
-        
-        <!-- DEFAULT / DARK THEME -->
         <ResourceDictionary x:Key="Default">
-            <!-- Exact Application Background & Primary / Secondary Surfaces -->
+            <!-- Backgrounds -->
             <SolidColorBrush x:Key="Brush.AppBackground" Color="#0B0B16"/>
-            <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#0B0B16"/>
+            <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#0D0D1A"/>
             <SolidColorBrush x:Key="Brush.Surface" Color="#16162C"/>
             <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#1B1C38"/>
-            <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#1B1C38"/>
-            <SolidColorBrush x:Key="Brush.SurfacePressed" Color="#16162C"/>
-            <SolidColorBrush x:Key="Brush.SurfaceMuted" Color="#16162C"/>
-            
-            <SolidColorBrush x:Key="Brush.Border" Color="#2A2A48"/>
-            <SolidColorBrush x:Key="Brush.BorderStrong" Color="#3A3A60"/>
-            
-            <!-- Typography Colors -->
+            <SolidColorBrush x:Key="Brush.SurfaceSubtle" Color="#131326"/>
+            <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#222244"/>
+
+            <!-- Borders -->
+            <SolidColorBrush x:Key="Brush.Border" Color="#2D2B55"/>
+            <SolidColorBrush x:Key="Brush.BorderSubtle" Color="#1E1C3D"/>
+            <SolidColorBrush x:Key="Brush.BorderStrong" Color="#4A4780"/>
+
+            <!-- Typography -->
             <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FFFFFF"/>
             <SolidColorBrush x:Key="Brush.TextSecondary" Color="#A0A0C0"/>
             <SolidColorBrush x:Key="Brush.TextMuted" Color="#6E6E9B"/>
-            <SolidColorBrush x:Key="Brush.TextLabels" Color="#A0A0C0"/>
-            <SolidColorBrush x:Key="Brush.TextDisabled" Color="#6E6E9B"/>
-            
-            <!-- Primary Accent — Electric Violet (#A100FF, #D000FF) -->
-            <SolidColorBrush x:Key="Brush.Accent" Color="#A100FF"/>
-            <SolidColorBrush x:Key="Brush.AccentSecondary" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.AccentHover" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.AccentSurface" Color="#1B1C38"/>
-            
-            <!-- Secondary Accent — Electric Cyan (#00F0FF, #00E5FF) -->
-            <SolidColorBrush x:Key="Brush.Cyan" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.CyanSecondary" Color="#00E5FF"/>
+            <SolidColorBrush x:Key="Brush.TextDisabled" Color="#4D4D70"/>
 
-            <!-- Tertiary Accent — Hot Pink (#FF007F, #FF3399) -->
-            <SolidColorBrush x:Key="Brush.Pink" Color="#FF007F"/>
-            <SolidColorBrush x:Key="Brush.PinkSecondary" Color="#FF3399"/>
+            <!-- Primary Accent (Electric Purple / Neon Violet) -->
+            <SolidColorBrush x:Key="Brush.Accent" Color="#A100FF"/>
+            <SolidColorBrush x:Key="Brush.AccentBright" Color="#D000FF"/>
+            <SolidColorBrush x:Key="Brush.AccentDeep" Color="#7A00CC"/>
+            <SolidColorBrush x:Key="Brush.AccentGlow" Color="#A100FF"/>
+            <SolidColorBrush x:Key="Brush.AccentSurface" Color="#1B1C38"/>
 
             <!-- Ambient Purple Glow (#4A00E0) -->
             <SolidColorBrush x:Key="Brush.AmbientGlow" Color="#4A00E0"/>
@@ -48,19 +58,19 @@
             <SolidColorBrush x:Key="Brush.Danger" Color="#FF007F"/>
             <SolidColorBrush x:Key="Brush.DangerSurface" Color="#1B1C38"/>
             
-            <!-- Download Palette (Electric Violet #A100FF, #D000FF) -->
-            <SolidColorBrush x:Key="Brush.Download" Color="#A100FF"/>
-            <SolidColorBrush x:Key="Brush.DownloadBright" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.DownloadMuted" Color="#A100FF"/>
-            <SolidColorBrush x:Key="Brush.DownloadGlow" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.DownloadSurface" Color="#1B1C38"/>
+            <!-- Download Palette (Electric Cyan #00D8F6, #00F0FF) -->
+            <SolidColorBrush x:Key="Brush.Download" Color="#00D8F6"/>
+            <SolidColorBrush x:Key="Brush.DownloadBright" Color="#00F0FF"/>
+            <SolidColorBrush x:Key="Brush.DownloadMuted" Color="#00D8F6"/>
+            <SolidColorBrush x:Key="Brush.DownloadGlow" Color="#00D8F6"/>
+            <SolidColorBrush x:Key="Brush.DownloadSurface" Color="#0D2235"/>
 
-            <!-- Upload Palette (Electric Cyan #00F0FF, #00E5FF) -->
-            <SolidColorBrush x:Key="Brush.Upload" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.UploadBright" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.UploadDeep" Color="#00E5FF"/>
-            <SolidColorBrush x:Key="Brush.UploadGlow" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.UploadSurface" Color="#1B1C38"/>
+            <!-- Upload Palette (Electric Violet #A855F7, #D000FF) -->
+            <SolidColorBrush x:Key="Brush.Upload" Color="#A855F7"/>
+            <SolidColorBrush x:Key="Brush.UploadBright" Color="#D000FF"/>
+            <SolidColorBrush x:Key="Brush.UploadDeep" Color="#8B5CF6"/>
+            <SolidColorBrush x:Key="Brush.UploadGlow" Color="#A855F7"/>
+            <SolidColorBrush x:Key="Brush.UploadSurface" Color="#25173B"/>
 
             <!-- Curated 12-Segment Process Donut Palette -->
             <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#00F0FF"/> <!-- 1: Electric Cyan -->
@@ -91,15 +101,26 @@
             <SolidColorBrush x:Key="Brush.ProcessChart11" Color="#FB7185"/>
             <SolidColorBrush x:Key="Brush.ProcessChart12" Color="#00E5FF"/>
 
+            <!-- Modern History Bar Chart Two-Color Gradients (Top -> Bottom) -->
+            <LinearGradientBrush x:Key="Brush.DownloadBarGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#22E3FF" Offset="0"/>
+                <GradientStop Color="#0077A8" Offset="1"/>
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="Brush.UploadBarGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#C56CFF" Offset="0"/>
+                <GradientStop Color="#6D28D9" Offset="1"/>
+            </LinearGradientBrush>
+
             <!-- Floating Glow & Area Gradient Brushes -->
             <LinearGradientBrush x:Key="Brush.HeroDownloadGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#388B00FF" Offset="0"/>
+                <GradientStop Color="#3800D8F6" Offset="0"/>
                 <GradientStop Color="#0016162C" Offset="0.75"/>
                 <GradientStop Color="#0016162C" Offset="1"/>
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.HeroUploadGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#3800F0FF" Offset="0"/>
+                <GradientStop Color="#38A855F7" Offset="0"/>
                 <GradientStop Color="#0016162C" Offset="0.75"/>
                 <GradientStop Color="#0016162C" Offset="1"/>
             </LinearGradientBrush>
@@ -116,23 +137,23 @@
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.DownloadAreaGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#22A100FF" Offset="0"/>
-                <GradientStop Color="#02A100FF" Offset="1"/>
+                <GradientStop Color="#2200D8F6" Offset="0"/>
+                <GradientStop Color="#0200D8F6" Offset="1"/>
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.UploadAreaGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#2200F0FF" Offset="0"/>
-                <GradientStop Color="#0200F0FF" Offset="1"/>
+                <GradientStop Color="#22A855F7" Offset="0"/>
+                <GradientStop Color="#02A855F7" Offset="1"/>
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.GradientDownload" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#8B00FF" Offset="0"/>
-                <GradientStop Color="#D000FF" Offset="1"/>
+                <GradientStop Color="#00D8F6" Offset="0"/>
+                <GradientStop Color="#00F0FF" Offset="1"/>
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.GradientUpload" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#00E5FF" Offset="0"/>
-                <GradientStop Color="#00F0FF" Offset="1"/>
+                <GradientStop Color="#A855F7" Offset="0"/>
+                <GradientStop Color="#D000FF" Offset="1"/>
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.GradientVioletPink" StartPoint="0%,0%" EndPoint="100%,0%">
@@ -157,40 +178,32 @@
             <SolidColorBrush x:Key="SystemControlForegroundBaseMediumLowBrush" Color="#6E6E9B"/>
         </ResourceDictionary>
 
-        <!-- DARK THEME EXPLICIT KEY -->
         <ResourceDictionary x:Key="Dark">
-            <!-- Exact Application Background & Primary / Secondary Surfaces -->
+            <!-- Backgrounds -->
             <SolidColorBrush x:Key="Brush.AppBackground" Color="#0B0B16"/>
-            <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#0B0B16"/>
+            <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#0D0D1A"/>
             <SolidColorBrush x:Key="Brush.Surface" Color="#16162C"/>
             <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#1B1C38"/>
-            <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#1B1C38"/>
-            <SolidColorBrush x:Key="Brush.SurfacePressed" Color="#16162C"/>
-            <SolidColorBrush x:Key="Brush.SurfaceMuted" Color="#16162C"/>
-            
-            <SolidColorBrush x:Key="Brush.Border" Color="#2A2A48"/>
-            <SolidColorBrush x:Key="Brush.BorderStrong" Color="#3A3A60"/>
-            
-            <!-- Typography Colors -->
+            <SolidColorBrush x:Key="Brush.SurfaceSubtle" Color="#131326"/>
+            <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#222244"/>
+
+            <!-- Borders -->
+            <SolidColorBrush x:Key="Brush.Border" Color="#2D2B55"/>
+            <SolidColorBrush x:Key="Brush.BorderSubtle" Color="#1E1C3D"/>
+            <SolidColorBrush x:Key="Brush.BorderStrong" Color="#4A4780"/>
+
+            <!-- Typography -->
             <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FFFFFF"/>
             <SolidColorBrush x:Key="Brush.TextSecondary" Color="#A0A0C0"/>
             <SolidColorBrush x:Key="Brush.TextMuted" Color="#6E6E9B"/>
-            <SolidColorBrush x:Key="Brush.TextLabels" Color="#A0A0C0"/>
-            <SolidColorBrush x:Key="Brush.TextDisabled" Color="#6E6E9B"/>
-            
-            <!-- Primary Accent — Electric Violet (#A100FF, #D000FF) -->
-            <SolidColorBrush x:Key="Brush.Accent" Color="#A100FF"/>
-            <SolidColorBrush x:Key="Brush.AccentSecondary" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.AccentHover" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.AccentSurface" Color="#1B1C38"/>
-            
-            <!-- Secondary Accent — Electric Cyan (#00F0FF, #00E5FF) -->
-            <SolidColorBrush x:Key="Brush.Cyan" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.CyanSecondary" Color="#00E5FF"/>
+            <SolidColorBrush x:Key="Brush.TextDisabled" Color="#4D4D70"/>
 
-            <!-- Tertiary Accent — Hot Pink (#FF007F, #FF3399) -->
-            <SolidColorBrush x:Key="Brush.Pink" Color="#FF007F"/>
-            <SolidColorBrush x:Key="Brush.PinkSecondary" Color="#FF3399"/>
+            <!-- Primary Accent (Electric Purple / Neon Violet) -->
+            <SolidColorBrush x:Key="Brush.Accent" Color="#A100FF"/>
+            <SolidColorBrush x:Key="Brush.AccentBright" Color="#D000FF"/>
+            <SolidColorBrush x:Key="Brush.AccentDeep" Color="#7A00CC"/>
+            <SolidColorBrush x:Key="Brush.AccentGlow" Color="#A100FF"/>
+            <SolidColorBrush x:Key="Brush.AccentSurface" Color="#1B1C38"/>
 
             <!-- Ambient Purple Glow (#4A00E0) -->
             <SolidColorBrush x:Key="Brush.AmbientGlow" Color="#4A00E0"/>
@@ -202,19 +215,19 @@
             <SolidColorBrush x:Key="Brush.Danger" Color="#FF007F"/>
             <SolidColorBrush x:Key="Brush.DangerSurface" Color="#1B1C38"/>
             
-            <!-- Download Palette (Electric Violet #A100FF, #D000FF) -->
-            <SolidColorBrush x:Key="Brush.Download" Color="#A100FF"/>
-            <SolidColorBrush x:Key="Brush.DownloadBright" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.DownloadMuted" Color="#A100FF"/>
-            <SolidColorBrush x:Key="Brush.DownloadGlow" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.DownloadSurface" Color="#1B1C38"/>
+            <!-- Download Palette (Electric Cyan #00D8F6, #00F0FF) -->
+            <SolidColorBrush x:Key="Brush.Download" Color="#00D8F6"/>
+            <SolidColorBrush x:Key="Brush.DownloadBright" Color="#00F0FF"/>
+            <SolidColorBrush x:Key="Brush.DownloadMuted" Color="#00D8F6"/>
+            <SolidColorBrush x:Key="Brush.DownloadGlow" Color="#00D8F6"/>
+            <SolidColorBrush x:Key="Brush.DownloadSurface" Color="#0D2235"/>
 
-            <!-- Upload Palette (Electric Cyan #00F0FF, #00E5FF) -->
-            <SolidColorBrush x:Key="Brush.Upload" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.UploadBright" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.UploadDeep" Color="#00E5FF"/>
-            <SolidColorBrush x:Key="Brush.UploadGlow" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.UploadSurface" Color="#1B1C38"/>
+            <!-- Upload Palette (Electric Violet #A855F7, #D000FF) -->
+            <SolidColorBrush x:Key="Brush.Upload" Color="#A855F7"/>
+            <SolidColorBrush x:Key="Brush.UploadBright" Color="#D000FF"/>
+            <SolidColorBrush x:Key="Brush.UploadDeep" Color="#8B5CF6"/>
+            <SolidColorBrush x:Key="Brush.UploadGlow" Color="#A855F7"/>
+            <SolidColorBrush x:Key="Brush.UploadSurface" Color="#25173B"/>
 
             <!-- Curated 12-Segment Process Donut Palette -->
             <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#00F0FF"/> <!-- 1: Electric Cyan -->
@@ -245,15 +258,26 @@
             <SolidColorBrush x:Key="Brush.ProcessChart11" Color="#FB7185"/>
             <SolidColorBrush x:Key="Brush.ProcessChart12" Color="#00E5FF"/>
 
+            <!-- Modern History Bar Chart Two-Color Gradients (Top -> Bottom) -->
+            <LinearGradientBrush x:Key="Brush.DownloadBarGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#22E3FF" Offset="0"/>
+                <GradientStop Color="#0077A8" Offset="1"/>
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="Brush.UploadBarGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#C56CFF" Offset="0"/>
+                <GradientStop Color="#6D28D9" Offset="1"/>
+            </LinearGradientBrush>
+
             <!-- Floating Glow & Area Gradient Brushes -->
             <LinearGradientBrush x:Key="Brush.HeroDownloadGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#388B00FF" Offset="0"/>
+                <GradientStop Color="#3800D8F6" Offset="0"/>
                 <GradientStop Color="#0016162C" Offset="0.75"/>
                 <GradientStop Color="#0016162C" Offset="1"/>
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.HeroUploadGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#3800F0FF" Offset="0"/>
+                <GradientStop Color="#38A855F7" Offset="0"/>
                 <GradientStop Color="#0016162C" Offset="0.75"/>
                 <GradientStop Color="#0016162C" Offset="1"/>
             </LinearGradientBrush>
@@ -270,23 +294,23 @@
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.DownloadAreaGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#22A100FF" Offset="0"/>
-                <GradientStop Color="#02A100FF" Offset="1"/>
+                <GradientStop Color="#2200D8F6" Offset="0"/>
+                <GradientStop Color="#0200D8F6" Offset="1"/>
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.UploadAreaGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#2200F0FF" Offset="0"/>
-                <GradientStop Color="#0200F0FF" Offset="1"/>
+                <GradientStop Color="#22A855F7" Offset="0"/>
+                <GradientStop Color="#02A855F7" Offset="1"/>
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.GradientDownload" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#8B00FF" Offset="0"/>
-                <GradientStop Color="#D000FF" Offset="1"/>
+                <GradientStop Color="#00D8F6" Offset="0"/>
+                <GradientStop Color="#00F0FF" Offset="1"/>
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.GradientUpload" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#00E5FF" Offset="0"/>
-                <GradientStop Color="#00F0FF" Offset="1"/>
+                <GradientStop Color="#A855F7" Offset="0"/>
+                <GradientStop Color="#D000FF" Offset="1"/>
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="Brush.GradientVioletPink" StartPoint="0%,0%" EndPoint="100%,0%">

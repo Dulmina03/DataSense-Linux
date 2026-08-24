@@ -244,6 +244,11 @@ public class ApplicationHistoricalProfile
     /// </summary>
     public double PercentageOfTotal { get; set; }
 
+    /// <summary>
+    /// Percentage relative to the highest application in the active period (0.0 to 100.0) for dynamic horizontal bar scaling.
+    /// </summary>
+    public double RelativeUsagePercent { get; set; }
+
     // ── Trend ─────────────────────────────────────────────────────────────────
 
     /// <summary>

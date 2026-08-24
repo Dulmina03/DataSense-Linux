@@ -248,12 +248,13 @@
                                             <DataTemplate DataType="vm:HistoricalGraphSample">
                                                 <Grid RowDefinitions="300,Auto" VerticalAlignment="Bottom" Height="340" Background="Transparent" Margin="2,0">
                                                     <!-- Bar Pair -->
-                                                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                                    <StackPanel Grid.Row="0" Height="300" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                                                                 Spacing="{Binding ((vm:HistoryViewModel)DataContext).BarGap, RelativeSource={RelativeSource AncestorType=UserControl}}">
                                                         <!-- Download Bar -->
                                                         <Border Height="{Binding DownloadBarHeight}"
                                                                 Width="{Binding ((vm:HistoryViewModel)DataContext).DownloadBarWidth, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                Background="{DynamicResource Brush.Download}"
+                                                                Background="{DynamicResource Brush.DownloadBarGradient}"
+                                                                VerticalAlignment="Bottom"
                                                                 CornerRadius="4,4,0,0">
                                                             <Border.Transitions>
                                                                 <Transitions>
@@ -264,7 +265,8 @@
                                                         <!-- Upload Bar -->
                                                         <Border Height="{Binding UploadBarHeight}"
                                                                 Width="{Binding ((vm:HistoryViewModel)DataContext).UploadBarWidth, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                Background="{DynamicResource Brush.Upload}"
+                                                                Background="{DynamicResource Brush.UploadBarGradient}"
+                                                                VerticalAlignment="Bottom"
                                                                 CornerRadius="4,4,0,0">
                                                             <Border.Transitions>
                                                                 <Transitions>
@@ -387,12 +389,13 @@
                                         <DataTemplate DataType="vm:HistoricalGraphSample">
                                             <Grid RowDefinitions="280,Auto" VerticalAlignment="Bottom" Height="320" Background="Transparent" Margin="3,0">
                                                 <!-- Bar Pair -->
-                                                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                                <StackPanel Grid.Row="0" Height="280" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                                                             Spacing="{Binding ((vm:HistoryViewModel)DataContext).TwelveMonthBarGap, RelativeSource={RelativeSource AncestorType=UserControl}}">
                                                     <!-- Download Bar -->
                                                     <Border Height="{Binding DownloadBarHeight}"
                                                             Width="{Binding ((vm:HistoryViewModel)DataContext).TwelveMonthDownloadBarWidth, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                            Background="{DynamicResource Brush.Download}"
+                                                            Background="{DynamicResource Brush.DownloadBarGradient}"
+                                                            VerticalAlignment="Bottom"
                                                             CornerRadius="4,4,0,0">
                                                         <Border.Transitions>
                                                             <Transitions>
@@ -403,7 +406,8 @@
                                                     <!-- Upload Bar -->
                                                     <Border Height="{Binding UploadBarHeight}"
                                                             Width="{Binding ((vm:HistoryViewModel)DataContext).TwelveMonthUploadBarWidth, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                            Background="{DynamicResource Brush.Upload}"
+                                                            Background="{DynamicResource Brush.UploadBarGradient}"
+                                                            VerticalAlignment="Bottom"
                                                             CornerRadius="4,4,0,0">
                                                         <Border.Transitions>
                                                             <Transitions>
@@ -507,7 +511,7 @@
                                         <!-- Bottom Row: Thick 12px Rounded Horizontal Bar -->
                                         <Grid Height="12">
                                             <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="6" Height="12"/>
-                                            <ProgressBar Value="{Binding PercentageOfTotal}"
+                                            <ProgressBar Value="{Binding RelativeUsagePercent}"
                                                          Minimum="0" Maximum="100"
                                                          Height="12"
                                                          CornerRadius="6"
