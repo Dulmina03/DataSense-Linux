@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddSingleton<INativeNotificationService, NativeNotificationService>();
         services.AddSingleton<ILinuxStartupService, LinuxStartupService>();
         services.AddSingleton<IAppIconService, LinuxApplicationIconService>();
+        services.AddSingleton<IApplicationChartColorProvider, ApplicationChartColorProvider>();
 
         // Database & Infrastructure
         services.AddSingleton<IPerformanceMonitor, PerformanceMonitor>();

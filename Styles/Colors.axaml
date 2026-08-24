@@ -34,11 +34,16 @@
             <SolidColorBrush x:Key="Brush.Download" Color="#38BDF8"/>
             <SolidColorBrush x:Key="Brush.Upload" Color="#A855F7"/>
 
-            <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#38BDF8"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#A855F7"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#6366F1"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#14B8A6"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#F59E0B"/>
+            <!-- Sophisticated 8-Segment Chart Palette (Harmonious with DataSense dark design) -->
+            <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#38BDF8"/> <!-- Electric Cyan -->
+            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#A855F7"/> <!-- Sophisticated Violet -->
+            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#6366F1"/> <!-- Indigo -->
+            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#14B8A6"/> <!-- Teal -->
+            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#F59E0B"/> <!-- Muted Amber -->
+            <SolidColorBrush x:Key="Brush.ChartSegment6" Color="#3B82F6"/> <!-- Blue -->
+            <SolidColorBrush x:Key="Brush.ChartSegment7" Color="#C084FC"/> <!-- Muted Purple / Lavender -->
+            <SolidColorBrush x:Key="Brush.ChartSegment8" Color="#10B981"/> <!-- Emerald -->
+            <SolidColorBrush x:Key="Brush.ChartSegmentOther" Color="#64748B"/> <!-- Slate / Muted Neutral -->
 
             <!-- FluentTheme System Overrides -->
             <SolidColorBrush x:Key="SystemRegionBrush" Color="#06080D"/>
@@ -83,11 +88,16 @@
             <SolidColorBrush x:Key="Brush.Download" Color="#38BDF8"/>
             <SolidColorBrush x:Key="Brush.Upload" Color="#A855F7"/>
 
-            <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#38BDF8"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#A855F7"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#6366F1"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#14B8A6"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#F59E0B"/>
+            <!-- Sophisticated 8-Segment Chart Palette -->
+            <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#38BDF8"/> <!-- Electric Cyan -->
+            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#A855F7"/> <!-- Sophisticated Violet -->
+            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#6366F1"/> <!-- Indigo -->
+            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#14B8A6"/> <!-- Teal -->
+            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#F59E0B"/> <!-- Muted Amber -->
+            <SolidColorBrush x:Key="Brush.ChartSegment6" Color="#3B82F6"/> <!-- Blue -->
+            <SolidColorBrush x:Key="Brush.ChartSegment7" Color="#C084FC"/> <!-- Muted Purple / Lavender -->
+            <SolidColorBrush x:Key="Brush.ChartSegment8" Color="#10B981"/> <!-- Emerald -->
+            <SolidColorBrush x:Key="Brush.ChartSegmentOther" Color="#64748B"/> <!-- Slate / Muted Neutral -->
 
             <!-- FluentTheme System Overrides -->
             <SolidColorBrush x:Key="SystemRegionBrush" Color="#06080D"/>
@@ -132,11 +142,16 @@
             <SolidColorBrush x:Key="Brush.Download" Color="#0284C7"/>
             <SolidColorBrush x:Key="Brush.Upload" Color="#7C3AED"/>
 
-            <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#0284C7"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#7C3AED"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#2563EB"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#059669"/>
-            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#D97706"/>
+            <!-- Sophisticated 8-Segment Chart Palette (Light theme tailored) -->
+            <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#0284C7"/> <!-- Cyan -->
+            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#7C3AED"/> <!-- Violet -->
+            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#4F46E5"/> <!-- Indigo -->
+            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#0D9488"/> <!-- Teal -->
+            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#D97706"/> <!-- Amber -->
+            <SolidColorBrush x:Key="Brush.ChartSegment6" Color="#2563EB"/> <!-- Blue -->
+            <SolidColorBrush x:Key="Brush.ChartSegment7" Color="#9333EA"/> <!-- Purple -->
+            <SolidColorBrush x:Key="Brush.ChartSegment8" Color="#059669"/> <!-- Emerald -->
+            <SolidColorBrush x:Key="Brush.ChartSegmentOther" Color="#64748B"/> <!-- Slate -->
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>

@@ -1,5 +1,6 @@
 using System;
 using Avalonia.Media;
+using DataSense.Helpers;
 
 namespace DataSense.Models;
 
@@ -22,6 +23,8 @@ public class ProcessNetworkUsage
     public long DownloadBytes { get; init; }
     public long UploadBytes { get; init; }
     public long TotalBytes => DownloadBytes + UploadBytes;
+
+    public double TotalRateBytesPerSec => DownloadRateBytesPerSec + UploadRateBytesPerSec;
 
     public DateTime Timestamp { get; init; } = DateTime.UtcNow;
     public DateTime? FirstSeen { get; init; }
@@ -56,4 +59,47 @@ public class ProcessNetworkUsage
     /// </summary>
     public string EffectiveDisplayName =>
         !string.IsNullOrWhiteSpace(ApplicationDisplayName) ? ApplicationDisplayName : ProcessIdentifier;
+
+    /// <summary>
+    /// Formatted download throughput string (e.g. "18.4 MB/s").
+    /// </summary>
+    public string DownloadRateText => ByteFormatter.FormatSpeed(DownloadRateBytesPerSec);
+
+    /// <summary>
+    /// Formatted upload throughput string (e.g. "2.8 MB/s").
+    /// </summary>
+    public string UploadRateText => ByteFormatter.FormatSpeed(UploadRateBytesPerSec);
+
+    /// <summary>
+    /// Formatted total throughput or total transfer string (e.g. "21.2 MB/s").
+    /// </summary>
+    public string TotalRateText => TotalRateBytesPerSec > 0
+        ? ByteFormatter.FormatSpeed(TotalRateBytesPerSec)
+        : ByteFormatter.FormatBytes(TotalBytes);
+
+    /// <summary>
+    /// Whether the process is actively communicating on the network in the current tick.
+    /// </summary>
+    public bool IsCurrentlyActive => IsActive && (DownloadRateBytesPerSec > 0 || UploadRateBytesPerSec > 0);
+
+    /// <summary>
+    /// Semantic status text ("Active" or "Idle").
+    /// </summary>
+    public string ActivityText => IsCurrentlyActive ? "Active" : "Idle";
+
+    /// <summary>
+    /// Semantic status color ("Success" or "Muted").
+    /// </summary>
+    public string ActivityColor => IsCurrentlyActive ? "Success" : "Muted";
+
+    /// <summary>
+    /// Rich tooltip summary formatted with real process metrics.
+    /// </summary>
+    public string TooltipSummary =>
+        $"{EffectiveDisplayName}\n\n" +
+        $"Process: {ProcessIdentifier}\n" +
+        $"Download: {DownloadRateText}\n" +
+        $"Upload: {UploadRateText}\n" +
+        $"Total: {TotalRateText}\n" +
+        $"Status: {ActivityText}";
 }

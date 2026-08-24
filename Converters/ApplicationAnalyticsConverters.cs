@@ -3,6 +3,7 @@ using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 using DataSense.Models;
+using DataSense.Services;
 
 namespace DataSense.Converters;
 
@@ -83,37 +84,22 @@ public class ProcessIndexColorConverter : IValueConverter
 {
     public static readonly ProcessIndexColorConverter Instance = new();
 
-    private static readonly IBrush[] Palette = new IBrush[]
-    {
-        new SolidColorBrush(Color.Parse("#38BDF8")), // Cyan
-        new SolidColorBrush(Color.Parse("#10B981")), // Green
-        new SolidColorBrush(Color.Parse("#EAB308")), // Yellow
-        new SolidColorBrush(Color.Parse("#EF4444")), // Red
-        new SolidColorBrush(Color.Parse("#A855F7")), // Purple
-        new SolidColorBrush(Color.Parse("#F97316"))  // Orange
-    };
-
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        int index = 0;
+        if (value is ApplicationHistoricalProfile profile)
+        {
+            return ApplicationChartColorProvider.Instance.GetColorBrush(profile.ProcessName);
+        }
+        if (value is string str)
+        {
+            return ApplicationChartColorProvider.Instance.GetColorBrush(str);
+        }
         if (parameter != null && int.TryParse(parameter.ToString(), out int pIdx))
         {
-            index = pIdx;
-        }
-        else if (value is ApplicationHistoricalProfile profile)
-        {
-            index = Math.Abs(profile.ProcessName?.GetHashCode() ?? 0) % Palette.Length;
-        }
-        else if (value is double pct)
-        {
-            index = (int)(pct * 10) % Palette.Length;
-        }
-        else if (value is string str)
-        {
-            index = Math.Abs(str.GetHashCode()) % Palette.Length;
+            return ApplicationChartColorProvider.Instance.GetColorBrush(pIdx.ToString());
         }
 
-        return Palette[Math.Abs(index) % Palette.Length];
+        return ApplicationChartColorProvider.Instance.GetColorBrush(value?.ToString());
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

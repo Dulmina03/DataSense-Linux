@@ -125,4 +125,21 @@
         <Setter Property="Margin" Value="0" />
         <Setter Property="BorderThickness" Value="0" />
     </Style>
+
+    <!-- Process Analytics Table Row -->
+    <Style Selector="Border.ProcessRow">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.ProcessRow:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+    </Style>
 </Styles>

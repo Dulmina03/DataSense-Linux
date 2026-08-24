@@ -166,6 +166,33 @@ public class ApplicationHistoricalProfile
     /// <summary>Monitoring backend (e.g. "Nethogs"); empty = not available.</summary>
     public string DataSource { get; set; } = string.Empty;
 
+    /// <summary>Resolved human-friendly display name (e.g. "Brave Web Browser").</summary>
+    public string ApplicationDisplayName { get; set; } = string.Empty;
+
+    /// <summary>Resolved application icon from Linux desktop theme or generic fallback.</summary>
+    public Avalonia.Media.IImage? ApplicationIcon { get; set; }
+
+    /// <summary>Effective display name for UI rendering.</summary>
+    public string EffectiveDisplayName =>
+        !string.IsNullOrWhiteSpace(ApplicationDisplayName) ? ApplicationDisplayName : ProcessName;
+
+    /// <summary>Formatted total bytes string.</summary>
+    public string FormattedTotalText => DataSense.Helpers.ByteFormatter.FormatBytes(TotalBytes);
+
+    /// <summary>Formatted download bytes string.</summary>
+    public string FormattedDownloadText => DataSense.Helpers.ByteFormatter.FormatBytes(DownloadBytes);
+
+    /// <summary>Formatted upload bytes string.</summary>
+    public string FormattedUploadText => DataSense.Helpers.ByteFormatter.FormatBytes(UploadBytes);
+
+    /// <summary>Rich tooltip summary formatted with actual telemetry metrics.</summary>
+    public string TooltipSummary =>
+        $"{EffectiveDisplayName}\n\n" +
+        $"Download: {FormattedDownloadText}\n" +
+        $"Upload:   {FormattedUploadText}\n" +
+        $"Total:    {FormattedTotalText}\n" +
+        $"Share:    {PercentageOfTotal:F1}%";
+
     // ── Period Aggregates ─────────────────────────────────────────────────────
 
     /// <summary>Bytes today (UTC calendar day). 0 if no today records.</summary>

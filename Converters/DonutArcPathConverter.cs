@@ -10,8 +10,8 @@ using DataSense.Models;
 namespace DataSense.Converters;
 
 /// <summary>
-/// Converts process list percentages or download/upload ratio into geometric PathGeometry arc shapes.
-/// Supports both Donut (hollow ring) and Pie (solid pie slice) geometries.
+/// Converts process list percentages or download/upload ratio into mathematically precise,
+/// true circular PathGeometry donut (hollow ring) or pie (solid slice) arc shapes.
 /// </summary>
 public class DonutArcPathConverter : IMultiValueConverter
 {
@@ -20,12 +20,14 @@ public class DonutArcPathConverter : IMultiValueConverter
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         if (values == null || values.Count < 2)
-            return Geometry.Parse("M 0,0");
+            return new PathGeometry();
 
-        double outerR = 74;
-        double innerR = 52;
-        double cx = 80;
-        double cy = 80;
+        // Standardized 200x200 drawing canvas defaults:
+        // cx=100, cy=100, outerR=88, innerR=60 (28px ring thickness, 12px canvas margin)
+        double outerR = 88;
+        double innerR = 60;
+        double cx = 100;
+        double cy = 100;
         bool isPieMode = false;
 
         if (parameter != null)
@@ -36,78 +38,130 @@ public class DonutArcPathConverter : IMultiValueConverter
                 isPieMode = true;
                 innerR = 0;
                 string[] parts = pStr.Split(',');
-                if (parts.Length > 1 && double.TryParse(parts[1], out double pr))
+                if (parts.Length > 1 && double.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double pr))
                 {
                     outerR = pr;
-                    cx = pr + 4;
-                    cy = pr + 4;
+                    cx = pr + 12;
+                    cy = pr + 12;
                 }
             }
-            else if (double.TryParse(pStr, out double r))
+            else if (pStr.Contains(','))
+            {
+                string[] parts = pStr.Split(',');
+                if (double.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out double or) &&
+                    double.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double ir))
+                {
+                    outerR = or;
+                    innerR = ir;
+                    cx = outerR + 12;
+                    cy = outerR + 12;
+                }
+            }
+            else if (double.TryParse(pStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double r))
             {
                 outerR = r;
-                innerR = r * 0.7;
-                cx = r + 4;
-                cy = r + 4;
+                innerR = r * 0.68;
+                cx = r + 12;
+                cy = r + 12;
             }
         }
 
-        double startPct = 0;
-        double sweepPct = 0;
+        double startFraction = 0;
+        double sweepFraction = 0;
+        int totalItemCount = 1;
 
         // Case 1: Process list item (item, list)
         if (values[0] is ApplicationHistoricalProfile targetItem && values[1] is IEnumerable<ApplicationHistoricalProfile> list)
         {
-            double cumulative = 0;
-            bool found = false;
-            foreach (var item in list)
+            var itemList = new List<ApplicationHistoricalProfile>(list);
+            totalItemCount = itemList.Count;
+
+            double totalPctSum = 0;
+            foreach (var item in itemList)
             {
-                if (item == targetItem)
+                if (item.PercentageOfTotal > 0)
+                    totalPctSum += item.PercentageOfTotal;
+            }
+
+            if (totalPctSum <= 0)
+                return new PathGeometry();
+
+            double cumulativePct = 0;
+            bool found = false;
+            foreach (var item in itemList)
+            {
+                if (item == targetItem || (item.ProcessName == targetItem.ProcessName && item.Pid == targetItem.Pid))
                 {
-                    startPct = cumulative;
-                    sweepPct = item.PercentageOfTotal;
+                    startFraction = cumulativePct / totalPctSum;
+                    sweepFraction = Math.Max(0, item.PercentageOfTotal) / totalPctSum;
                     found = true;
                     break;
                 }
-                cumulative += item.PercentageOfTotal;
+                if (item.PercentageOfTotal > 0)
+                    cumulativePct += item.PercentageOfTotal;
             }
-            if (!found || sweepPct <= 0)
-                return Geometry.Parse("M 0,0");
+
+            if (!found || sweepFraction <= 0.0001)
+                return new PathGeometry();
         }
         // Case 2: Monthly ratio (isUploadFlag, downloadGridLength, uploadGridLength)
         else if (values.Count >= 3 && values[0] is bool isUpload && values[1] is GridLength dlGrid && values[2] is GridLength ulGrid)
         {
-            double dlValue = dlGrid.Value;
-            double ulValue = ulGrid.Value;
+            totalItemCount = 2;
+            double dlValue = Math.Max(0, dlGrid.Value);
+            double ulValue = Math.Max(0, ulGrid.Value);
             double total = dlValue + ulValue;
-            if (total <= 0) return Geometry.Parse("M 0,0");
 
-            double dlPct = (dlValue / total) * 100.0;
-            double ulPct = (ulValue / total) * 100.0;
+            if (total <= 0)
+                return new PathGeometry();
+
+            double dlFrac = dlValue / total;
+            double ulFrac = ulValue / total;
 
             if (!isUpload)
             {
-                startPct = 0;
-                sweepPct = dlPct;
+                startFraction = 0;
+                sweepFraction = dlFrac;
             }
             else
             {
-                startPct = dlPct;
-                sweepPct = ulPct;
+                startFraction = dlFrac;
+                sweepFraction = ulFrac;
             }
+
+            if (sweepFraction <= 0.0001)
+                return new PathGeometry();
         }
         else
         {
-            return Geometry.Parse("M 0,0");
+            return new PathGeometry();
         }
 
-        if (sweepPct <= 0) return Geometry.Parse("M 0,0");
+        // Handle single 100% full donut circle
+        if (sweepFraction >= 0.9999)
+        {
+            return CreateFullDonutGeometry(cx, cy, outerR, innerR, isPieMode);
+        }
 
-        // Clamp sweepPct to avoid full 360 circle arc segment degeneracy
-        if (sweepPct >= 99.99) sweepPct = 99.9;
+        // Angular math: 12 o'clock top is -90 degrees
+        double rawStartAngle = (startFraction * 360.0) - 90.0;
+        double rawSweepAngle = sweepFraction * 360.0;
 
-        double startAngle = (startPct / 100.0) * 360.0 - 90.0;
-        double sweepAngle = (sweepPct / 100.0) * 360.0;
+        // Apply subtle segment gap if multiple segments exist
+        double startAngle = rawStartAngle;
+        double sweepAngle = rawSweepAngle;
+
+        if (totalItemCount > 1)
+        {
+            double gapDeg = 2.0; // 2 degree gap for clean visual separation
+            double effectiveGap = Math.Min(gapDeg, rawSweepAngle * 0.25);
+            startAngle = rawStartAngle + (effectiveGap / 2.0);
+            sweepAngle = rawSweepAngle - effectiveGap;
+        }
+
+        if (sweepAngle <= 0.01)
+            return new PathGeometry();
+
         double endAngle = startAngle + sweepAngle;
 
         double startRad = Math.PI * startAngle / 180.0;
@@ -123,7 +177,7 @@ public class DonutArcPathConverter : IMultiValueConverter
 
         if (isPieMode || innerR <= 0)
         {
-            // Solid Pie Chart Slice
+            // Solid Pie slice
             var figure = new PathFigure
             {
                 StartPoint = new Point(cx, cy),
@@ -144,7 +198,7 @@ public class DonutArcPathConverter : IMultiValueConverter
         }
         else
         {
-            // Donut Ring Slice
+            // True Circular Donut Sector
             double x3 = cx + innerR * Math.Cos(endRad);
             double y3 = cy + innerR * Math.Sin(endRad);
             double x4 = cx + innerR * Math.Cos(startRad);
@@ -157,6 +211,7 @@ public class DonutArcPathConverter : IMultiValueConverter
                 IsFilled = true
             };
 
+            // 1. Clockwise outer circular arc
             figure.Segments!.Add(new ArcSegment
             {
                 Point = new Point(x2, y2),
@@ -165,14 +220,99 @@ public class DonutArcPathConverter : IMultiValueConverter
                 IsLargeArc = isLargeArc
             });
 
+            // 2. Straight line to inner radius
             figure.Segments.Add(new LineSegment { Point = new Point(x3, y3) });
 
+            // 3. Counter-clockwise inner circular arc
             figure.Segments.Add(new ArcSegment
             {
                 Point = new Point(x4, y4),
                 Size = new Size(innerR, innerR),
                 SweepDirection = SweepDirection.CounterClockwise,
                 IsLargeArc = isLargeArc
+            });
+
+            // IsClosed connects back to (x1, y1)
+            pathGeometry.Figures!.Add(figure);
+        }
+
+        return pathGeometry;
+    }
+
+    private static Geometry CreateFullDonutGeometry(double cx, double cy, double outerR, double innerR, bool isPieMode)
+    {
+        var pathGeometry = new PathGeometry();
+
+        if (isPieMode || innerR <= 0)
+        {
+            // Full circle pie
+            var figure = new PathFigure
+            {
+                StartPoint = new Point(cx, cy - outerR),
+                IsClosed = true,
+                IsFilled = true
+            };
+
+            figure.Segments!.Add(new ArcSegment
+            {
+                Point = new Point(cx, cy + outerR),
+                Size = new Size(outerR, outerR),
+                SweepDirection = SweepDirection.Clockwise,
+                IsLargeArc = false
+            });
+            figure.Segments.Add(new ArcSegment
+            {
+                Point = new Point(cx, cy - outerR),
+                Size = new Size(outerR, outerR),
+                SweepDirection = SweepDirection.Clockwise,
+                IsLargeArc = false
+            });
+
+            pathGeometry.Figures!.Add(figure);
+        }
+        else
+        {
+            // Full continuous 360-degree donut ring
+            var figure = new PathFigure
+            {
+                StartPoint = new Point(cx, cy - outerR),
+                IsClosed = true,
+                IsFilled = true
+            };
+
+            // Outer circle (top -> bottom -> top)
+            figure.Segments!.Add(new ArcSegment
+            {
+                Point = new Point(cx, cy + outerR),
+                Size = new Size(outerR, outerR),
+                SweepDirection = SweepDirection.Clockwise,
+                IsLargeArc = false
+            });
+            figure.Segments.Add(new ArcSegment
+            {
+                Point = new Point(cx, cy - outerR),
+                Size = new Size(outerR, outerR),
+                SweepDirection = SweepDirection.Clockwise,
+                IsLargeArc = false
+            });
+
+            // Line down to inner radius at top
+            figure.Segments.Add(new LineSegment { Point = new Point(cx, cy - innerR) });
+
+            // Inner circle (top -> bottom -> top, counter-clockwise)
+            figure.Segments.Add(new ArcSegment
+            {
+                Point = new Point(cx, cy + innerR),
+                Size = new Size(innerR, innerR),
+                SweepDirection = SweepDirection.CounterClockwise,
+                IsLargeArc = false
+            });
+            figure.Segments.Add(new ArcSegment
+            {
+                Point = new Point(cx, cy - innerR),
+                Size = new Size(innerR, innerR),
+                SweepDirection = SweepDirection.CounterClockwise,
+                IsLargeArc = false
             });
 
             pathGeometry.Figures!.Add(figure);

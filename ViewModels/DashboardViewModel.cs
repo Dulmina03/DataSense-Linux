@@ -238,6 +238,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     public ObservableCollection<ProcessNetworkUsage> LiveProcessTraffic { get; } = new();
     public ObservableCollection<ApplicationHistoricalProfile> TopProcesses { get; } = new();
 
+    [ObservableProperty] private bool _hasLiveProcessTraffic = false;
     [ObservableProperty] private string _downloadHeavyProcessText = "—";
     [ObservableProperty] private string _uploadHeavyProcessText = "—";
     [ObservableProperty] private string _topProcessesBaselineText = "Collecting process usage baseline...";
@@ -545,18 +546,25 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             {
                 LiveProcessTraffic.Add(process);
             }
+            HasLiveProcessTraffic = LiveProcessTraffic.Count > 0;
 
             if ((!HasTopProcesses || TopProcesses.Count == 0) && LiveProcessTraffic.Count > 0)
             {
                 var liveGrouped = LiveProcessTraffic
                     .GroupBy(p => p.ProcessIdentifier)
-                    .Select(g => new ApplicationHistoricalProfile
+                    .Select(g =>
                     {
-                        ProcessName = g.Key,
-                        DownloadBytes = g.Sum(x => x.DownloadBytes),
-                        UploadBytes = g.Sum(x => x.UploadBytes),
-                        TodayBytes = g.Sum(x => x.DownloadBytes + x.UploadBytes),
-                        DataSource = "Live Telemetry"
+                        var first = g.First();
+                        return new ApplicationHistoricalProfile
+                        {
+                            ProcessName = g.Key,
+                            DownloadBytes = g.Sum(x => x.DownloadBytes),
+                            UploadBytes = g.Sum(x => x.UploadBytes),
+                            TodayBytes = g.Sum(x => x.DownloadBytes + x.UploadBytes),
+                            DataSource = "Live Telemetry",
+                            ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessIdentifier, first.ExecutablePath),
+                            ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessIdentifier, first.ExecutablePath)
+                        };
                     })
                     .OrderByDescending(p => p.TotalBytes)
                     .Take(5)
@@ -1173,7 +1181,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                         TodayBytes = g.Sum(x => x.TodayBytes),
                         YesterdayBytes = g.Sum(x => x.YesterdayBytes),
                         SevenDayTotalBytes = g.Sum(x => x.SevenDayTotalBytes),
-                        ThirtyDayTotalBytes = g.Sum(x => x.ThirtyDayTotalBytes)
+                        ThirtyDayTotalBytes = g.Sum(x => x.ThirtyDayTotalBytes),
+                        ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessName, first.ExecutablePath),
+                        ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessName, first.ExecutablePath)
                     };
                 })
                 .OrderByDescending(p => p.TotalBytes)
@@ -1185,13 +1195,19 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             {
                 var liveGrouped = LiveProcessTraffic
                     .GroupBy(p => p.ProcessIdentifier.Trim().ToLowerInvariant())
-                    .Select(g => new ApplicationHistoricalProfile
+                    .Select(g =>
                     {
-                        ProcessName = g.First().ProcessIdentifier,
-                        DownloadBytes = g.Sum(x => x.DownloadBytes),
-                        UploadBytes = g.Sum(x => x.UploadBytes),
-                        TodayBytes = g.Sum(x => x.DownloadBytes + x.UploadBytes),
-                        DataSource = "Live Telemetry"
+                        var first = g.First();
+                        return new ApplicationHistoricalProfile
+                        {
+                            ProcessName = first.ProcessIdentifier,
+                            DownloadBytes = g.Sum(x => x.DownloadBytes),
+                            UploadBytes = g.Sum(x => x.UploadBytes),
+                            TodayBytes = g.Sum(x => x.DownloadBytes + x.UploadBytes),
+                            DataSource = "Live Telemetry",
+                            ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessIdentifier, first.ExecutablePath),
+                            ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessIdentifier, first.ExecutablePath)
+                        };
                     })
                     .OrderByDescending(p => p.TotalBytes)
                     .Take(5)
