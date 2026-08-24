@@ -70,41 +70,22 @@ public class NetworkUsageItemViewModel
     public string UploadedText => ByteFormatter.FormatBytes(BytesUploaded);
     public string TotalText => ByteFormatter.FormatBytes(TotalBytes);
 
-    public string DisplayName
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(NetworkName) || NetworkName.Equals("Unknown Network", StringComparison.OrdinalIgnoreCase))
-            {
-                return !string.IsNullOrWhiteSpace(InterfaceName) ? "Unknown Network" : "Unknown Network";
-            }
-            if (NetworkName.StartsWith("Interface: ", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Unknown Network";
-            }
-            return NetworkName;
-        }
-    }
+    public string DisplayName => !string.IsNullOrWhiteSpace(NetworkName) ? NetworkName : (!string.IsNullOrWhiteSpace(InterfaceName) ? $"Interface: {InterfaceName}" : "Unknown Network");
 
     public string SubtitleText
     {
         get
         {
-            if (!string.IsNullOrWhiteSpace(NetworkName) &&
-                !NetworkName.Equals("Unknown Network", StringComparison.OrdinalIgnoreCase) &&
-                !NetworkName.StartsWith("Interface: ", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(InterfaceName) && InterfaceName != "None")
             {
-                if (NetworkName.Equals("Ethernet", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(InterfaceName))
-                {
-                    return $"Interface: {InterfaceName}";
-                }
-                return $"Network: {NetworkName}";
+                string type = !string.IsNullOrWhiteSpace(ConnectionType) && ConnectionType != "Unknown" ? ConnectionType : "Network";
+                return $"{type} • {InterfaceName}";
             }
-            if (!string.IsNullOrWhiteSpace(InterfaceName))
+            if (!string.IsNullOrWhiteSpace(ConnectionType) && ConnectionType != "Unknown")
             {
-                return $"Interface: {InterfaceName}";
+                return ConnectionType;
             }
-            return "Network: Unknown";
+            return "Connected Network";
         }
     }
 
@@ -154,6 +135,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     private readonly IAppIconService _appIconService;
     private readonly IApplicationChartColorProvider _colorProvider;
     private readonly INetworkMonitorWorker _networkMonitorWorker;
+    private readonly INetworkIdentityService _identityService;
 
     private bool _initialising = true;
     private bool _disposed;
@@ -168,7 +150,8 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         IApplicationAnalyticsService appAnalyticsService,
         IAppIconService appIconService,
         IApplicationChartColorProvider colorProvider,
-        INetworkMonitorWorker networkMonitorWorker)
+        INetworkMonitorWorker networkMonitorWorker,
+        INetworkIdentityService? identityService = null)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _historicalService = historicalService ?? throw new ArgumentNullException(nameof(historicalService));
@@ -176,6 +159,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         _appIconService = appIconService ?? throw new ArgumentNullException(nameof(appIconService));
         _colorProvider = colorProvider ?? throw new ArgumentNullException(nameof(colorProvider));
         _networkMonitorWorker = networkMonitorWorker ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
+        _identityService = identityService ?? new NetworkIdentityService(new LinuxNetworkConnectionService());
 
         _selectedPeriod = HistoryPeriodType.Last7Days;
         _selectedInterface = "All";
@@ -506,6 +490,18 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
         try
         {
+            // Ensure canonical identity is resolved and cached for the active interface
+            if (!string.IsNullOrWhiteSpace(_networkMonitorWorker.ActiveInterface) &&
+                _networkMonitorWorker.ActiveInterface != "None" &&
+                _networkMonitorWorker.ActiveInterface != "Disconnected")
+            {
+                try
+                {
+                    await _identityService.GetCurrentIdentityAsync(_networkMonitorWorker.ActiveInterface);
+                }
+                catch { }
+            }
+
             var (start, end) = ComputeDateRange();
             string? ifaceFilter = SelectedInterface == "All" ? null : SelectedInterface;
 
@@ -611,17 +607,19 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             }
             catch { }
 
-            // 7. Map Network Usage (Strictly aggregate data usage totals by network)
+            // 7. Map Network Usage (Strictly aggregate data usage totals by canonical network identity)
             var networkGrouped = sessions
-                .GroupBy(s => NetworkIdentityValidator.NormalizeNetworkName(s.NetworkName, s.InterfaceName))
+                .GroupBy(s => _identityService.GetCanonicalKey(s.NetworkName, s.InterfaceName))
                 .Select(g =>
                 {
-                    var first = g.First();
+                    var firstValid = g.FirstOrDefault(x => _identityService.IsValidNetworkName(x.NetworkName)) ?? g.First();
+                    string displayName = _identityService.NormalizeNetworkName(firstValid.NetworkName, firstValid.InterfaceName);
+
                     return new NetworkUsageItemViewModel
                     {
-                        NetworkName = g.Key,
-                        InterfaceName = first.InterfaceName,
-                        ConnectionType = first.ConnectionType,
+                        NetworkName = displayName,
+                        InterfaceName = firstValid.InterfaceName,
+                        ConnectionType = firstValid.ConnectionType,
                         BytesDownloaded = g.Sum(x => x.BytesDownloaded),
                         BytesUploaded = g.Sum(x => x.BytesUploaded)
                     };

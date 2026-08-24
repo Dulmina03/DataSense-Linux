@@ -30,7 +30,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IApplicationIntelligenceService _appIntelligenceService;
     private readonly IUnifiedIntelligenceService     _unifiedIntelligenceService;
     private readonly IApplicationAnalyticsService    _applicationAnalyticsService;
+    private readonly IUnifiedAnalyticsIntelligenceService _unifiedAnalyticsIntelligenceService;
     private readonly NetworkSessionManager     _sessionManager;
+    private readonly INetworkIdentityService   _identityService;
     private bool     _disposed;
     private int      _tickCount  = 4; // Start at 4 so first tick triggers details load immediately
     private DateTime _lastAnalyticsDate = DateTime.MinValue; // Track UTC date for midnight auto-refresh
@@ -320,7 +322,6 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     
     [ObservableProperty] private UnifiedInsight? _primaryUnifiedInsight;
     [ObservableProperty] private bool _hasUnifiedInsights;
-    private readonly IUnifiedAnalyticsIntelligenceService _unifiedAnalyticsIntelligenceService;
 
     // ── Chart layout constants ──────────────────────────────────────────────
 
@@ -364,7 +365,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         IUnifiedAnalyticsIntelligenceService unifiedAnalyticsIntelligenceService,
         NetworkSessionManager           sessionManager,
         IChartDataService               chartDataService,
-        IAppIconService?                appIconService = null)
+        IAppIconService?                appIconService = null,
+        INetworkIdentityService?        identityService = null)
     {
         _networkMonitorWorker   = networkMonitorWorker   ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
         _repository             = repository             ?? throw new ArgumentNullException(nameof(repository));
@@ -381,6 +383,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         _sessionManager         = sessionManager         ?? throw new ArgumentNullException(nameof(sessionManager));
         _chartDataService       = chartDataService       ?? throw new ArgumentNullException(nameof(chartDataService));
         _appIconService         = appIconService         ?? new LinuxApplicationIconService();
+        _identityService        = identityService        ?? new NetworkIdentityService(_connectionService);
 
         // Initialise relative timeline axis labels
         TimeAxisLabels.Add("-60s");
@@ -1892,6 +1895,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         try
         {
             var details = await _connectionService.GetConnectionDetailsAsync(interfaceName);
+            var identity = await _identityService.GetCurrentIdentityAsync(interfaceName);
 
             Dispatcher.UIThread.Post(() =>
             {
@@ -1910,25 +1914,25 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 HasWifi                = details.ConnectionType.Equals("wifi", StringComparison.OrdinalIgnoreCase);
                 IsConnectionDetailsLoading = false;
 
-                if (HasWifi)
-                {
-                    NetworkTypeText = "Wi-Fi";
-                    NetworkIdentityText = !string.IsNullOrEmpty(details.WifiSsid) && details.WifiSsid != "—" ? details.WifiSsid : "Connected";
-                }
-                else if (details.ConnectionType.Equals("ethernet", StringComparison.OrdinalIgnoreCase))
-                {
-                    NetworkTypeText = "Ethernet";
-                    NetworkIdentityText = "Connected";
-                }
-                else if (string.IsNullOrEmpty(interfaceName) || interfaceName == "None" || interfaceName == "Disconnected")
+                if (string.IsNullOrEmpty(interfaceName) || interfaceName == "None" || interfaceName == "Disconnected" || !identity.IsConnected)
                 {
                     NetworkTypeText = "Disconnected";
                     NetworkIdentityText = "—";
                 }
+                else if (HasWifi)
+                {
+                    NetworkTypeText = "Wi-Fi";
+                    NetworkIdentityText = identity.DisplayName;
+                }
+                else if (details.ConnectionType.Equals("ethernet", StringComparison.OrdinalIgnoreCase))
+                {
+                    NetworkTypeText = "Ethernet";
+                    NetworkIdentityText = identity.DisplayName;
+                }
                 else
                 {
                     NetworkTypeText = details.ConnectionType;
-                    NetworkIdentityText = !string.IsNullOrEmpty(details.ConnectionName) && details.ConnectionName != "—" ? details.ConnectionName : "Connected";
+                    NetworkIdentityText = identity.DisplayName;
                 }
             });
         }

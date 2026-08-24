@@ -53,6 +53,7 @@ public static class DependencyInjection
         services.AddSingleton<INetworkMonitorWorker, NetworkMonitorWorker>();
         services.AddSingleton<INetworkPersistenceService, NetworkPersistenceService>();
         services.AddSingleton<INetworkConnectionService, LinuxNetworkConnectionService>();
+        services.AddSingleton<INetworkIdentityService, NetworkIdentityService>();
         services.AddSingleton<NetworkSessionManager>();
         services.AddSingleton<ISpeedTestService, CloudflareSpeedTestService>();
 

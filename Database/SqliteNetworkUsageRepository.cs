@@ -164,17 +164,81 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             catch (SqliteException) { /* Column already exists */ }
         }
 
-        // Clean invalid / placeholder NetworkName records in NetworkSessions
+        // Safe intelligent migration for invalid / placeholder NetworkName records in NetworkSessions
         try
         {
-            using var cleanCmd = connection.CreateCommand();
-            cleanCmd.CommandText = @"
-                UPDATE NetworkSessions 
-                SET NetworkName = 'Interface: ' || InterfaceName 
-                WHERE (NetworkName IS NULL OR TRIM(NetworkName) IN ('-', '--', '—', '–', '', 'Unknown', 'unknown', 'Unknown Network', 'Wi-Fi', 'Wifi', 'wifi', 'Wireless', 'Mobile Hotspot', 'Hotspot', 'Connected Network', 'Network', 'None', 'null'))
-                  AND InterfaceName IS NOT NULL AND InterfaceName NOT IN ('', 'None', 'Disconnected');
+            // 1. Identify records with placeholder network names
+            using var findCmd = connection.CreateCommand();
+            findCmd.CommandText = @"
+                SELECT Id, NetworkName, InterfaceName, StartTime, EndTime 
+                FROM NetworkSessions 
+                WHERE NetworkName IS NULL 
+                   OR TRIM(NetworkName) IN ('-', '--', '—', '–', '', 'Unknown', 'unknown', 'Unknown Network', 'Wi-Fi', 'Wifi', 'wifi', 'Wireless', 'Mobile Hotspot', 'Hotspot', 'Connected Network', 'Network', 'None', 'null')
+                   OR NetworkName LIKE 'Interface: %'
+                ORDER BY StartTime ASC;
             ";
-            await cleanCmd.ExecuteNonQueryAsync();
+
+            var invalidSessions = new List<(long Id, string InterfaceName, DateTime StartTime, DateTime? EndTime)>();
+            using (var reader = await findCmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    long id = reader.GetInt64(0);
+                    string iface = reader.IsDBNull(2) ? "" : reader.GetString(2);
+                    if (DateTime.TryParse(reader.GetString(3), out var start))
+                    {
+                        DateTime? end = reader.IsDBNull(4) ? null : (DateTime.TryParse(reader.GetString(4), out var e) ? e : null);
+                        invalidSessions.Add((id, iface, start, end));
+                    }
+                }
+            }
+
+            // For each invalid session, see if we can safely attribute it from adjacent valid sessions on the same interface within 2 hours
+            foreach (var invalid in invalidSessions)
+            {
+                string? inferredNetwork = null;
+                if (!string.IsNullOrWhiteSpace(invalid.InterfaceName) && invalid.InterfaceName != "None" && invalid.InterfaceName != "Disconnected")
+                {
+                    using var adjacentCmd = connection.CreateCommand();
+                    adjacentCmd.CommandText = @"
+                        SELECT NetworkName 
+                        FROM NetworkSessions 
+                        WHERE InterfaceName = @Iface 
+                          AND Id != @Id
+                          AND NetworkName IS NOT NULL 
+                          AND TRIM(NetworkName) NOT IN ('-', '--', '—', '–', '', 'Unknown', 'unknown', 'Unknown Network', 'Wi-Fi', 'Wifi', 'wifi', 'Wireless', 'Mobile Hotspot', 'Hotspot', 'Connected Network', 'Network', 'None', 'null')
+                          AND NOT NetworkName LIKE 'Interface: %'
+                          AND (
+                              (StartTime <= @EndPlus AND EndTime >= @StartMinus) OR
+                              (StartTime <= @Start AND EndTime >= @Start) OR
+                              (StartTime >= @StartMinus AND StartTime <= @EndPlus)
+                          )
+                        ORDER BY ABS(strftime('%s', StartTime) - strftime('%s', @Start)) ASC
+                        LIMIT 1;
+                    ";
+                    adjacentCmd.Parameters.AddWithValue("@Iface", invalid.InterfaceName);
+                    adjacentCmd.Parameters.AddWithValue("@Id", invalid.Id);
+                    adjacentCmd.Parameters.AddWithValue("@Start", invalid.StartTime.ToString("o"));
+                    adjacentCmd.Parameters.AddWithValue("@StartMinus", invalid.StartTime.AddHours(-2).ToString("o"));
+                    adjacentCmd.Parameters.AddWithValue("@EndPlus", (invalid.EndTime ?? invalid.StartTime).AddHours(2).ToString("o"));
+
+                    var result = await adjacentCmd.ExecuteScalarAsync();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        inferredNetwork = result.ToString();
+                    }
+                }
+
+                string targetName = !string.IsNullOrWhiteSpace(inferredNetwork)
+                    ? inferredNetwork
+                    : (!string.IsNullOrWhiteSpace(invalid.InterfaceName) && invalid.InterfaceName != "None" && invalid.InterfaceName != "Disconnected" ? $"Interface: {invalid.InterfaceName}" : "Unknown Network");
+
+                using var updateCmd = connection.CreateCommand();
+                updateCmd.CommandText = "UPDATE NetworkSessions SET NetworkName = @Name WHERE Id = @Id;";
+                updateCmd.Parameters.AddWithValue("@Name", targetName);
+                updateCmd.Parameters.AddWithValue("@Id", invalid.Id);
+                await updateCmd.ExecuteNonQueryAsync();
+            }
         }
         catch { }
     }

@@ -22,7 +22,7 @@ public class MockNetworkConnectionService : INetworkConnectionService
 
 public class MockNetworkMonitorWorker : INetworkMonitorWorker
 {
-    public string? ActiveInterface => "wlan0";
+    public string? ActiveInterface { get; set; } = "wlan0";
     public bool IsRunning => true;
     public double DownloadSpeed => 100;
     public double UploadSpeed => 50;

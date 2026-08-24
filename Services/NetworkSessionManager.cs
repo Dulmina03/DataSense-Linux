@@ -12,6 +12,7 @@ public class NetworkSessionManager : IDisposable
     private readonly INetworkMonitorWorker _monitorWorker;
     private readonly INetworkConnectionService _connectionService;
     private readonly INetworkUsageRepository _repository;
+    private readonly INetworkIdentityService _identityService;
     
     private NetworkSession? _currentSession;
     public NetworkSession? CurrentSession => _currentSession;
@@ -27,11 +28,13 @@ public class NetworkSessionManager : IDisposable
     public NetworkSessionManager(
         INetworkMonitorWorker monitorWorker,
         INetworkConnectionService connectionService,
-        INetworkUsageRepository repository)
+        INetworkUsageRepository repository,
+        INetworkIdentityService? identityService = null)
     {
         _monitorWorker = monitorWorker;
         _connectionService = connectionService;
         _repository = repository;
+        _identityService = identityService ?? new NetworkIdentityService(connectionService);
     }
 
     public void Start()
@@ -88,22 +91,22 @@ public class NetworkSessionManager : IDisposable
             // Check for network switch (e.g., interface change or SSID change every 5 seconds)
             bool shouldCheckNetworkIdentity = _currentInterface != iface || (now - _lastNetworkCheck).TotalSeconds > 5;
             string? detectedNetworkName = _currentNetworkName;
-            NetworkConnectionDetails? details = null;
+            NetworkIdentity? identity = null;
 
-            if (shouldCheckNetworkIdentity && !isDisconnected && _connectionService != null)
+            if (shouldCheckNetworkIdentity && !isDisconnected)
             {
                 try
                 {
-                    details = await _connectionService.GetConnectionDetailsAsync(iface!);
-                    var resolved = ResolveNetworkName(details, iface!);
+                    identity = await _identityService.GetCurrentIdentityAsync(iface!);
+                    var resolved = identity.DisplayName;
 
                     // If resolved identity is valid, update detected name
-                    if (NetworkIdentityValidator.IsValidNetworkName(resolved) || resolved == "Ethernet")
+                    if (_identityService.IsValidNetworkName(resolved) || resolved == "Ethernet")
                     {
                         detectedNetworkName = resolved;
                     }
                     // If resolution temporarily failed or returned interface fallback, but we already had a valid network on this interface, preserve it
-                    else if (_currentInterface == iface && NetworkIdentityValidator.IsValidNetworkName(_currentNetworkName))
+                    else if (_currentInterface == iface && _identityService.IsValidNetworkName(_currentNetworkName))
                     {
                         detectedNetworkName = _currentNetworkName;
                     }
@@ -133,19 +136,19 @@ public class NetworkSessionManager : IDisposable
 
                 if (!isDisconnected)
                 {
-                    if (string.IsNullOrEmpty(detectedNetworkName) && _connectionService != null)
+                    if (string.IsNullOrEmpty(detectedNetworkName))
                     {
                         try
                         {
-                            details = await _connectionService.GetConnectionDetailsAsync(iface!);
-                            detectedNetworkName = ResolveNetworkName(details, iface!);
+                            identity = await _identityService.GetCurrentIdentityAsync(iface!);
+                            detectedNetworkName = identity.DisplayName;
                             _currentNetworkName = detectedNetworkName;
                         }
                         catch { }
                     }
 
-                    string networkName = NetworkIdentityValidator.NormalizeNetworkName(detectedNetworkName, iface);
-                    string connType = details?.ConnectionType ?? (iface != null && (iface.StartsWith("wl") || iface.StartsWith("wlan")) ? "WiFi" : "Ethernet");
+                    string networkName = _identityService.NormalizeNetworkName(detectedNetworkName, iface);
+                    string connType = identity?.Type.ToString() ?? (iface != null && (iface.StartsWith("wl") || iface.StartsWith("wlan")) ? "WiFi" : "Ethernet");
 
                     _currentSession = new NetworkSession
                     {

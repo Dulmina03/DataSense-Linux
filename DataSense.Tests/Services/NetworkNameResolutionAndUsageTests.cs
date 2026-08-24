@@ -213,7 +213,7 @@ public class NetworkNameResolutionAndUsageTests : IDisposable
         Assert.Equal(250_000_000, slt.BytesUploaded);     // 100M + 150M
         Assert.Equal(1_450_000_000, slt.TotalBytes);      // Download + Upload = Total
         Assert.Equal("SLT Fiber", slt.DisplayName);
-        Assert.Equal("Network: SLT Fiber", slt.SubtitleText);
+        Assert.Equal("wifi • wlo1", slt.SubtitleText);
 
         var galaxy = vm.NetworkUsageItems.FirstOrDefault(n => n.NetworkName == "Galaxy A04s");
         Assert.NotNull(galaxy);
@@ -221,7 +221,7 @@ public class NetworkNameResolutionAndUsageTests : IDisposable
         Assert.Equal(50_000_000, galaxy.BytesUploaded);
         Assert.Equal(350_000_000, galaxy.TotalBytes);
         Assert.Equal("Galaxy A04s", galaxy.DisplayName);
-        Assert.Equal("Network: Galaxy A04s", galaxy.SubtitleText);
+        Assert.Equal("wifi • wlo1", galaxy.SubtitleText);
     }
 
     [Fact]
@@ -373,5 +373,209 @@ public class NetworkNameResolutionAndUsageTests : IDisposable
         Assert.Equal(1_000_000, galaxy.BytesDownloaded);
         Assert.Equal(200_000, galaxy.BytesUploaded);
         Assert.Equal(1_200_000, galaxy.TotalBytes);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 3. INetworkIdentityService & Unified Identity Tests
+    // ────────────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task NetworkIdentityService_WifiAndHotspot_ResolvesCorrectIdentity()
+    {
+        var mockConnService = new Mock<INetworkConnectionService>();
+        mockConnService.Setup(c => c.GetConnectionDetailsAsync("wlo1"))
+            .ReturnsAsync(new NetworkConnectionDetails
+            {
+                InterfaceName = "wlo1",
+                ConnectionType = "wifi",
+                WifiSsid = "uom.wireless",
+                ConnectionName = "uom.wireless"
+            });
+
+        var service = new NetworkIdentityService(mockConnService.Object);
+        var identity = await service.GetCurrentIdentityAsync("wlo1");
+
+        Assert.Equal("uom.wireless", identity.DisplayName);
+        Assert.Equal("uom.wireless", identity.Ssid);
+        Assert.Equal(NetworkType.WiFi, identity.Type);
+        Assert.True(identity.IsConnected);
+        Assert.Equal("uom.wireless", identity.CanonicalKey);
+    }
+
+    [Fact]
+    public async Task NetworkIdentityService_TemporaryDropout_MaintainsLastKnownIdentity()
+    {
+        var mockConnService = new Mock<INetworkConnectionService>();
+        
+        // First query: valid SSID
+        mockConnService.SetupSequence(c => c.GetConnectionDetailsAsync("wlo1"))
+            .ReturnsAsync(new NetworkConnectionDetails
+            {
+                InterfaceName = "wlo1",
+                ConnectionType = "wifi",
+                WifiSsid = "uom.wireless",
+                ConnectionName = "uom.wireless"
+            })
+            // Second query: temporary dropout (empty SSID)
+            .ReturnsAsync(new NetworkConnectionDetails
+            {
+                InterfaceName = "wlo1",
+                ConnectionType = "wifi",
+                WifiSsid = "—",
+                ConnectionName = "None"
+            });
+
+        var service = new NetworkIdentityService(mockConnService.Object);
+
+        var first = await service.GetCurrentIdentityAsync("wlo1");
+        Assert.Equal("uom.wireless", first.DisplayName);
+
+        var second = await service.GetCurrentIdentityAsync("wlo1");
+        // Should preserve last known identity instead of emitting dash or Unknown Network!
+        Assert.Equal("uom.wireless", second.DisplayName);
+    }
+
+    [Fact]
+    public async Task NetworkIdentityService_CanonicalGrouping_MergesCaseInsensitiveNames()
+    {
+        var today = DateTime.UtcNow.Date;
+
+        // Save mixed-case session records
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "uom.wireless",
+            InterfaceName = "wlo1",
+            ConnectionType = "wifi",
+            StartTime = today.AddHours(8),
+            EndTime = today.AddHours(10),
+            BytesDownloaded = 1_000_000,
+            BytesUploaded = 200_000
+        });
+
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "UOM.WIRELESS",
+            InterfaceName = "wlo1",
+            ConnectionType = "wifi",
+            StartTime = today.AddHours(11),
+            EndTime = today.AddHours(13),
+            BytesDownloaded = 2_000_000,
+            BytesUploaded = 300_000
+        });
+
+        var mockConn = new Mock<INetworkConnectionService>();
+        var idService = new NetworkIdentityService(mockConn.Object);
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker,
+            idService);
+
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        // Grouped into exactly 1 network entry
+        Assert.Single(vm.NetworkUsageItems);
+        var item = vm.NetworkUsageItems[0];
+        Assert.Equal("uom.wireless", item.DisplayName, ignoreCase: true);
+        Assert.Equal(3_000_000, item.BytesDownloaded);
+        Assert.Equal(500_000, item.BytesUploaded);
+        Assert.Equal(3_500_000, item.TotalBytes);
+    }
+
+    [Fact]
+    public async Task IntelligentMigration_CleansInvalidPlaceholdersSafely()
+    {
+        // Add a placeholder session
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "-",
+            InterfaceName = "wlo1",
+            ConnectionType = "wifi",
+            StartTime = DateTime.UtcNow.AddHours(-1),
+            EndTime = DateTime.UtcNow,
+            BytesDownloaded = 500_000,
+            BytesUploaded = 50_000
+        });
+
+        // Initialize repository triggers migration
+        await _dbContext.Repository.InitializeAsync();
+
+        var sessions = await _dbContext.Repository.GetSessionsAsync(DateTime.UtcNow.AddHours(-2), DateTime.UtcNow.AddHours(1));
+        var migrated = sessions.FirstOrDefault(s => s.InterfaceName == "wlo1");
+        
+        Assert.NotNull(migrated);
+        // Should not be "-" or empty
+        Assert.False(string.IsNullOrWhiteSpace(migrated.NetworkName));
+        Assert.NotEqual("-", migrated.NetworkName);
+        Assert.NotEqual("--", migrated.NetworkName);
+        Assert.NotEqual("—", migrated.NetworkName);
+    }
+
+    [Fact]
+    public async Task NetworkSessions_InterfaceFallback_ResolvesToDashboardIdentityAndMerges()
+    {
+        var today = DateTime.UtcNow.Date;
+
+        // Session 1 previously saved as "Interface: wlo1"
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Interface: wlo1",
+            InterfaceName = "wlo1",
+            ConnectionType = "wifi",
+            StartTime = today.AddHours(9),
+            EndTime = today.AddHours(11),
+            BytesDownloaded = 1_500_000_000,
+            BytesUploaded = 200_000_000
+        });
+
+        // Session 2 saved as "uom.wireless"
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "uom.wireless",
+            InterfaceName = "wlo1",
+            ConnectionType = "wifi",
+            StartTime = today.AddHours(11),
+            EndTime = today.AddHours(13),
+            BytesDownloaded = 2_000_000_000,
+            BytesUploaded = 300_000_000
+        });
+
+        var mockConn = new Mock<INetworkConnectionService>();
+        mockConn.Setup(c => c.GetConnectionDetailsAsync("wlo1"))
+            .ReturnsAsync(new NetworkConnectionDetails
+            {
+                InterfaceName = "wlo1",
+                ConnectionType = "wifi",
+                WifiSsid = "uom.wireless",
+                ConnectionName = "uom.wireless"
+            });
+
+        var idService = new NetworkIdentityService(mockConn.Object);
+        _monitorWorker.ActiveInterface = "wlo1";
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker,
+            idService);
+
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        // All sessions on wlo1 must be merged into "uom.wireless"
+        Assert.Single(vm.NetworkUsageItems);
+        var item = vm.NetworkUsageItems[0];
+        Assert.Equal("uom.wireless", item.DisplayName);
+        Assert.Equal(3_500_000_000, item.BytesDownloaded); // 1.5GB + 2.0GB
+        Assert.Equal(500_000_000, item.BytesUploaded);     // 200MB + 300MB
+        Assert.Equal(4_000_000_000, item.TotalBytes);
     }
 }
