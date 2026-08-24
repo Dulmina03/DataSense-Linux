@@ -125,6 +125,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
     public ObservableCollection<ApplicationHistoricalProfile> Applications { get; } = new();
     public ObservableCollection<ApplicationHistoricalProfile> FilteredApplications { get; } = new();
+    public ObservableCollection<ApplicationHistoricalProfile> MonthlyApplicationBreakdown { get; } = new();
 
     public ObservableCollection<MonthSelectItem> AvailableMonths { get; } = new();
     public ObservableCollection<string> Interfaces { get; } = new();
@@ -175,9 +176,10 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _hasHistoricalGraphData;
     [ObservableProperty] private bool _hasMonthlyBreakdown;
 
-    [ObservableProperty] private double _downloadBarWidth = 14.0;
-    [ObservableProperty] private double _uploadBarWidth = 14.0;
-    [ObservableProperty] private double _barGap = 4.0;
+    // Generous, clearly readable bar dimensions with prominent separation
+    [ObservableProperty] private double _downloadBarWidth = 26.0;
+    [ObservableProperty] private double _uploadBarWidth = 26.0;
+    [ObservableProperty] private double _barGap = 6.0;
 
     [ObservableProperty] private string _yAxisTopText = "1 MB";
     [ObservableProperty] private string _yAxisMidHighText = "750 KB";
@@ -194,7 +196,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _xAxisLabel6 = "";
 
     [ObservableProperty] private double _chartWidth = 900.0;
-    [ObservableProperty] private double _chartHeight = 180.0;
+    [ObservableProperty] private double _chartHeight = 250.0;
 
     // Hover Tooltip
     [ObservableProperty] private bool _isHoverActive;
@@ -246,23 +248,23 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
         AverageUsageLabel = value == HistoryPeriodType.Today ? "AVG / HOUR" : "AVG / DAY";
 
-        // Assign dynamic bar spacing properties depending on count of items in selected period
+        // Assign large, readable bar dimensions with prominent separation
         switch (value)
         {
             case HistoryPeriodType.Today:
+                DownloadBarWidth = 10.0;
+                UploadBarWidth = 10.0;
+                BarGap = 3.0;
+                break;
+            case HistoryPeriodType.Last7Days:
+                DownloadBarWidth = 26.0;
+                UploadBarWidth = 26.0;
+                BarGap = 6.0;
+                break;
+            case HistoryPeriodType.Month:
                 DownloadBarWidth = 6.0;
                 UploadBarWidth = 6.0;
                 BarGap = 2.0;
-                break;
-            case HistoryPeriodType.Last7Days:
-                DownloadBarWidth = 14.0;
-                UploadBarWidth = 14.0;
-                BarGap = 4.0;
-                break;
-            case HistoryPeriodType.Month:
-                DownloadBarWidth = 4.0;
-                UploadBarWidth = 4.0;
-                BarGap = 1.0;
                 break;
         }
 
@@ -564,7 +566,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 });
             }
 
-            // 11. Scale Bar Heights
+            // 11. Scale Bar Heights (using generous 250px vertical height)
             ScaleBarHeights(chartPoints, mBreakdown);
 
             // Post all results to UI
@@ -591,6 +593,10 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 Applications.Clear();
                 foreach (var a in mappedApps)
                     Applications.Add(a);
+
+                MonthlyApplicationBreakdown.Clear();
+                foreach (var a in mappedApps.Take(8))
+                    MonthlyApplicationBreakdown.Add(a);
 
                 HistoricalChartPoints.Clear();
                 foreach (var p in chartPoints)
@@ -712,6 +718,8 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
     private void ScaleBarHeights(List<HistoricalGraphSample> chartPoints, List<HistoricalGraphSample> mBreakdown)
     {
+        const double ChartContentHeight = 250.0;
+
         // 1. Scale Historical Chart Points
         double maxObserved = chartPoints.Count > 0 ? chartPoints.Max(p => Math.Max(p.DownloadBytes, p.UploadBytes)) : 0;
         double yMax = CalculateStableYMax(maxObserved);
@@ -733,8 +741,8 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             double dlRatio = yMax > 0 ? Math.Clamp((double)p.DownloadBytes / yMax, 0.0, 1.0) : 0.0;
             double ulRatio = yMax > 0 ? Math.Clamp((double)p.UploadBytes / yMax, 0.0, 1.0) : 0.0;
 
-            p.DownloadBarHeight = dlRatio * 180.0; // visual height constraint is 180px
-            p.UploadBarHeight = ulRatio * 180.0;
+            p.DownloadBarHeight = dlRatio * ChartContentHeight;
+            p.UploadBarHeight = ulRatio * ChartContentHeight;
         }
 
         // 2. Scale Monthly Breakdown Items
@@ -750,8 +758,8 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             double dlRatio = mYMax > 0 ? Math.Clamp((double)p.DownloadBytes / mYMax, 0.0, 1.0) : 0.0;
             double ulRatio = mYMax > 0 ? Math.Clamp((double)p.UploadBytes / mYMax, 0.0, 1.0) : 0.0;
 
-            p.DownloadBarHeight = dlRatio * 180.0;
-            p.UploadBarHeight = ulRatio * 180.0;
+            p.DownloadBarHeight = dlRatio * ChartContentHeight;
+            p.UploadBarHeight = ulRatio * ChartContentHeight;
         }
     }
 
@@ -778,9 +786,9 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         {
             IsHoverActive = true;
             HoverX = closest.CanvasX;
-            // Place tooltip float slightly above the taller bar of this category
-            HoverY = 180.0 - Math.Max(closest.DownloadBarHeight, closest.UploadBarHeight) - 10.0;
-            HoverY = Math.Clamp(HoverY, 10.0, 150.0);
+            // Position tooltip card above the tallest bar with safe boundary clamp
+            HoverY = 250.0 - Math.Max(closest.DownloadBarHeight, closest.UploadBarHeight) - 15.0;
+            HoverY = Math.Clamp(HoverY, 10.0, 200.0);
 
             HoverTimestampText = closest.Label;
             HoverDownloadText = closest.DownloadFormatted;
