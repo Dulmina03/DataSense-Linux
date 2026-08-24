@@ -1384,4 +1384,48 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         }
         return results;
     }
+
+    public async Task<int> GetTotalRecordCountAsync()
+    {
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            await connection.OpenAsync();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = @"
+                SELECT 
+                    (SELECT COUNT(*) FROM NetworkUsageRecords) +
+                    (SELECT COUNT(*) FROM NetworkSessions) +
+                    (SELECT COUNT(*) FROM ProcessUsageRecords) +
+                    (SELECT COUNT(*) FROM SpeedTestRecords);
+            ";
+            var result = await cmd.ExecuteScalarAsync();
+            return Convert.ToInt32(result);
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    public async Task ClearAllHistoryAsync()
+    {
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            await connection.OpenAsync();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = @"
+                DELETE FROM NetworkUsageRecords;
+                DELETE FROM NetworkSessions;
+                DELETE FROM ProcessUsageRecords;
+                DELETE FROM SpeedTestRecords;
+                VACUUM;
+            ";
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch { }
+    }
 }

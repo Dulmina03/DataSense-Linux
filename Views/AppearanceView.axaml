@@ -83,7 +83,7 @@
                 <Border Classes="AnalyticsSurface" Padding="{DynamicResource Padding.Large}">
                     <StackPanel Spacing="{DynamicResource Spacing.MD}">
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <Button Content="Save Preferences" Command="{Binding SaveBudgetCommand}" IsEnabled="{Binding !IsSaving}" Classes="Primary"/>
+                            <Button Content="Save Preferences" Command="{Binding SaveSettingsCommand}" IsEnabled="{Binding !IsSaving}" Classes="Primary"/>
                         </StackPanel>
                         <TextBlock Text="{Binding SaveStatusText}" Foreground="{DynamicResource Brush.Success}" Classes="Caption" FontWeight="SemiBold"/>
                     </StackPanel>

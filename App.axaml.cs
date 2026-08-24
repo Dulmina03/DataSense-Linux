@@ -45,12 +45,17 @@ public partial class App : Application
 
         // 2. Crash-safe Repository Initialization
         var repository = Services.GetRequiredService<INetworkUsageRepository>();
+        var themeService = Services.GetService<IThemeService>();
         Task.Run(async () =>
         {
             try
             {
                 await repository.InitializeAsync();
                 await repository.PurgeOldRecordsAsync(TimeSpan.FromDays(30));
+                if (themeService != null)
+                {
+                    await themeService.InitializeAsync();
+                }
             }
             catch (Exception ex)
             {

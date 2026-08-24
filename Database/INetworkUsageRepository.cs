@@ -81,4 +81,8 @@ public interface INetworkUsageRepository
     // App Settings (key-value store for persisting user preferences)
     Task<string?> GetSettingAsync(string key);
     Task SaveSettingAsync(string key, string value);
+
+    // Storage Management & Maintenance
+    Task<int> GetTotalRecordCountAsync();
+    Task ClearAllHistoryAsync();
 }

@@ -171,6 +171,8 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         _ = InitializeAsync();
     }
 
+    private readonly System.Threading.SemaphoreSlim _loadLock = new(1, 1);
+
     private static void RunOnUI(Action action)
     {
         if (Dispatcher.UIThread.CheckAccess())
@@ -478,18 +480,19 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
     public async Task LoadAsync(bool showLoading = true)
     {
-        if (showLoading)
-        {
-            RunOnUI(() =>
-            {
-                IsLoading = true;
-                HasHistoricalGraphData = false;
-            });
-        }
-        ErrorMessage = null;
-
+        await _loadLock.WaitAsync();
         try
         {
+            if (showLoading)
+            {
+                RunOnUI(() =>
+                {
+                    IsLoading = true;
+                    HasHistoricalGraphData = false;
+                });
+            }
+            ErrorMessage = null;
+
             // Ensure canonical identity is resolved and cached for the active interface
             if (!string.IsNullOrWhiteSpace(_networkMonitorWorker.ActiveInterface) &&
                 _networkMonitorWorker.ActiveInterface != "None" &&
@@ -810,6 +813,10 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 HasHistoricalGraphData = false;
                 HasTwelveMonthData = false;
             });
+        }
+        finally
+        {
+            _loadLock.Release();
         }
     }
 

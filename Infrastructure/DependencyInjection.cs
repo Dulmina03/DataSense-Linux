@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddSingleton<IApplicationSessionService, ApplicationSessionService>();
         services.AddSingleton<IUnifiedAnalyticsIntelligenceService, UnifiedAnalyticsIntelligenceService>();
         services.AddSingleton<IChartDataService, ChartDataService>();
+        services.AddSingleton<IThemeService, ThemeService>();
 
         // Monitoring Services
         services.AddSingleton<INetworkMonitorService, LinuxNetworkMonitorService>();
