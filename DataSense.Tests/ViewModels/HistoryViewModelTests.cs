@@ -619,4 +619,86 @@ public class HistoryViewModelTests : IDisposable
         await vm.LoadAsync(showLoading: false);
         Assert.Contains("Application network usage for", vm.ApplicationBreakdownSubtitle);
     }
+
+    [Fact]
+    public async Task NetworkSessions_DisplaysLiveSession_AndGroupsMonthlyByNetworkName()
+    {
+        var now = DateTime.UtcNow;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        // 2 sessions on "SLT Fiber"
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "SLT Fiber",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = startOfMonth.AddDays(2).AddHours(8),
+            EndTime = startOfMonth.AddDays(2).AddHours(12),
+            BytesDownloaded = 4_000_000,
+            BytesUploaded = 1_000_000
+        });
+
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "SLT Fiber",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = startOfMonth.AddDays(3).AddHours(14),
+            EndTime = null, // Live active session!
+            BytesDownloaded = 2_000_000,
+            BytesUploaded = 500_000
+        });
+
+        // 1 session on "Dialog 4G"
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Dialog 4G",
+            InterfaceName = "usb0",
+            ConnectionType = "Cellular",
+            StartTime = startOfMonth.AddDays(1).AddHours(9),
+            EndTime = startOfMonth.AddDays(1).AddHours(11),
+            BytesDownloaded = 1_000_000,
+            BytesUploaded = 200_000
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        // Load Month
+        vm.SelectMonth();
+        await vm.LoadAsync(showLoading: false);
+
+        // 1. Live Session verified
+        Assert.True(vm.HasLiveSession);
+        Assert.NotNull(vm.CurrentLiveSession);
+        Assert.Equal("SLT Fiber", vm.CurrentLiveSession.DisplayName);
+        Assert.True(vm.CurrentLiveSession.IsActive);
+
+        // 2. Counts: 3 sessions, 2 distinct networks
+        Assert.Equal("3 SESSIONS · 2 NETWORKS", vm.SessionNetworkCountText);
+
+        // 3. Monthly aggregated groups: Exactly 2 networks
+        Assert.Equal(2, vm.MonthlyNetworkSummaries.Count);
+        var slt = vm.MonthlyNetworkSummaries.FirstOrDefault(m => m.NetworkName == "SLT Fiber");
+        Assert.NotNull(slt);
+        Assert.Equal(6_000_000, slt.BytesDownloaded); // 4M + 2M
+        Assert.Equal(1_500_000, slt.BytesUploaded);   // 1M + 0.5M
+        Assert.Equal(7_500_000, slt.TotalBytes);
+
+        var dialog = vm.MonthlyNetworkSummaries.FirstOrDefault(m => m.NetworkName == "Dialog 4G");
+        Assert.NotNull(dialog);
+        Assert.Equal(1_000_000, dialog.BytesDownloaded);
+        Assert.Equal(200_000, dialog.BytesUploaded);
+        Assert.Equal(1_200_000, dialog.TotalBytes);
+
+        // 4. Monthly totals
+        Assert.NotEmpty(vm.MonthlyTotalDownloadText);
+        Assert.NotEmpty(vm.MonthlyTotalUploadText);
+        Assert.NotEmpty(vm.MonthlyTotalUsageText);
+    }
 }
