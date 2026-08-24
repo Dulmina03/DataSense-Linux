@@ -38,12 +38,14 @@ public class SpeedTestViewModelTests : IDisposable
     private readonly TestDatabaseContext _dbContext;
     private readonly MockSpeedTestService _mockSpeedService;
     private readonly MockNetworkMonitorWorker _mockWorker;
+    private readonly MockNetworkConnectionService _mockConnService;
 
     public SpeedTestViewModelTests()
     {
         _dbContext = TestDatabaseFactory.CreateAsync().GetAwaiter().GetResult();
         _mockSpeedService = new MockSpeedTestService();
         _mockWorker = new MockNetworkMonitorWorker();
+        _mockConnService = new MockNetworkConnectionService();
     }
 
     public void Dispose()
@@ -54,7 +56,7 @@ public class SpeedTestViewModelTests : IDisposable
     [Fact]
     public void InitialState_HasValidDefaultsAndTitle()
     {
-        var vm = new SpeedTestViewModel(_mockSpeedService, _dbContext.Repository, _mockWorker);
+        var vm = new SpeedTestViewModel(_mockSpeedService, _dbContext.Repository, _mockWorker, null, _mockConnService);
 
         Assert.Equal("Speed Test", vm.Title);
         Assert.Equal("READY", vm.DisplayPhaseText);
@@ -63,41 +65,53 @@ public class SpeedTestViewModelTests : IDisposable
         Assert.NotNull(vm.MeterBackgroundArc);
         Assert.NotNull(vm.MeterOuterRing);
         Assert.NotNull(vm.MeterInnerRing);
+        Assert.NotNull(vm.MeterInnerDomeArc);
+        Assert.NotNull(vm.ConcentricRing1);
+        Assert.NotNull(vm.ConcentricRing2);
+        Assert.NotNull(vm.ConcentricRing3);
+        Assert.NotNull(vm.ConcentricRing4);
         Assert.NotEmpty(vm.ScaleTicks);
+        Assert.NotEmpty(vm.OsPlatform);
     }
 
     [Fact]
     public void GaugeGeometry_CalculatesAccurateArc()
     {
-        var geom = SpeedTestViewModel.CreateArcGeometry(160, 145, 110, 150, 120);
+        var geom = SpeedTestViewModel.CreateArcGeometry(180, 160, 120, 150, 120);
 
         Assert.NotNull(geom);
+        Assert.NotNull(geom.Figures);
         Assert.Single(geom.Figures);
         Assert.False(geom.Figures[0].IsClosed);
+        Assert.NotNull(geom.Figures[0].Segments);
         Assert.Single(geom.Figures[0].Segments);
     }
 
     [Fact]
     public async Task StartTestAsync_ExecutesAllPhasesAndPersistsRecord()
     {
-        var vm = new SpeedTestViewModel(_mockSpeedService, _dbContext.Repository, _mockWorker);
+        var vm = new SpeedTestViewModel(_mockSpeedService, _dbContext.Repository, _mockWorker, null, _mockConnService);
 
         await vm.StartTestAsync();
 
         Assert.False(vm.IsTesting);
         Assert.Equal(SpeedTestStage.Completed, vm.CurrentStage);
         Assert.Equal("COMPLETED", vm.DisplayPhaseText);
-        Assert.Equal("82.4 Mbps", vm.DownloadSpeedText);
-        Assert.Equal("24.7 Mbps", vm.UploadSpeedText);
+        Assert.Equal("10.3 MB/s", vm.DownloadSpeedText);
+        Assert.Equal("10.3", vm.DownloadValueText);
+        Assert.Equal("3.1 MB/s", vm.UploadSpeedText);
+        Assert.Equal("3.1", vm.UploadValueText);
         Assert.Equal("18 ms", vm.PingText);
-        Assert.Equal("Excellent", vm.OverallQuality);
+        Assert.Equal("18", vm.PingValueText);
+        Assert.Equal("Good", vm.OverallQuality);
+        Assert.Equal("MB/s", vm.DisplayUnitText);
         Assert.True(vm.HasRealtimeGraphData);
 
         // Verify record persisted in database
         var history = (await _dbContext.Repository.GetSpeedTestsAsync(10)).ToList();
         Assert.Single(history);
-        Assert.Equal(82.4, history[0].DownloadSpeedMbps);
-        Assert.Equal(24.7, history[0].UploadSpeedMbps);
+        Assert.Equal(10.3, Math.Round(history[0].DownloadSpeedMbps, 1));
+        Assert.Equal(3.1, Math.Round(history[0].UploadSpeedMbps, 1));
         Assert.Equal(18.0, history[0].PingMs);
     }
 
@@ -105,7 +119,7 @@ public class SpeedTestViewModelTests : IDisposable
     public async Task CancelTest_SetsCancelledState()
     {
         var blockingService = new BlockingSpeedTestService();
-        var vm = new SpeedTestViewModel(blockingService, _dbContext.Repository, _mockWorker);
+        var vm = new SpeedTestViewModel(blockingService, _dbContext.Repository, _mockWorker, null, _mockConnService);
 
         var testTask = vm.StartTestAsync();
         vm.CancelTest();

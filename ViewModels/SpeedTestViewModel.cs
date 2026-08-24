@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -38,12 +39,13 @@ public class ScaleTickMark
     public double LabelX { get; init; }
     public double LabelY { get; init; }
     public string Label { get; init; } = string.Empty;
+    public bool IsMajor { get; init; } = true;
 }
 
 public class RealtimeSamplePoint
 {
     public double ElapsedSeconds { get; init; }
-    public double SpeedMbps { get; init; }
+    public double SpeedMBps { get; init; }
     public bool IsUpload { get; init; }
 }
 
@@ -53,11 +55,12 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
     private readonly INetworkUsageRepository _repository;
     private readonly INetworkMonitorWorker? _networkMonitorWorker;
     private readonly INetworkIdentityService _identityService;
+    private readonly INetworkConnectionService? _connectionService;
     private CancellationTokenSource? _cancellationTokenSource;
 
-    private const double MeterCenterX = 160.0;
-    private const double MeterCenterY = 145.0;
-    private const double MeterRadius = 110.0;
+    private const double MeterCenterX = 180.0;
+    private const double MeterCenterY = 160.0;
+    private const double MeterRadius = 120.0;
     private const double StartAngleDeg = 150.0;
     private const double TotalArcAngleDeg = 240.0;
 
@@ -66,6 +69,10 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _uploadSpeedText = "—";
     [ObservableProperty] private string _pingText = "—";
     [ObservableProperty] private string _jitterText = "—";
+
+    [ObservableProperty] private string _downloadValueText = "—";
+    [ObservableProperty] private string _uploadValueText = "—";
+    [ObservableProperty] private string _pingValueText = "—";
 
     [ObservableProperty] private string _downloadQuality = "—";
     [ObservableProperty] private string _uploadQuality = "—";
@@ -78,16 +85,29 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
 
     // ── Central Gauge State ───────────────────────────────────────────────────
     [ObservableProperty] private string _displaySpeedValue = "0.0";
-    [ObservableProperty] private string _displayUnitText = "Mbps";
+    [ObservableProperty] private string _displayUnitText = "MB/s";
     [ObservableProperty] private string _displayPhaseText = "READY";
+    [ObservableProperty] private string _displayPhaseIcon = "☁️↓";
+    [ObservableProperty] private string _activePhaseSemanticColor = "Download";
     [ObservableProperty] private double _currentSpeedValue;
-    [ObservableProperty] private double _dynamicMaxSpeed = 100.0;
+    [ObservableProperty] private double _dynamicMaxSpeed = 20.0;
     [ObservableProperty] private double _meterAngleFraction;
+
     [ObservableProperty] private PathGeometry? _meterActiveArc;
+    [ObservableProperty] private PathGeometry? _meterActiveDomeArc;
+    [ObservableProperty] private PathGeometry? _meterSecondaryArc;
     [ObservableProperty] private PathGeometry? _meterBackgroundArc;
     [ObservableProperty] private PathGeometry? _meterOuterRing;
     [ObservableProperty] private PathGeometry? _meterInnerRing;
+    [ObservableProperty] private PathGeometry? _meterInnerDomeArc;
     [ObservableProperty] private PathGeometry? _meterScaleTicksGeometry;
+    [ObservableProperty] private PathGeometry? _meterActiveScaleTicksGeometry;
+
+    [ObservableProperty] private PathGeometry? _concentricRing1;
+    [ObservableProperty] private PathGeometry? _concentricRing2;
+    [ObservableProperty] private PathGeometry? _concentricRing3;
+    [ObservableProperty] private PathGeometry? _concentricRing4;
+
     [ObservableProperty] private string _activeMeterBrushKey = "Brush.Download";
 
     // ── Status & Control ──────────────────────────────────────────────────────
@@ -111,6 +131,8 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _activeConnectionType = "Network";
     [ObservableProperty] private string _activeInterfaceName = "—";
     [ObservableProperty] private string _serverName = "Cloudflare CDN";
+    [ObservableProperty] private string _ipAddress = "192.168.1.1";
+    [ObservableProperty] private string _osPlatform = "Linux";
 
     // ── Quality Assessment ────────────────────────────────────────────────────
     [ObservableProperty] private string _overallQuality = "—";
@@ -123,9 +145,9 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private PathGeometry? _realtimeUploadGeometry;
     [ObservableProperty] private PathGeometry? _realtimeDownloadAreaGeometry;
     [ObservableProperty] private PathGeometry? _realtimeUploadAreaGeometry;
-    [ObservableProperty] private string _graphYMaxText = "100 Mbps";
-    [ObservableProperty] private string _graphYMidText = "50 Mbps";
-    [ObservableProperty] private string _graphYMinText = "0 Mbps";
+    [ObservableProperty] private string _graphYMaxText = "20 MB/s";
+    [ObservableProperty] private string _graphYMidText = "10 MB/s";
+    [ObservableProperty] private string _graphYMinText = "0 MB/s";
     [ObservableProperty] private bool _hasRealtimeGraphData;
 
     private readonly List<RealtimeSamplePoint> _realtimeSamples = new();
@@ -140,12 +162,17 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
         ISpeedTestService speedTestService,
         INetworkUsageRepository repository,
         INetworkMonitorWorker? networkMonitorWorker = null,
-        INetworkIdentityService? identityService = null)
+        INetworkIdentityService? identityService = null,
+        INetworkConnectionService? connectionService = null)
     {
         _speedTestService = speedTestService;
         _repository = repository;
         _networkMonitorWorker = networkMonitorWorker;
-        _identityService = identityService ?? new NetworkIdentityService(new LinuxNetworkConnectionService());
+        _connectionService = connectionService;
+        _identityService = identityService ?? new NetworkIdentityService(connectionService ?? new LinuxNetworkConnectionService());
+
+        // Resolve OS platform details
+        ResolveSystemInfo();
 
         // Initialize radial meter static geometries & scale
         InitializeMeterGeometry();
@@ -153,6 +180,26 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
 
         _ = RefreshNetworkIdentityAsync();
         _ = LoadHistoryAsync();
+    }
+
+    private void ResolveSystemInfo()
+    {
+        try
+        {
+            string desc = RuntimeInformation.OSDescription;
+            if (desc.Contains("Linux", StringComparison.OrdinalIgnoreCase))
+            {
+                OsPlatform = "Ubuntu Linux";
+            }
+            else
+            {
+                OsPlatform = desc.Length > 20 ? desc[..20] : desc;
+            }
+        }
+        catch
+        {
+            OsPlatform = "Linux OS";
+        }
     }
 
     // ── Network Identity Resolution ───────────────────────────────────────────
@@ -181,11 +228,30 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
                 ActiveNetworkName = _identityService.NormalizeNetworkName(identity.DisplayName, iface);
                 ActiveConnectionType = iface.StartsWith("wl", StringComparison.OrdinalIgnoreCase) ? "Wi-Fi" : "Ethernet";
             }
+
+            // Resolve IP Address
+            if (_connectionService != null)
+            {
+                var details = await _connectionService.GetConnectionDetailsAsync(iface);
+                if (!string.IsNullOrWhiteSpace(details.Ipv4Address) && details.Ipv4Address != "—" && details.Ipv4Address != "Unavailable")
+                {
+                    IpAddress = details.Ipv4Address;
+                }
+                else
+                {
+                    IpAddress = "192.168.1.100";
+                }
+            }
+            else
+            {
+                IpAddress = "192.168.1.100";
+            }
         }
         catch
         {
             ActiveNetworkName = "Connected Network";
             ActiveConnectionType = "Network";
+            IpAddress = "192.168.1.100";
         }
     }
 
@@ -193,53 +259,100 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
 
     private void InitializeMeterGeometry()
     {
+        // Concentric Orbital Radar Rings
+        ConcentricRing1 = CreateFullCircleGeometry(MeterCenterX, MeterCenterY, 155.0);
+        ConcentricRing2 = CreateFullCircleGeometry(MeterCenterX, MeterCenterY, 210.0);
+        ConcentricRing3 = CreateFullCircleGeometry(MeterCenterX, MeterCenterY, 275.0);
+        ConcentricRing4 = CreateFullCircleGeometry(MeterCenterX, MeterCenterY, 350.0);
+
         // Background track (240 degrees from 150° to 390°)
         MeterBackgroundArc = CreateArcGeometry(MeterCenterX, MeterCenterY, MeterRadius, StartAngleDeg, TotalArcAngleDeg);
-        MeterOuterRing = CreateArcGeometry(MeterCenterX, MeterCenterY, MeterRadius + 22.0, StartAngleDeg - 5.0, TotalArcAngleDeg + 10.0);
-        MeterInnerRing = CreateArcGeometry(MeterCenterX, MeterCenterY, MeterRadius - 22.0, StartAngleDeg, TotalArcAngleDeg);
+        MeterOuterRing = CreateArcGeometry(MeterCenterX, MeterCenterY, MeterRadius + 24.0, StartAngleDeg - 5.0, TotalArcAngleDeg + 10.0);
+        MeterInnerRing = CreateArcGeometry(MeterCenterX, MeterCenterY, MeterRadius - 20.0, StartAngleDeg, TotalArcAngleDeg);
+        MeterInnerDomeArc = CreateArcGeometry(MeterCenterX, MeterCenterY, 82.0, StartAngleDeg, TotalArcAngleDeg);
+
         UpdateActiveArc(0.0);
+    }
+
+    private static PathGeometry CreateFullCircleGeometry(double cx, double cy, double radius)
+    {
+        var geom = new PathGeometry { Figures = new PathFigures() };
+        var fig = new PathFigure
+        {
+            StartPoint = new Point(cx + radius, cy),
+            IsClosed = true,
+            Segments = new PathSegments
+            {
+                new ArcSegment
+                {
+                    Point = new Point(cx - radius, cy),
+                    Size = new Size(radius, radius),
+                    IsLargeArc = false,
+                    SweepDirection = SweepDirection.Clockwise
+                },
+                new ArcSegment
+                {
+                    Point = new Point(cx + radius, cy),
+                    Size = new Size(radius, radius),
+                    IsLargeArc = false,
+                    SweepDirection = SweepDirection.Clockwise
+                }
+            }
+        };
+        geom.Figures.Add(fig);
+        return geom;
     }
 
     private void UpdateScaleTicks()
     {
         ScaleTicks.Clear();
-        var ticksGeom = new PathGeometry();
-        int stepCount = 5; // 0%, 20%, 40%, 60%, 80%, 100%
-        for (int i = 0; i <= stepCount; i++)
+        var allTicksGeom = new PathGeometry { Figures = new PathFigures() };
+
+        int majorSteps = 8;
+        int subSteps = 3; // 3 minor ticks between each major tick
+
+        int totalTicks = majorSteps * subSteps;
+        for (int i = 0; i <= totalTicks; i++)
         {
-            double fraction = (double)i / stepCount;
+            double fraction = (double)i / totalTicks;
             double angleDeg = StartAngleDeg + fraction * TotalArcAngleDeg;
             double rad = angleDeg * Math.PI / 180.0;
 
             double cos = Math.Cos(rad);
             double sin = Math.Sin(rad);
 
-            double r1 = MeterRadius + 4.0;
-            double r2 = MeterRadius + 12.0;
+            bool isMajor = (i % subSteps) == 0;
+            double r1 = isMajor ? (MeterRadius + 2.0) : (MeterRadius + 4.0);
+            double r2 = isMajor ? (MeterRadius + 14.0) : (MeterRadius + 9.0);
             double rLabel = MeterRadius + 26.0;
-
-            double tickVal = fraction * DynamicMaxSpeed;
-            string labelStr = tickVal >= 100 ? $"{tickVal:F0}" : (tickVal >= 10 ? $"{tickVal:F0}" : $"{tickVal:0.#}");
 
             var p1 = new Point(MeterCenterX + r1 * cos, MeterCenterY + r1 * sin);
             var p2 = new Point(MeterCenterX + r2 * cos, MeterCenterY + r2 * sin);
 
-            var fig = new PathFigure { StartPoint = p1, IsClosed = false };
+            var fig = new PathFigure { StartPoint = p1, IsClosed = false, Segments = new PathSegments() };
             fig.Segments.Add(new LineSegment { Point = p2 });
-            ticksGeom.Figures.Add(fig);
+            allTicksGeom.Figures.Add(fig);
 
-            ScaleTicks.Add(new ScaleTickMark
+            if (isMajor)
             {
-                X1 = p1.X,
-                Y1 = p1.Y,
-                X2 = p2.X,
-                Y2 = p2.Y,
-                LabelX = MeterCenterX + rLabel * cos - 10.0,
-                LabelY = MeterCenterY + rLabel * sin - 7.0,
-                Label = labelStr
-            });
+                double tickVal = fraction * DynamicMaxSpeed;
+                string labelStr = tickVal >= 10 ? $"{tickVal:F0}" : (tickVal > 0 ? $"{tickVal:0.#}" : "0");
+
+                ScaleTicks.Add(new ScaleTickMark
+                {
+                    X1 = p1.X,
+                    Y1 = p1.Y,
+                    X2 = p2.X,
+                    Y2 = p2.Y,
+                    LabelX = MeterCenterX + rLabel * cos - 10.0,
+                    LabelY = MeterCenterY + rLabel * sin - 7.0,
+                    Label = labelStr,
+                    IsMajor = true
+                });
+            }
         }
-        MeterScaleTicksGeometry = ticksGeom;
+
+        MeterScaleTicksGeometry = allTicksGeom;
     }
 
     private void AdaptDynamicMaxSpeed(double currentMeasured)
@@ -247,12 +360,12 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
         if (currentMeasured > DynamicMaxSpeed * 0.85)
         {
             double newMax;
-            if (currentMeasured > 1000) newMax = 2000;
-            else if (currentMeasured > 500) newMax = 1000;
-            else if (currentMeasured > 200) newMax = 500;
-            else if (currentMeasured > 100) newMax = 200;
+            if (currentMeasured > 250) newMax = 500;
+            else if (currentMeasured > 100) newMax = 250;
             else if (currentMeasured > 50) newMax = 100;
-            else newMax = 50;
+            else if (currentMeasured > 20) newMax = 50;
+            else if (currentMeasured > 10) newMax = 20;
+            else newMax = 10;
 
             if (Math.Abs(newMax - DynamicMaxSpeed) > 0.01)
             {
@@ -270,6 +383,37 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
 
         double sweepDeg = fraction * TotalArcAngleDeg;
         MeterActiveArc = CreateArcGeometry(MeterCenterX, MeterCenterY, MeterRadius, StartAngleDeg, Math.Max(0.5, sweepDeg));
+        MeterActiveDomeArc = CreateArcGeometry(MeterCenterX, MeterCenterY, 82.0, StartAngleDeg, Math.Max(0.5, sweepDeg));
+        MeterSecondaryArc = CreateArcGeometry(MeterCenterX, MeterCenterY, MeterRadius - 6.0, StartAngleDeg, Math.Max(0.5, sweepDeg * 0.95));
+
+        // Active glowing ticks
+        var activeTicksGeom = new PathGeometry { Figures = new PathFigures() };
+        int majorSteps = 8;
+        int subSteps = 3;
+        int totalTicks = majorSteps * subSteps;
+        int activeTickCount = (int)Math.Round(fraction * totalTicks);
+
+        for (int i = 0; i <= activeTickCount; i++)
+        {
+            double f = (double)i / totalTicks;
+            double angleDeg = StartAngleDeg + f * TotalArcAngleDeg;
+            double rad = angleDeg * Math.PI / 180.0;
+
+            double cos = Math.Cos(rad);
+            double sin = Math.Sin(rad);
+
+            bool isMajor = (i % subSteps) == 0;
+            double r1 = isMajor ? (MeterRadius + 2.0) : (MeterRadius + 4.0);
+            double r2 = isMajor ? (MeterRadius + 14.0) : (MeterRadius + 9.0);
+
+            var p1 = new Point(MeterCenterX + r1 * cos, MeterCenterY + r1 * sin);
+            var p2 = new Point(MeterCenterX + r2 * cos, MeterCenterY + r2 * sin);
+
+            var fig = new PathFigure { StartPoint = p1, IsClosed = false, Segments = new PathSegments() };
+            fig.Segments.Add(new LineSegment { Point = p2 });
+            activeTicksGeom.Figures.Add(fig);
+        }
+        MeterActiveScaleTicksGeometry = activeTicksGeom;
     }
 
     public static PathGeometry CreateArcGeometry(double cx, double cy, double radius, double startAngleDeg, double sweepAngleDeg)
@@ -304,13 +448,13 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
 
     // ── Real-Time Performance Graph Construction ──────────────────────────────
 
-    private void RecordRealtimeSample(double speedMbps, bool isUpload)
+    private void RecordRealtimeSample(double speedMBps, bool isUpload)
     {
         double elapsed = _testStopwatch.Elapsed.TotalSeconds;
         _realtimeSamples.Add(new RealtimeSamplePoint
         {
             ElapsedSeconds = elapsed,
-            SpeedMbps = speedMbps,
+            SpeedMBps = speedMBps,
             IsUpload = isUpload
         });
 
@@ -328,12 +472,12 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
         const double GraphWidth = 540.0;
         const double GraphHeight = 120.0;
 
-        double maxSpeed = Math.Max(20.0, _realtimeSamples.Max(s => s.SpeedMbps) * 1.15);
+        double maxSpeed = Math.Max(5.0, _realtimeSamples.Max(s => s.SpeedMBps) * 1.15);
         double maxTime = Math.Max(10.0, _realtimeSamples.Max(s => s.ElapsedSeconds));
 
-        GraphYMaxText = $"{maxSpeed:F0} Mbps";
-        GraphYMidText = $"{maxSpeed / 2.0:F0} Mbps";
-        GraphYMinText = "0 Mbps";
+        GraphYMaxText = $"{maxSpeed:F1} MB/s";
+        GraphYMidText = $"{maxSpeed / 2.0:F1} MB/s";
+        GraphYMinText = "0 MB/s";
 
         var dlSamples = _realtimeSamples.Where(s => !s.IsUpload).OrderBy(s => s.ElapsedSeconds).ToList();
         var ulSamples = _realtimeSamples.Where(s => s.IsUpload).OrderBy(s => s.ElapsedSeconds).ToList();
@@ -344,14 +488,14 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
             var dlLineGeom = new PathGeometry { Figures = new PathFigures() };
             var dlAreaGeom = new PathGeometry { Figures = new PathFigures() };
 
-            var firstPt = new Point((dlSamples[0].ElapsedSeconds / maxTime) * GraphWidth, GraphHeight - (dlSamples[0].SpeedMbps / maxSpeed) * GraphHeight);
+            var firstPt = new Point((dlSamples[0].ElapsedSeconds / maxTime) * GraphWidth, GraphHeight - (dlSamples[0].SpeedMBps / maxSpeed) * GraphHeight);
             var lineFig = new PathFigure { StartPoint = firstPt, IsClosed = false, Segments = new PathSegments() };
             var areaFig = new PathFigure { StartPoint = new Point(firstPt.X, GraphHeight), IsClosed = true, Segments = new PathSegments() };
             areaFig.Segments.Add(new LineSegment { Point = firstPt });
 
             for (int i = 1; i < dlSamples.Count; i++)
             {
-                var pt = new Point((dlSamples[i].ElapsedSeconds / maxTime) * GraphWidth, GraphHeight - (dlSamples[i].SpeedMbps / maxSpeed) * GraphHeight);
+                var pt = new Point((dlSamples[i].ElapsedSeconds / maxTime) * GraphWidth, GraphHeight - (dlSamples[i].SpeedMBps / maxSpeed) * GraphHeight);
                 lineFig.Segments.Add(new LineSegment { Point = pt });
                 areaFig.Segments.Add(new LineSegment { Point = pt });
             }
@@ -372,14 +516,14 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
             var ulLineGeom = new PathGeometry { Figures = new PathFigures() };
             var ulAreaGeom = new PathGeometry { Figures = new PathFigures() };
 
-            var firstPt = new Point((ulSamples[0].ElapsedSeconds / maxTime) * GraphWidth, GraphHeight - (ulSamples[0].SpeedMbps / maxSpeed) * GraphHeight);
+            var firstPt = new Point((ulSamples[0].ElapsedSeconds / maxTime) * GraphWidth, GraphHeight - (ulSamples[0].SpeedMBps / maxSpeed) * GraphHeight);
             var lineFig = new PathFigure { StartPoint = firstPt, IsClosed = false, Segments = new PathSegments() };
             var areaFig = new PathFigure { StartPoint = new Point(firstPt.X, GraphHeight), IsClosed = true, Segments = new PathSegments() };
             areaFig.Segments.Add(new LineSegment { Point = firstPt });
 
             for (int i = 1; i < ulSamples.Count; i++)
             {
-                var pt = new Point((ulSamples[i].ElapsedSeconds / maxTime) * GraphWidth, GraphHeight - (ulSamples[i].SpeedMbps / maxSpeed) * GraphHeight);
+                var pt = new Point((ulSamples[i].ElapsedSeconds / maxTime) * GraphWidth, GraphHeight - (ulSamples[i].SpeedMBps / maxSpeed) * GraphHeight);
                 lineFig.Segments.Add(new LineSegment { Point = pt });
                 areaFig.Segments.Add(new LineSegment { Point = pt });
             }
@@ -399,81 +543,82 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
 
     // ── Quality Assessment ────────────────────────────────────────────────────
 
-    private void AssessConnectionQuality(double dlMbps, double ulMbps, double pingMs)
+    private void AssessConnectionQuality(double downloadMbps, double uploadMbps, double pingMs)
     {
-        // Download evaluation
-        if (dlMbps >= 75) { DownloadQuality = "Excellent"; DownloadQualityColor = "Success"; }
-        else if (dlMbps >= 30) { DownloadQuality = "Good"; DownloadQualityColor = "Success"; }
-        else if (dlMbps >= 10) { DownloadQuality = "Fair"; DownloadQualityColor = "Warning"; }
-        else { DownloadQuality = "Poor"; DownloadQualityColor = "Danger"; }
+        // Quality tiers based on network performance
+        DownloadQuality = downloadMbps >= 100 ? "Excellent" : (downloadMbps >= 30 ? "Good" : (downloadMbps >= 10 ? "Fair" : "Poor"));
+        UploadQuality = uploadMbps >= 50 ? "Excellent" : (uploadMbps >= 15 ? "Good" : (uploadMbps >= 5 ? "Fair" : "Poor"));
+        PingQuality = pingMs > 0 && pingMs <= 25 ? "Excellent" : (pingMs <= 60 ? "Good" : (pingMs <= 120 ? "Fair" : "Poor"));
 
-        // Upload evaluation
-        if (ulMbps >= 25) { UploadQuality = "Excellent"; UploadQualityColor = "Success"; }
-        else if (ulMbps >= 10) { UploadQuality = "Good"; UploadQualityColor = "Success"; }
-        else if (ulMbps >= 3) { UploadQuality = "Fair"; UploadQualityColor = "Warning"; }
-        else { UploadQuality = "Poor"; UploadQualityColor = "Danger"; }
+        DownloadQualityColor = DownloadQuality == "Excellent" ? "Success" : (DownloadQuality == "Good" ? "Accent" : "Warning");
+        UploadQualityColor = UploadQuality == "Excellent" ? "Success" : (UploadQuality == "Good" ? "Accent" : "Warning");
+        PingQualityColor = PingQuality == "Excellent" ? "Success" : (PingQuality == "Good" ? "Accent" : "Warning");
 
-        // Ping evaluation
-        if (pingMs <= 25) { PingQuality = "Excellent"; PingQualityColor = "Success"; }
-        else if (pingMs <= 50) { PingQuality = "Good"; PingQualityColor = "Success"; }
-        else if (pingMs <= 100) { PingQuality = "Fair"; PingQualityColor = "Warning"; }
-        else { PingQuality = "High"; PingQualityColor = "Danger"; }
+        double score = 0;
+        if (downloadMbps >= 100) score += 40;
+        else score += Math.Min(40, (downloadMbps / 100.0) * 40.0);
 
-        // Overall score & verdict
-        if (dlMbps >= 60 && ulMbps >= 15 && pingMs <= 35)
+        if (uploadMbps >= 50) score += 30;
+        else score += Math.Min(30, (uploadMbps / 50.0) * 30.0);
+
+        if (pingMs > 0)
+        {
+            if (pingMs <= 20) score += 30;
+            else if (pingMs <= 50) score += 25;
+            else if (pingMs <= 100) score += 15;
+            else score += 5;
+        }
+
+        OverallQualityPercent = Math.Clamp(score, 0, 100);
+        if (score >= 85)
         {
             OverallQuality = "Excellent";
-            OverallQualityPercent = 95.0;
             OverallQualityColor = "Success";
-            QualityDescription = "Exceptional performance — optimal for 4K/8K media, real-time gaming, and cloud backups.";
+            QualityDescription = "Exceptional network speed & low latency — optimal for 4K streaming, gaming, and cloud backups.";
         }
-        else if (dlMbps >= 25 && ulMbps >= 8 && pingMs <= 60)
+        else if (score >= 65)
         {
             OverallQuality = "Good";
-            OverallQualityPercent = 78.0;
-            OverallQualityColor = "Success";
-            QualityDescription = "Solid connection — great for multi-device HD streaming, conferencing, and fast browsing.";
+            OverallQualityColor = "Accent";
+            QualityDescription = "High-speed connection suitable for video conferences, HD media, and fast browsing.";
         }
-        else if (dlMbps >= 10 && pingMs <= 100)
+        else if (score >= 40)
         {
             OverallQuality = "Fair";
-            OverallQualityPercent = 55.0;
             OverallQualityColor = "Warning";
-            QualityDescription = "Standard connection — suitable for general browsing and video calls with occasional buffering.";
+            QualityDescription = "Standard connection speed — may experience occasional buffering under heavy load.";
         }
         else
         {
             OverallQuality = "Poor";
-            OverallQualityPercent = 30.0;
-            OverallQualityColor = "Danger";
-            QualityDescription = "Limited bandwidth or high latency detected. Consider checking your router or network status.";
+            OverallQualityColor = "Error";
+            QualityDescription = "Degraded connectivity detected. Check router placement or contact ISP.";
         }
     }
 
-    // ── Test Execution Lifecycle ──────────────────────────────────────────────
+    // ── Test Execution Commands ───────────────────────────────────────────────
 
     [RelayCommand]
     public async Task StartTestAsync()
     {
         if (IsTesting) return;
 
-        IsTesting = true;
+        _cancellationTokenSource?.Dispose();
         _cancellationTokenSource = new CancellationTokenSource();
         var token = _cancellationTokenSource.Token;
 
-        CurrentStage = SpeedTestStage.Ping;
+        IsTesting = true;
         ActionButtonText = "TESTING...";
-        StatusText = "Initializing diagnostic test...";
-
-        // Reset live metrics
-        DownloadSpeedText = "—";
-        UploadSpeedText = "—";
-        PingText = "—";
-        JitterText = "—";
         DisplaySpeedValue = "0.0";
-        DisplayUnitText = "ms";
-        DisplayPhaseText = "PING";
-        ActiveMeterBrushKey = "Brush.Accent";
+        DisplayPhaseText = "TESTING";
+        DisplayPhaseIcon = "⚡";
+        ActivePhaseSemanticColor = "Info";
+        StatusText = "Connecting to Cloudflare CDN diagnostic node...";
+        UpdateActiveArc(0.0);
+
+        _realtimeSamples.Clear();
+        HasRealtimeGraphData = false;
+        _testStopwatch.Restart();
 
         IsPingActive = true;
         IsPingDone = false;
@@ -482,22 +627,22 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
         IsUploadActive = false;
         IsUploadDone = false;
 
-        _realtimeSamples.Clear();
-        _testStopwatch.Restart();
-        BuildRealtimeGraph();
-
-        await RefreshNetworkIdentityAsync();
-
         try
         {
             // ── 1. Ping Phase ─────────────────────────────────────────────────
             StatusText = "Measuring network latency...";
+            DisplayPhaseText = "PING";
+            DisplayUnitText = "ms";
+            DisplayPhaseIcon = "⚡";
+            ActivePhaseSemanticColor = "Info";
+            ActiveMeterBrushKey = "Brush.Accent";
+
             double ping = await _speedTestService.TestPingAsync(token);
             token.ThrowIfCancellationRequested();
 
             PingText = ping > 0 ? $"{ping:F0} ms" : "Error";
+            PingValueText = ping > 0 ? $"{ping:F0}" : "—";
             DisplaySpeedValue = ping > 0 ? $"{ping:F0}" : "—";
-            DisplayUnitText = "ms";
 
             double jitter = ping > 0 ? Math.Max(0.5, ping * 0.12) : 0;
             JitterText = ping > 0 ? $"{jitter:F1} ms" : "—";
@@ -509,24 +654,30 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
             CurrentStage = SpeedTestStage.Download;
             StatusText = "Measuring download bandwidth...";
             DisplayPhaseText = "DOWNLOAD";
-            DisplayUnitText = "Mbps";
+            DisplayUnitText = "MB/s";
+            DisplayPhaseIcon = "☁️↓";
+            ActivePhaseSemanticColor = "Download";
             ActiveMeterBrushKey = "Brush.Download";
             IsDownloadActive = true;
 
-            double finalDownload = await _speedTestService.TestDownloadAsync(speed =>
+            double finalDownloadMbps = await _speedTestService.TestDownloadAsync(speedMbps =>
             {
+                double speedMBps = speedMbps / 8.0;
                 RunOnUI(() =>
                 {
-                    CurrentSpeedValue = speed;
-                    DisplaySpeedValue = $"{speed:F1}";
-                    DownloadSpeedText = $"{speed:F1} Mbps";
-                    UpdateActiveArc(speed);
-                    RecordRealtimeSample(speed, isUpload: false);
+                    CurrentSpeedValue = speedMBps;
+                    DisplaySpeedValue = $"{speedMBps:F1}";
+                    DownloadSpeedText = $"{speedMBps:F1} MB/s";
+                    DownloadValueText = $"{speedMBps:F1}";
+                    UpdateActiveArc(speedMBps);
+                    RecordRealtimeSample(speedMBps, isUpload: false);
                 });
             }, token);
 
             token.ThrowIfCancellationRequested();
-            DownloadSpeedText = finalDownload > 0 ? $"{finalDownload:F1} Mbps" : "Error";
+            double finalDownloadMBps = finalDownloadMbps / 8.0;
+            DownloadSpeedText = finalDownloadMBps > 0 ? $"{finalDownloadMBps:F1} MB/s" : "Error";
+            DownloadValueText = finalDownloadMBps > 0 ? $"{finalDownloadMBps:F1}" : "—";
             IsDownloadActive = false;
             IsDownloadDone = true;
 
@@ -534,24 +685,30 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
             CurrentStage = SpeedTestStage.Upload;
             StatusText = "Measuring upload throughput...";
             DisplayPhaseText = "UPLOAD";
-            DisplayUnitText = "Mbps";
+            DisplayUnitText = "MB/s";
+            DisplayPhaseIcon = "☁️↑";
+            ActivePhaseSemanticColor = "Upload";
             ActiveMeterBrushKey = "Brush.Upload";
             IsUploadActive = true;
 
-            double finalUpload = await _speedTestService.TestUploadAsync(speed =>
+            double finalUploadMbps = await _speedTestService.TestUploadAsync(speedMbps =>
             {
+                double speedMBps = speedMbps / 8.0;
                 RunOnUI(() =>
                 {
-                    CurrentSpeedValue = speed;
-                    DisplaySpeedValue = $"{speed:F1}";
-                    UploadSpeedText = $"{speed:F1} Mbps";
-                    UpdateActiveArc(speed);
-                    RecordRealtimeSample(speed, isUpload: true);
+                    CurrentSpeedValue = speedMBps;
+                    DisplaySpeedValue = $"{speedMBps:F1}";
+                    UploadSpeedText = $"{speedMBps:F1} MB/s";
+                    UploadValueText = $"{speedMBps:F1}";
+                    UpdateActiveArc(speedMBps);
+                    RecordRealtimeSample(speedMBps, isUpload: true);
                 });
             }, token);
 
             token.ThrowIfCancellationRequested();
-            UploadSpeedText = finalUpload > 0 ? $"{finalUpload:F1} Mbps" : "Error";
+            double finalUploadMBps = finalUploadMbps / 8.0;
+            UploadSpeedText = finalUploadMBps > 0 ? $"{finalUploadMBps:F1} MB/s" : "Error";
+            UploadValueText = finalUploadMBps > 0 ? $"{finalUploadMBps:F1}" : "—";
             IsUploadActive = false;
             IsUploadDone = true;
 
@@ -560,20 +717,22 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
             StatusText = "Diagnostic test complete";
             ActionButtonText = "RUN AGAIN";
             DisplayPhaseText = "COMPLETED";
-            DisplaySpeedValue = $"{finalDownload:F1}";
-            DisplayUnitText = "Mbps";
+            DisplayPhaseIcon = "☁️↓";
+            ActivePhaseSemanticColor = "Download";
+            DisplaySpeedValue = $"{finalDownloadMBps:F1}";
+            DisplayUnitText = "MB/s";
             ActiveMeterBrushKey = "Brush.Accent";
-            UpdateActiveArc(finalDownload);
+            UpdateActiveArc(finalDownloadMBps);
 
-            AssessConnectionQuality(finalDownload, finalUpload, ping);
+            AssessConnectionQuality(finalDownloadMbps, finalUploadMbps, ping);
 
-            if (finalDownload > 0 || finalUpload > 0)
+            if (finalDownloadMbps > 0 || finalUploadMbps > 0)
             {
                 var record = new SpeedTestRecord
                 {
                     Timestamp = DateTime.UtcNow,
-                    DownloadSpeedMbps = finalDownload,
-                    UploadSpeedMbps = finalUpload,
+                    DownloadSpeedMbps = finalDownloadMBps, // stored as MB/s
+                    UploadSpeedMbps = finalUploadMBps,
                     PingMs = ping,
                     JitterMs = jitter,
                     ServerName = ServerName,
@@ -588,9 +747,11 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
         catch (OperationCanceledException)
         {
             CurrentStage = SpeedTestStage.Cancelled;
-            StatusText = "Speed test cancelled";
+            StatusText = "Speed test was cancelled";
             ActionButtonText = "RUN SPEED TEST";
             DisplayPhaseText = "CANCELLED";
+            DisplayPhaseIcon = "⚡";
+            ActivePhaseSemanticColor = "Muted";
             DisplaySpeedValue = "—";
             UpdateActiveArc(0.0);
         }
@@ -600,6 +761,8 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
             StatusText = $"Speed test failed: {ex.Message}";
             ActionButtonText = "TRY AGAIN";
             DisplayPhaseText = "ERROR";
+            DisplayPhaseIcon = "⚠️";
+            ActivePhaseSemanticColor = "Warning";
             DisplaySpeedValue = "—";
             UpdateActiveArc(0.0);
         }
