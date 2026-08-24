@@ -533,7 +533,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 .ToList();
 
             // 8. Map Application Profiles (Chart #3 & Explorer)
-            long grandAppTotal = topApps.Sum(a => a.BytesDownloaded + a.BytesUploaded);
+            long grandAppTotal = totalUsage > 0 ? totalUsage : topApps.Sum(a => a.BytesDownloaded + a.BytesUploaded);
             var mappedApps = topApps
                 .GroupBy(a => a.ProcessName.Trim().ToLowerInvariant())
                 .Select(g =>
@@ -554,6 +554,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                         DownloadBytes = appDl,
                         UploadBytes = appUl,
                         PercentageOfTotal = appShare,
+                        RelativeUsagePercent = appShare,
                         ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessName, first.ExecutablePath),
                         ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessName, first.ExecutablePath)
                     };
@@ -561,16 +562,23 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 .OrderByDescending(a => a.TotalBytes)
                 .ToList();
 
-            long maxAppBytes = mappedApps.Count > 0 ? mappedApps.Max(a => a.TotalBytes) : 0;
             for (int i = 0; i < mappedApps.Count; i++)
             {
                 mappedApps[i].DisplayIndex = i;
-                mappedApps[i].RelativeUsagePercent = maxAppBytes > 0
-                    ? Math.Max((double)mappedApps[i].TotalBytes / maxAppBytes * 100.0, mappedApps[i].TotalBytes > 0 ? 3.0 : 0.0)
-                    : 0.0;
             }
 
-            // 9. Build Chart #1 Samples (12 buckets for Today, 7 for 7-Days, 28-31 for Month)
+            // Dynamic Subtitles based on selected period
+            string appSubtitle = SelectedPeriod switch
+            {
+                HistoryPeriodType.Today => "Application network usage for today",
+                HistoryPeriodType.Last7Days => "Application network usage for the last 7 days",
+                HistoryPeriodType.Month => SelectedMonth != null
+                    ? $"Application network usage for {SelectedMonth.DisplayName}"
+                    : $"Application network usage for {DateTime.UtcNow:MMMM yyyy}",
+                _ => "Application network usage for the selected period"
+            };
+
+            // 9. Build Chart #1 Samples (6 buckets for Today, 7 for 7-Days, 28-31 for Month)
             var chartPoints = BuildHistoricalGraphSamples(dailyList, hourlyList, start, end);
 
             // 10. Scale Bar Heights for Chart #1 & Chart #2
@@ -592,6 +600,9 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 AverageUsageText = ByteFormatter.FormatBytes(avgUsage);
                 AverageUsageTrendText = trendAvgText;
                 AverageUsageTrendColor = trendAvgColor;
+
+                ApplicationBreakdownSubtitle = appSubtitle;
+                UsageExplorerSubtitle = appSubtitle;
 
                 NetworkSessions.Clear();
                 foreach (var s in mappedSessions)

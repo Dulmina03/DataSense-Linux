@@ -544,4 +544,79 @@ public class HistoryViewModelTests : IDisposable
         vm.ClearTwelveMonthHover();
         Assert.False(vm.IsTwelveMonthHoverActive);
     }
+
+    [Fact]
+    public async Task ApplicationUsageBreakdown_SynchronizesWithPeriodAndMonth_AccuratelyCalculatingDlUlTotalShare()
+    {
+        var now = DateTime.UtcNow;
+        var today = now.Date;
+
+        // Add application records for Today
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "chrome",
+                BytesDownloaded = 2_000_000,
+                BytesUploaded = 500_000,
+                Timestamp = today.AddHours(2)
+            },
+            new ProcessUsageRecord
+            {
+                ProcessName = "code",
+                BytesDownloaded = 1_000_000,
+                BytesUploaded = 500_000,
+                Timestamp = today.AddHours(3)
+            }
+        });
+
+        // Add NetworkUsage so totalUsage aligns
+        await _dbContext.Repository.SaveUsageAsync(new NetworkUsage
+        {
+            Timestamp = today.AddHours(1),
+            InterfaceName = "eth0",
+            BytesReceived = 10_000_000,
+            BytesSent = 1_000_000
+        });
+        await _dbContext.Repository.SaveUsageAsync(new NetworkUsage
+        {
+            Timestamp = today.AddHours(4),
+            InterfaceName = "eth0",
+            BytesReceived = 13_000_000, // Delta = 3,000,000
+            BytesSent = 2_000_000       // Delta = 1,000,000 -> Total = 4,000,000
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        // 1. TODAY
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.Equal("Application network usage for today", vm.ApplicationBreakdownSubtitle);
+        Assert.Equal(2, vm.Applications.Count);
+
+        var chrome = vm.Applications.FirstOrDefault(a => a.ProcessName == "chrome");
+        Assert.NotNull(chrome);
+        Assert.Equal(2_000_000, chrome.DownloadBytes);
+        Assert.Equal(500_000, chrome.UploadBytes);
+        Assert.Equal(2_500_000, chrome.TotalBytes);
+        // Total period traffic is 4,000,000. Chrome share: 2,500,000 / 4,000,000 = 62.5%
+        Assert.Equal(62.5, chrome.PercentageOfTotal, 1);
+
+        // 2. 7 DAYS
+        vm.SelectLast7Days();
+        await vm.LoadAsync(showLoading: false);
+        Assert.Equal("Application network usage for the last 7 days", vm.ApplicationBreakdownSubtitle);
+
+        // 3. MONTH
+        vm.SelectMonth();
+        await vm.LoadAsync(showLoading: false);
+        Assert.Contains("Application network usage for", vm.ApplicationBreakdownSubtitle);
+    }
 }
