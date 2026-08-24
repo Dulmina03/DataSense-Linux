@@ -167,7 +167,7 @@
                 </Grid>
             </StackPanel>
 
-            <!-- ── 4. HISTORICAL NETWORK USAGE GRAPH ─────────────────────────────────────── -->
+            <!-- ── 4. HISTORICAL NETWORK USAGE CHART (GROUPED BAR CHART) ─────────────────── -->
             <Border Classes="AnalyticsSurface" Padding="20">
                 <StackPanel Spacing="16">
                     <!-- Header with Title, Subtitle, and Legend Readouts -->
@@ -232,21 +232,52 @@
                                     <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource Brush.SurfaceElevated}" HorizontalAlignment="Center">
                                         <TextBlock Text="📊" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Text="No network usage recorded for this period" Classes="Body" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                                    <TextBlock Text="Historical records accumulate automatically as network activity occurs." Classes="Caption" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    <TextBlock Text="No network usage recorded" Classes="Body" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                    <TextBlock Text="Usage data will appear here once DataSense records network activity." Classes="Caption" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextMuted}"/>
                                 </StackPanel>
 
-                                <!-- 1. UPLOAD SERIES: Glowing Spline Wave -->
-                                <Path Data="{Binding HistoricalUploadAreaGeometry}" Fill="{DynamicResource Brush.UploadAreaGradient}" IsVisible="{Binding HasHistoricalGraphData}"/>
-                                <Path Data="{Binding HistoricalUploadLineGeometry}" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="2.0" IsVisible="{Binding HasHistoricalGraphData}"/>
+                                <!-- Premium Grouped Bar Chart ItemsControl -->
+                                <ItemsControl ItemsSource="{Binding HistoricalChartPoints}" IsVisible="{Binding HasHistoricalGraphData}" Height="180" VerticalAlignment="Bottom">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Rows="1" VerticalAlignment="Bottom" Height="180"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:HistoricalGraphSample">
+                                            <Grid VerticalAlignment="Bottom" Height="180" Background="Transparent">
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                                            Spacing="{Binding ((vm:HistoryViewModel)DataContext).BarGap, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                                    <!-- Download Bar -->
+                                                    <Border Height="{Binding DownloadBarHeight}"
+                                                            Width="{Binding ((vm:HistoryViewModel)DataContext).DownloadBarWidth, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            Background="{DynamicResource Brush.Download}"
+                                                            CornerRadius="3,3,0,0">
+                                                        <Border.Transitions>
+                                                            <Transitions>
+                                                                <DoubleTransition Property="Height" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                                            </Transitions>
+                                                        </Border.Transitions>
+                                                    </Border>
+                                                    <!-- Upload Bar -->
+                                                    <Border Height="{Binding UploadBarHeight}"
+                                                            Width="{Binding ((vm:HistoryViewModel)DataContext).UploadBarWidth, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            Background="{DynamicResource Brush.Upload}"
+                                                            CornerRadius="3,3,0,0">
+                                                        <Border.Transitions>
+                                                            <Transitions>
+                                                                <DoubleTransition Property="Height" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                                            </Transitions>
+                                                        </Border.Transitions>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
-                                <!-- 2. DOWNLOAD SERIES: Glowing Spline Wave -->
-                                <Path Data="{Binding HistoricalDownloadAreaGeometry}" Fill="{DynamicResource Brush.DownloadAreaGradient}" IsVisible="{Binding HasHistoricalGraphData}"/>
-                                <Path Data="{Binding HistoricalDownloadLineGeometry}" Stroke="{DynamicResource Brush.Download}" StrokeThickness="2.5" IsVisible="{Binding HasHistoricalGraphData}"/>
-
-                                <!-- 3. Interactive Tooltip & Guideline -->
+                                <!-- Interactive Tooltip Box -->
                                 <Canvas IsHitTestVisible="False" IsVisible="{Binding IsHoverActive}">
-                                    <!-- Vertical Guide -->
                                     <Line StartPoint="{Binding HoverX, StringFormat='{}{0},0'}"
                                           EndPoint="{Binding HoverX, StringFormat='{}{0},180'}"
                                           Stroke="{DynamicResource Brush.BorderStrong}"
@@ -254,28 +285,28 @@
                                           StrokeDashArray="3,3"
                                           Opacity="0.7"/>
 
-                                    <!-- Hover Tooltip Box -->
                                     <Border Canvas.Left="{Binding HoverX}"
                                             Canvas.Top="10"
                                             Background="{DynamicResource Brush.SurfaceElevated}"
                                             BorderBrush="{DynamicResource Brush.BorderStrong}"
                                             BorderThickness="1"
                                             CornerRadius="8"
-                                            Padding="10,8"
+                                            Padding="12,10"
                                             BoxShadow="0 4 12 0 #40000000">
-                                        <StackPanel Spacing="4">
+                                        <StackPanel Spacing="6" MinWidth="110">
                                             <TextBlock Text="{Binding HoverTimestampText}" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
-                                            <Border Height="1" Background="{DynamicResource Brush.Border}"/>
-                                            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto,Auto" Margin="0,2">
-                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="↓ Download: " Classes="Caption" Foreground="{DynamicResource Brush.Download}"/>
-                                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding HoverDownloadText}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Download}"/>
+                                            <Border Height="1" Background="{DynamicResource Brush.Border}" Opacity="0.5"/>
+                                            <StackPanel Spacing="3">
+                                                <TextBlock Text="DOWNLOAD" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                                <TextBlock Text="{Binding HoverDownloadText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}"/>
 
-                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="↑ Upload: " Classes="Caption" Foreground="{DynamicResource Brush.Upload}"/>
-                                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding HoverUploadText}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}"/>
+                                                <TextBlock Text="UPLOAD" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" Margin="0,3,0,0"/>
+                                                <TextBlock Text="{Binding HoverUploadText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}"/>
 
-                                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Total: " Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
-                                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding HoverTotalText}" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
-                                            </Grid>
+                                                <Border Height="1" Background="{DynamicResource Brush.Border}" Opacity="0.5" Margin="0,3"/>
+                                                <TextBlock Text="TOTAL" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                                <TextBlock Text="{Binding HoverTotalText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                            </StackPanel>
                                         </StackPanel>
                                     </Border>
                                 </Canvas>
@@ -292,6 +323,104 @@
                         <TextBlock Grid.Column="4" Text="{Binding XAxisLabel4}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center"/>
                         <TextBlock Grid.Column="5" Text="{Binding XAxisLabel5}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center"/>
                         <TextBlock Grid.Column="6" Text="{Binding XAxisLabel6}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Right"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ── 4B. MONTHLY USAGE BREAKDOWN (GROUPED BAR CHART) ───────────────────────── -->
+            <Border Classes="AnalyticsSurface" Padding="20" IsVisible="{Binding !IsMonthActive}">
+                <StackPanel Spacing="16">
+                    <!-- Header with Title, Subtitle, and Legend Readouts -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="MONTHLY USAGE BREAKDOWN" Classes="PanelTitle"/>
+                            <TextBlock Text="Daily usage distribution for selected calendar month" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        </StackPanel>
+
+                        <!-- Legend Badges -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="↓ Download" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="↑ Upload" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Graph Canvas Area with Y-Axis -->
+                    <Grid Height="210">
+                        <Grid Margin="78,0,0,0" ClipToBounds="True" Background="Transparent">
+                            <Grid>
+                                <!-- Horizontal Background Gridlines (5 Subtle Levels) -->
+                                <Canvas Height="180">
+                                    <Line StartPoint="0,10"  EndPoint="2000,10"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.08"/>
+                                    <Line StartPoint="0,48"  EndPoint="2000,48"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.06"/>
+                                    <Line StartPoint="0,88"  EndPoint="2000,88"  Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.06"/>
+                                    <Line StartPoint="0,128" EndPoint="2000,128" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.06"/>
+                                    <Line StartPoint="0,168" EndPoint="2000,168" Stroke="{DynamicResource Brush.Border}" StrokeThickness="1" Opacity="0.14"/>
+                                </Canvas>
+
+                                <!-- Grouped Bar Chart ItemsControl -->
+                                <ItemsControl ItemsSource="{Binding MonthlyBreakdownItems}" Height="180" VerticalAlignment="Bottom">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Rows="1" VerticalAlignment="Bottom" Height="180"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:HistoricalGraphSample">
+                                            <Grid VerticalAlignment="Bottom" Height="180" Background="Transparent">
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Spacing="1">
+                                                    <!-- Download Bar -->
+                                                    <Border Height="{Binding DownloadBarHeight}"
+                                                            Width="4"
+                                                            Background="{DynamicResource Brush.Download}"
+                                                            CornerRadius="2,2,0,0"
+                                                            ToolTip.Tip="{Binding DownloadFormatted}">
+                                                        <Border.Transitions>
+                                                            <Transitions>
+                                                                <DoubleTransition Property="Height" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                                            </Transitions>
+                                                        </Border.Transitions>
+                                                    </Border>
+                                                    <!-- Upload Bar -->
+                                                    <Border Height="{Binding UploadBarHeight}"
+                                                            Width="4"
+                                                            Background="{DynamicResource Brush.Upload}"
+                                                            CornerRadius="2,2,0,0"
+                                                            ToolTip.Tip="{Binding UploadFormatted}">
+                                                        <Border.Transitions>
+                                                            <Transitions>
+                                                                <DoubleTransition Property="Height" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                                            </Transitions>
+                                                        </Border.Transitions>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+
+                    <!-- X-Axis Labels (Intelligently reduced to show 5-day ticks) -->
+                    <Grid Margin="78,0,0,0" ColumnDefinitions="*,*,*,*,*,*,*">
+                        <TextBlock Grid.Column="0" Text="01" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Left"/>
+                        <TextBlock Grid.Column="1" Text="05" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="10" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="3" Text="15" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="4" Text="20" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="5" Text="25" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="6" Text="30" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Right"/>
                     </Grid>
                 </StackPanel>
             </Border>
