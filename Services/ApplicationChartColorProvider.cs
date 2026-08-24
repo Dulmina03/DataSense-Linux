@@ -174,7 +174,25 @@ public class ApplicationChartColorProvider : IApplicationChartColorProvider
 
     public string GetColorHexByIndex(int index)
     {
-        if (index < 0) return "#6E6E9B";
+        if (index < 0)
+        {
+            if (Application.Current != null &&
+                Application.Current.TryFindResource("Brush.ChartSegmentOther", out var otherRes) &&
+                otherRes is ISolidColorBrush scb)
+            {
+                return $"#{scb.Color.R:X2}{scb.Color.G:X2}{scb.Color.B:X2}";
+            }
+            return "#6E6E9B";
+        }
+
+        string token = PaletteTokens[index % PaletteTokens.Length];
+        if (Application.Current != null &&
+            Application.Current.TryFindResource(token, out var res) &&
+            res is ISolidColorBrush brush)
+        {
+            return $"#{brush.Color.R:X2}{brush.Color.G:X2}{brush.Color.B:X2}";
+        }
+
         return PaletteHex[index % PaletteHex.Length];
     }
 

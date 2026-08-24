@@ -141,8 +141,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     private bool _disposed;
     private int _tickCount = 4;
 
-    // Retaining exactly ONE "Usage History" title at page level, return empty here to prevent duplicate top Context Title.
-    public override string Title => string.Empty;
+    public override string Title => "Usage History";
 
     public HistoryViewModel(
         INetworkUsageRepository repository,

@@ -1,338 +1,169 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!--
-    DATASENSE COLOR IDENTITY: DEEP SPACE BLACK/PURPLE + ELECTRIC NEON
-    ==================================================================
-    App Background:         #0B0B16 (Deep space black/purple)
-    Surface / Card:         #16162C (Deep midnight purple)
-    Surface Elevated:       #1B1C38 (Elevated purple container)
-    Border:                 #2D2B55 (Muted purple border)
-    Border Strong:          #4A4780 (High-contrast purple border)
-    Primary Accent:         #A100FF (Electric Purple / Violet)
-    Secondary Accent:       #00F0FF (Electric Cyan)
-    Glow Accent:            #D000FF (Neon Magenta Glow)
-    Download:               #00D8F6 (Electric Cyan)
-    Upload:                 #A855F7 (Electric Violet)
-    Success (Live/Health):  #10B981 (Restrained Healthy Green)
-    Warning:                #F59E0B (Amber Alert)
-    Text Primary:           #FFFFFF (Crisp Pure White)
-    Text Secondary:         #A0A0C0 (Soft Slate Lavender)
-    Text Muted:             #6E6E9B (Low-contrast Lavender/Gray)
+    DATASENSE CENTRALIZED SEMANTIC THEME RESOURCE SYSTEM
+    ====================================================
+    All brushes are defined at the root ResourceDictionary level so that
+    runtime ThemeService updates seamlessly propagate to all {DynamicResource} bindings.
     -->
 
-    <ResourceDictionary.ThemeDictionaries>
-        <ResourceDictionary x:Key="Default">
-            <!-- Backgrounds -->
-            <SolidColorBrush x:Key="Brush.AppBackground" Color="#0B0B16"/>
-            <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#0D0D1A"/>
-            <SolidColorBrush x:Key="Brush.Surface" Color="#16162C"/>
-            <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#1B1C38"/>
-            <SolidColorBrush x:Key="Brush.SurfaceSubtle" Color="#131326"/>
-            <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#222244"/>
+    <!-- Backgrounds & Navigation -->
+    <SolidColorBrush x:Key="Brush.AppBackground" Color="#0B0B16"/>
+    <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#0D0D1A"/>
+    <SolidColorBrush x:Key="Brush.Surface" Color="#16162C"/>
+    <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#1D1D3A"/>
+    <SolidColorBrush x:Key="Brush.SurfaceSubtle" Color="#131326"/>
+    <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#222244"/>
 
-            <!-- Borders -->
-            <SolidColorBrush x:Key="Brush.Border" Color="#2D2B55"/>
-            <SolidColorBrush x:Key="Brush.BorderSubtle" Color="#1E1C3D"/>
-            <SolidColorBrush x:Key="Brush.BorderStrong" Color="#4A4780"/>
+    <!-- Borders & Dividers -->
+    <SolidColorBrush x:Key="Brush.Border" Color="#303052"/>
+    <SolidColorBrush x:Key="Brush.BorderSubtle" Color="#1E1C3D"/>
+    <SolidColorBrush x:Key="Brush.BorderStrong" Color="#4A4780"/>
+    <SolidColorBrush x:Key="Brush.Divider" Color="#303052"/>
 
-            <!-- Typography -->
-            <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FFFFFF"/>
-            <SolidColorBrush x:Key="Brush.TextSecondary" Color="#A0A0C0"/>
-            <SolidColorBrush x:Key="Brush.TextMuted" Color="#6E6E9B"/>
-            <SolidColorBrush x:Key="Brush.TextDisabled" Color="#4D4D70"/>
+    <!-- Typography -->
+    <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.TextSecondary" Color="#C4C4E8"/>
+    <SolidColorBrush x:Key="Brush.TextMuted" Color="#8585AD"/>
+    <SolidColorBrush x:Key="Brush.TextDisabled" Color="#4D4D70"/>
 
-            <!-- Primary Accent (Electric Purple / Neon Violet) -->
-            <SolidColorBrush x:Key="Brush.Accent" Color="#A100FF"/>
-            <SolidColorBrush x:Key="Brush.AccentBright" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.AccentDeep" Color="#7A00CC"/>
-            <SolidColorBrush x:Key="Brush.AccentGlow" Color="#A100FF"/>
-            <SolidColorBrush x:Key="Brush.AccentSurface" Color="#1B1C38"/>
+    <!-- Primary Accent (Electric Purple / Violet) -->
+    <SolidColorBrush x:Key="Brush.Accent" Color="#A100FF"/>
+    <SolidColorBrush x:Key="Brush.AccentBright" Color="#00E5FF"/>
+    <SolidColorBrush x:Key="Brush.AccentDeep" Color="#FF007F"/>
+    <SolidColorBrush x:Key="Brush.AccentHover" Color="#B833FF"/>
+    <SolidColorBrush x:Key="Brush.AccentGlow" Color="#D000FF"/>
+    <SolidColorBrush x:Key="Brush.AccentSurface" Color="#1D1D3A"/>
+    <SolidColorBrush x:Key="Brush.AmbientGlow" Color="#4A00E0"/>
 
-            <!-- Ambient Purple Glow (#4A00E0) -->
-            <SolidColorBrush x:Key="Brush.AmbientGlow" Color="#4A00E0"/>
+    <!-- Status Colors -->
+    <SolidColorBrush x:Key="Brush.Success" Color="#39FF88"/>
+    <SolidColorBrush x:Key="Brush.SuccessSurface" Color="#122E22"/>
+    <SolidColorBrush x:Key="Brush.Warning" Color="#FFD166"/>
+    <SolidColorBrush x:Key="Brush.Danger" Color="#FF4D6D"/>
+    <SolidColorBrush x:Key="Brush.DangerSurface" Color="#33141E"/>
 
-            <!-- Status Colors (Restrained healthy green for live) -->
-            <SolidColorBrush x:Key="Brush.Success" Color="#10B981"/>
-            <SolidColorBrush x:Key="Brush.SuccessSurface" Color="#1B1C38"/>
-            <SolidColorBrush x:Key="Brush.Warning" Color="#F59E0B"/>
-            <SolidColorBrush x:Key="Brush.Danger" Color="#FF007F"/>
-            <SolidColorBrush x:Key="Brush.DangerSurface" Color="#1B1C38"/>
-            
-            <!-- Download Palette (Electric Cyan #00D8F6, #00F0FF) -->
-            <SolidColorBrush x:Key="Brush.Download" Color="#00D8F6"/>
-            <SolidColorBrush x:Key="Brush.DownloadBright" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.DownloadMuted" Color="#00D8F6"/>
-            <SolidColorBrush x:Key="Brush.DownloadGlow" Color="#00D8F6"/>
-            <SolidColorBrush x:Key="Brush.DownloadSurface" Color="#0D2235"/>
+    <!-- Download Palette -->
+    <SolidColorBrush x:Key="Brush.Download" Color="#00D8F6"/>
+    <SolidColorBrush x:Key="Brush.DownloadBright" Color="#00F0FF"/>
+    <SolidColorBrush x:Key="Brush.DownloadMuted" Color="#00D8F6"/>
+    <SolidColorBrush x:Key="Brush.DownloadGlow" Color="#00D8F6"/>
+    <SolidColorBrush x:Key="Brush.DownloadSurface" Color="#0D2235"/>
 
-            <!-- Upload Palette (Electric Violet #A855F7, #D000FF) -->
-            <SolidColorBrush x:Key="Brush.Upload" Color="#A855F7"/>
-            <SolidColorBrush x:Key="Brush.UploadBright" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.UploadDeep" Color="#8B5CF6"/>
-            <SolidColorBrush x:Key="Brush.UploadGlow" Color="#A855F7"/>
-            <SolidColorBrush x:Key="Brush.UploadSurface" Color="#25173B"/>
+    <!-- Upload Palette -->
+    <SolidColorBrush x:Key="Brush.Upload" Color="#A855F7"/>
+    <SolidColorBrush x:Key="Brush.UploadBright" Color="#D000FF"/>
+    <SolidColorBrush x:Key="Brush.UploadDeep" Color="#8B5CF6"/>
+    <SolidColorBrush x:Key="Brush.UploadGlow" Color="#A855F7"/>
+    <SolidColorBrush x:Key="Brush.UploadSurface" Color="#25173B"/>
 
-            <!-- Curated 12-Segment Process Donut Palette -->
-            <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#00F0FF"/> <!-- 1: Electric Cyan -->
-            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#34D399"/> <!-- 2: Emerald -->
-            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#FBBF24"/> <!-- 3: Amber -->
-            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#FF007F"/> <!-- 4: Hot Pink -->
-            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#A855F7"/> <!-- 5: Violet -->
-            <SolidColorBrush x:Key="Brush.ChartSegment6" Color="#60A5FA"/> <!-- 6: Sky Blue -->
-            <SolidColorBrush x:Key="Brush.ChartSegment7" Color="#818CF8"/> <!-- 7: Indigo -->
-            <SolidColorBrush x:Key="Brush.ChartSegment8" Color="#14B8A6"/> <!-- 8: Teal -->
-            <SolidColorBrush x:Key="Brush.ChartSegment9" Color="#D000FF"/> <!-- 9: Magenta -->
-            <SolidColorBrush x:Key="Brush.ChartSegment10" Color="#8B5CF6"/> <!-- 10: Purple -->
-            <SolidColorBrush x:Key="Brush.ChartSegment11" Color="#FB7185"/> <!-- 11: Rose -->
-            <SolidColorBrush x:Key="Brush.ChartSegment12" Color="#00E5FF"/> <!-- 12: Turquoise -->
-            <SolidColorBrush x:Key="Brush.ChartSegmentOther" Color="#6E6E9B"/> <!-- Other: Subdued Muted Purple/Blue -->
+    <!-- Charts, Gridlines & Tooltips -->
+    <SolidColorBrush x:Key="Brush.ChartGrid" Color="#303052"/>
+    <SolidColorBrush x:Key="Brush.ChartAxis" Color="#8585AD"/>
+    <SolidColorBrush x:Key="Brush.ChartTooltip" Color="#1D1D3A"/>
+    <SolidColorBrush x:Key="Brush.ChartTooltipText" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.ChartSegmentOther" Color="#6E6E9B"/>
 
-            <!-- Process Chart Semantic Aliases -->
-            <SolidColorBrush x:Key="Brush.ProcessChart1" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart2" Color="#34D399"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart3" Color="#FBBF24"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart4" Color="#FF007F"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart5" Color="#A855F7"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart6" Color="#60A5FA"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart7" Color="#818CF8"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart8" Color="#14B8A6"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart9" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart10" Color="#8B5CF6"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart11" Color="#FB7185"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart12" Color="#00E5FF"/>
+    <!-- Curated 12-Segment Process Palette & Semantic Aliases -->
+    <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#00F0FF"/>
+    <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#39FF88"/>
+    <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#FFD166"/>
+    <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#FF007F"/>
+    <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#A855F7"/>
+    <SolidColorBrush x:Key="Brush.ChartSegment6" Color="#00D8F6"/>
+    <SolidColorBrush x:Key="Brush.ChartSegment7" Color="#818CF8"/>
+    <SolidColorBrush x:Key="Brush.ChartSegment8" Color="#10B981"/>
+    <SolidColorBrush x:Key="Brush.ChartSegment9" Color="#D000FF"/>
+    <SolidColorBrush x:Key="Brush.ChartSegment10" Color="#8B5CF6"/>
+    <SolidColorBrush x:Key="Brush.ChartSegment11" Color="#FF4D6D"/>
+    <SolidColorBrush x:Key="Brush.ChartSegment12" Color="#00E5FF"/>
 
-            <!-- Modern History Bar Chart Two-Color Gradients (Top -> Bottom) -->
-            <LinearGradientBrush x:Key="Brush.DownloadBarGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#22E3FF" Offset="0"/>
-                <GradientStop Color="#0077A8" Offset="1"/>
-            </LinearGradientBrush>
+    <SolidColorBrush x:Key="Brush.ProcessChart1" Color="#00F0FF"/>
+    <SolidColorBrush x:Key="Brush.ProcessChart2" Color="#39FF88"/>
+    <SolidColorBrush x:Key="Brush.ProcessChart3" Color="#FFD166"/>
+    <SolidColorBrush x:Key="Brush.ProcessChart4" Color="#FF007F"/>
+    <SolidColorBrush x:Key="Brush.ProcessChart5" Color="#A855F7"/>
+    <SolidColorBrush x:Key="Brush.ProcessChart6" Color="#00D8F6"/>
+    <SolidColorBrush x:Key="Brush.ProcessChart7" Color="#818CF8"/>
+    <SolidColorBrush x:Key="Brush.ProcessChart8" Color="#10B981"/>
+    <SolidColorBrush x:Key="Brush.ProcessChart9" Color="#D000FF"/>
+    <SolidColorBrush x:Key="Brush.ProcessChart10" Color="#8B5CF6"/>
+    <SolidColorBrush x:Key="Brush.ProcessChart11" Color="#FF4D6D"/>
+    <SolidColorBrush x:Key="Brush.ProcessChart12" Color="#00E5FF"/>
 
-            <LinearGradientBrush x:Key="Brush.UploadBarGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#C56CFF" Offset="0"/>
-                <GradientStop Color="#6D28D9" Offset="1"/>
-            </LinearGradientBrush>
+    <!-- Bar Chart Two-Color Gradients -->
+    <LinearGradientBrush x:Key="Brush.DownloadBarGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#22E3FF" Offset="0"/>
+        <GradientStop Color="#0077A8" Offset="1"/>
+    </LinearGradientBrush>
 
-            <!-- Floating Glow & Area Gradient Brushes -->
-            <LinearGradientBrush x:Key="Brush.HeroDownloadGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#3800D8F6" Offset="0"/>
-                <GradientStop Color="#0016162C" Offset="0.75"/>
-                <GradientStop Color="#0016162C" Offset="1"/>
-            </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.UploadBarGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#C56CFF" Offset="0"/>
+        <GradientStop Color="#6D28D9" Offset="1"/>
+    </LinearGradientBrush>
 
-            <LinearGradientBrush x:Key="Brush.HeroUploadGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#38A855F7" Offset="0"/>
-                <GradientStop Color="#0016162C" Offset="0.75"/>
-                <GradientStop Color="#0016162C" Offset="1"/>
-            </LinearGradientBrush>
+    <!-- Floating Glow & Area Gradient Brushes -->
+    <LinearGradientBrush x:Key="Brush.HeroDownloadGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#3800D8F6" Offset="0"/>
+        <GradientStop Color="#0016162C" Offset="0.75"/>
+        <GradientStop Color="#0016162C" Offset="1"/>
+    </LinearGradientBrush>
 
-            <LinearGradientBrush x:Key="Brush.HeroUsageGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#284A00E0" Offset="0"/>
-                <GradientStop Color="#0016162C" Offset="0.75"/>
-                <GradientStop Color="#0016162C" Offset="1"/>
-            </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.HeroUploadGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#38A855F7" Offset="0"/>
+        <GradientStop Color="#0016162C" Offset="0.75"/>
+        <GradientStop Color="#0016162C" Offset="1"/>
+    </LinearGradientBrush>
 
-            <LinearGradientBrush x:Key="Brush.ActiveNavGradient" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#2EA100FF" Offset="0"/>
-                <GradientStop Color="#08A100FF" Offset="1"/>
-            </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.HeroUsageGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#284A00E0" Offset="0"/>
+        <GradientStop Color="#0016162C" Offset="0.75"/>
+        <GradientStop Color="#0016162C" Offset="1"/>
+    </LinearGradientBrush>
 
-            <LinearGradientBrush x:Key="Brush.DownloadAreaGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#2200D8F6" Offset="0"/>
-                <GradientStop Color="#0200D8F6" Offset="1"/>
-            </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.ActiveNavGradient" StartPoint="0%,0%" EndPoint="100%,0%">
+        <GradientStop Color="#2EA100FF" Offset="0"/>
+        <GradientStop Color="#08A100FF" Offset="1"/>
+    </LinearGradientBrush>
 
-            <LinearGradientBrush x:Key="Brush.UploadAreaGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#22A855F7" Offset="0"/>
-                <GradientStop Color="#02A855F7" Offset="1"/>
-            </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.DownloadAreaGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#2200D8F6" Offset="0"/>
+        <GradientStop Color="#0200D8F6" Offset="1"/>
+    </LinearGradientBrush>
 
-            <LinearGradientBrush x:Key="Brush.GradientDownload" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#00D8F6" Offset="0"/>
-                <GradientStop Color="#00F0FF" Offset="1"/>
-            </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.UploadAreaGradient" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#22A855F7" Offset="0"/>
+        <GradientStop Color="#02A855F7" Offset="1"/>
+    </LinearGradientBrush>
 
-            <LinearGradientBrush x:Key="Brush.GradientUpload" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#A855F7" Offset="0"/>
-                <GradientStop Color="#D000FF" Offset="1"/>
-            </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.GradientDownload" StartPoint="0%,0%" EndPoint="100%,0%">
+        <GradientStop Color="#00D8F6" Offset="0"/>
+        <GradientStop Color="#00F0FF" Offset="1"/>
+    </LinearGradientBrush>
 
-            <LinearGradientBrush x:Key="Brush.GradientVioletPink" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#A100FF" Offset="0"/>
-                <GradientStop Color="#FF007F" Offset="1"/>
-            </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.GradientUpload" StartPoint="0%,0%" EndPoint="100%,0%">
+        <GradientStop Color="#A855F7" Offset="0"/>
+        <GradientStop Color="#D000FF" Offset="1"/>
+    </LinearGradientBrush>
 
-            <LinearGradientBrush x:Key="Brush.GradientCyanPink" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#00F0FF" Offset="0"/>
-                <GradientStop Color="#FF007F" Offset="1"/>
-            </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.GradientVioletPink" StartPoint="0%,0%" EndPoint="100%,0%">
+        <GradientStop Color="#A100FF" Offset="0"/>
+        <GradientStop Color="#FF007F" Offset="1"/>
+    </LinearGradientBrush>
 
-            <!-- FluentTheme System Overrides -->
-            <SolidColorBrush x:Key="SystemRegionBrush" Color="#0B0B16"/>
-            <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="#0B0B16"/>
-            <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="#16162C"/>
-            <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumLowBrush" Color="#16162C"/>
-            <SolidColorBrush x:Key="SystemControlBackgroundChromeLowBrush" Color="#1B1C38"/>
-            <SolidColorBrush x:Key="SystemControlBackgroundListLowBrush" Color="#16162C"/>
-            <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="#FFFFFF"/>
-            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="#A0A0C0"/>
-            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumLowBrush" Color="#6E6E9B"/>
-        </ResourceDictionary>
+    <LinearGradientBrush x:Key="Brush.GradientCyanPink" StartPoint="0%,0%" EndPoint="100%,0%">
+        <GradientStop Color="#00F0FF" Offset="0"/>
+        <GradientStop Color="#FF007F" Offset="1"/>
+    </LinearGradientBrush>
 
-        <ResourceDictionary x:Key="Dark">
-            <!-- Backgrounds -->
-            <SolidColorBrush x:Key="Brush.AppBackground" Color="#0B0B16"/>
-            <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#0D0D1A"/>
-            <SolidColorBrush x:Key="Brush.Surface" Color="#16162C"/>
-            <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#1B1C38"/>
-            <SolidColorBrush x:Key="Brush.SurfaceSubtle" Color="#131326"/>
-            <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#222244"/>
-
-            <!-- Borders -->
-            <SolidColorBrush x:Key="Brush.Border" Color="#2D2B55"/>
-            <SolidColorBrush x:Key="Brush.BorderSubtle" Color="#1E1C3D"/>
-            <SolidColorBrush x:Key="Brush.BorderStrong" Color="#4A4780"/>
-
-            <!-- Typography -->
-            <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FFFFFF"/>
-            <SolidColorBrush x:Key="Brush.TextSecondary" Color="#A0A0C0"/>
-            <SolidColorBrush x:Key="Brush.TextMuted" Color="#6E6E9B"/>
-            <SolidColorBrush x:Key="Brush.TextDisabled" Color="#4D4D70"/>
-
-            <!-- Primary Accent (Electric Purple / Neon Violet) -->
-            <SolidColorBrush x:Key="Brush.Accent" Color="#A100FF"/>
-            <SolidColorBrush x:Key="Brush.AccentBright" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.AccentDeep" Color="#7A00CC"/>
-            <SolidColorBrush x:Key="Brush.AccentGlow" Color="#A100FF"/>
-            <SolidColorBrush x:Key="Brush.AccentSurface" Color="#1B1C38"/>
-
-            <!-- Ambient Purple Glow (#4A00E0) -->
-            <SolidColorBrush x:Key="Brush.AmbientGlow" Color="#4A00E0"/>
-
-            <!-- Status Colors (Restrained healthy green for live) -->
-            <SolidColorBrush x:Key="Brush.Success" Color="#10B981"/>
-            <SolidColorBrush x:Key="Brush.SuccessSurface" Color="#1B1C38"/>
-            <SolidColorBrush x:Key="Brush.Warning" Color="#F59E0B"/>
-            <SolidColorBrush x:Key="Brush.Danger" Color="#FF007F"/>
-            <SolidColorBrush x:Key="Brush.DangerSurface" Color="#1B1C38"/>
-            
-            <!-- Download Palette (Electric Cyan #00D8F6, #00F0FF) -->
-            <SolidColorBrush x:Key="Brush.Download" Color="#00D8F6"/>
-            <SolidColorBrush x:Key="Brush.DownloadBright" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.DownloadMuted" Color="#00D8F6"/>
-            <SolidColorBrush x:Key="Brush.DownloadGlow" Color="#00D8F6"/>
-            <SolidColorBrush x:Key="Brush.DownloadSurface" Color="#0D2235"/>
-
-            <!-- Upload Palette (Electric Violet #A855F7, #D000FF) -->
-            <SolidColorBrush x:Key="Brush.Upload" Color="#A855F7"/>
-            <SolidColorBrush x:Key="Brush.UploadBright" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.UploadDeep" Color="#8B5CF6"/>
-            <SolidColorBrush x:Key="Brush.UploadGlow" Color="#A855F7"/>
-            <SolidColorBrush x:Key="Brush.UploadSurface" Color="#25173B"/>
-
-            <!-- Curated 12-Segment Process Donut Palette -->
-            <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#00F0FF"/> <!-- 1: Electric Cyan -->
-            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#34D399"/> <!-- 2: Emerald -->
-            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#FBBF24"/> <!-- 3: Amber -->
-            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#FF007F"/> <!-- 4: Hot Pink -->
-            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#A855F7"/> <!-- 5: Violet -->
-            <SolidColorBrush x:Key="Brush.ChartSegment6" Color="#60A5FA"/> <!-- 6: Sky Blue -->
-            <SolidColorBrush x:Key="Brush.ChartSegment7" Color="#818CF8"/> <!-- 7: Indigo -->
-            <SolidColorBrush x:Key="Brush.ChartSegment8" Color="#14B8A6"/> <!-- 8: Teal -->
-            <SolidColorBrush x:Key="Brush.ChartSegment9" Color="#D000FF"/> <!-- 9: Magenta -->
-            <SolidColorBrush x:Key="Brush.ChartSegment10" Color="#8B5CF6"/> <!-- 10: Purple -->
-            <SolidColorBrush x:Key="Brush.ChartSegment11" Color="#FB7185"/> <!-- 11: Rose -->
-            <SolidColorBrush x:Key="Brush.ChartSegment12" Color="#00E5FF"/> <!-- 12: Turquoise -->
-            <SolidColorBrush x:Key="Brush.ChartSegmentOther" Color="#6E6E9B"/> <!-- Other: Subdued Muted Purple/Blue -->
-
-            <!-- Process Chart Semantic Aliases -->
-            <SolidColorBrush x:Key="Brush.ProcessChart1" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart2" Color="#34D399"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart3" Color="#FBBF24"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart4" Color="#FF007F"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart5" Color="#A855F7"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart6" Color="#60A5FA"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart7" Color="#818CF8"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart8" Color="#14B8A6"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart9" Color="#D000FF"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart10" Color="#8B5CF6"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart11" Color="#FB7185"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart12" Color="#00E5FF"/>
-
-            <!-- Modern History Bar Chart Two-Color Gradients (Top -> Bottom) -->
-            <LinearGradientBrush x:Key="Brush.DownloadBarGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#22E3FF" Offset="0"/>
-                <GradientStop Color="#0077A8" Offset="1"/>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="Brush.UploadBarGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#C56CFF" Offset="0"/>
-                <GradientStop Color="#6D28D9" Offset="1"/>
-            </LinearGradientBrush>
-
-            <!-- Floating Glow & Area Gradient Brushes -->
-            <LinearGradientBrush x:Key="Brush.HeroDownloadGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#3800D8F6" Offset="0"/>
-                <GradientStop Color="#0016162C" Offset="0.75"/>
-                <GradientStop Color="#0016162C" Offset="1"/>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="Brush.HeroUploadGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#38A855F7" Offset="0"/>
-                <GradientStop Color="#0016162C" Offset="0.75"/>
-                <GradientStop Color="#0016162C" Offset="1"/>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="Brush.HeroUsageGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#284A00E0" Offset="0"/>
-                <GradientStop Color="#0016162C" Offset="0.75"/>
-                <GradientStop Color="#0016162C" Offset="1"/>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="Brush.ActiveNavGradient" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#2EA100FF" Offset="0"/>
-                <GradientStop Color="#08A100FF" Offset="1"/>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="Brush.DownloadAreaGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#2200D8F6" Offset="0"/>
-                <GradientStop Color="#0200D8F6" Offset="1"/>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="Brush.UploadAreaGradient" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#22A855F7" Offset="0"/>
-                <GradientStop Color="#02A855F7" Offset="1"/>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="Brush.GradientDownload" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#00D8F6" Offset="0"/>
-                <GradientStop Color="#00F0FF" Offset="1"/>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="Brush.GradientUpload" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#A855F7" Offset="0"/>
-                <GradientStop Color="#D000FF" Offset="1"/>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="Brush.GradientVioletPink" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#A100FF" Offset="0"/>
-                <GradientStop Color="#FF007F" Offset="1"/>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="Brush.GradientCyanPink" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#00F0FF" Offset="0"/>
-                <GradientStop Color="#FF007F" Offset="1"/>
-            </LinearGradientBrush>
-
-            <!-- FluentTheme System Overrides -->
-            <SolidColorBrush x:Key="SystemRegionBrush" Color="#0B0B16"/>
-            <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="#0B0B16"/>
-            <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="#16162C"/>
-            <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumLowBrush" Color="#16162C"/>
-            <SolidColorBrush x:Key="SystemControlBackgroundChromeLowBrush" Color="#1B1C38"/>
-            <SolidColorBrush x:Key="SystemControlBackgroundListLowBrush" Color="#16162C"/>
-            <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="#FFFFFF"/>
-            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="#A0A0C0"/>
-            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumLowBrush" Color="#6E6E9B"/>
-        </ResourceDictionary>
-    </ResourceDictionary.ThemeDictionaries>
+    <!-- FluentTheme System Overrides -->
+    <SolidColorBrush x:Key="SystemRegionBrush" Color="#0B0B16"/>
+    <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="#0B0B16"/>
+    <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="#16162C"/>
+    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumLowBrush" Color="#16162C"/>
+    <SolidColorBrush x:Key="SystemControlBackgroundChromeLowBrush" Color="#1D1D3A"/>
+    <SolidColorBrush x:Key="SystemControlBackgroundListLowBrush" Color="#16162C"/>
+    <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="#C4C4E8"/>
+    <SolidColorBrush x:Key="SystemControlForegroundBaseMediumLowBrush" Color="#8585AD"/>
 </ResourceDictionary>

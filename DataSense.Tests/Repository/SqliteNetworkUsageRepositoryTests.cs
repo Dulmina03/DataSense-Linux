@@ -138,4 +138,23 @@ public class SqliteNetworkUsageRepositoryTests
         Assert.Equal(2, top.Count);
         Assert.Equal("chrome", top[0].ProcessName);
     }
+
+    [Fact]
+    public async Task GetAvailableNetworksAsync_FiltersPlaceholdersAndDeduplicates()
+    {
+        using var context = await TestDatabaseFactory.CreateAsync();
+        DateTime now = DateTime.UtcNow;
+
+        await TestDataBuilder.SeedSessionAsync(context.Repository, "uom.wireless", "wlan0", now.AddHours(-3), TimeSpan.FromHours(1), 500000, 100000);
+        await TestDataBuilder.SeedSessionAsync(context.Repository, "-", "wlan0", now.AddHours(-2), TimeSpan.FromHours(1), 200000, 50000);
+        await TestDataBuilder.SeedSessionAsync(context.Repository, "uom.wireless", "wlan0", now.AddHours(-1), TimeSpan.FromHours(1), 300000, 80000);
+        await TestDataBuilder.SeedSessionAsync(context.Repository, "SLT Fiber", "eth0", now.AddHours(-1), TimeSpan.FromHours(1), 1000000, 200000);
+
+        var networks = (await context.Repository.GetAvailableNetworksAsync()).ToList();
+
+        Assert.Equal(2, networks.Count);
+        Assert.Contains("uom.wireless", networks);
+        Assert.Contains("SLT Fiber", networks);
+        Assert.DoesNotContain("-", networks);
+    }
 }

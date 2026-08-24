@@ -4,10 +4,82 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using DataSense.Database;
 
 namespace DataSense.Services;
+
+public record ThemeDefinition(
+    string Id,
+    string DisplayName,
+    string Icon,
+    bool IsLight,
+    // Backgrounds & Surfaces
+    string AppBackground,
+    string NavigationBackground,
+    string Surface,
+    string SurfaceElevated,
+    string SurfaceSubtle,
+    string SurfaceHover,
+    // Borders & Dividers
+    string Border,
+    string BorderSubtle,
+    string BorderStrong,
+    string Divider,
+    // Typography
+    string TextPrimary,
+    string TextSecondary,
+    string TextMuted,
+    string TextDisabled,
+    // Accents
+    string AccentPrimary,
+    string AccentSecondary,
+    string AccentTertiary,
+    string AccentHover,
+    string AccentGlow,
+    string AccentSurface,
+    string AmbientGlow,
+    // Download
+    string Download,
+    string DownloadBright,
+    string DownloadMuted,
+    string DownloadGlow,
+    string DownloadSurface,
+    // Upload
+    string Upload,
+    string UploadBright,
+    string UploadDeep,
+    string UploadGlow,
+    string UploadSurface,
+    // Status
+    string Success,
+    string SuccessSurface,
+    string Warning,
+    string Danger,
+    string DangerSurface,
+    // Charts
+    string ChartGrid,
+    string ChartAxis,
+    string ChartTooltipBackground,
+    string ChartTooltipText,
+    string ChartSegmentOther,
+    // 12 Process Colors
+    string[] ProcessPalette,
+    // Gradients (Start and End hex colors)
+    (string Start, string End) DownloadBarGradient,
+    (string Start, string End) UploadBarGradient,
+    (string Start, string End) HeroDownloadGradient,
+    (string Start, string End) HeroUploadGradient,
+    (string Start, string End) HeroUsageGradient,
+    (string Start, string End) DownloadAreaGradient,
+    (string Start, string End) UploadAreaGradient,
+    (string Start, string End) ActiveNavGradient,
+    (string Start, string End) GradientDownload,
+    (string Start, string End) GradientUpload,
+    (string Start, string End) GradientVioletPink,
+    (string Start, string End) GradientCyanPink
+);
 
 public class ThemeService : IThemeService
 {
@@ -23,11 +95,401 @@ public class ThemeService : IThemeService
         new("Arctic Light", "Arctic Light", "🤍")
     };
 
+    private static readonly Dictionary<string, ThemeDefinition> ThemeDefinitions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Neon Space"] = new(
+            Id: "Neon Space",
+            DisplayName: "Neon Space",
+            Icon: "🌌",
+            IsLight: false,
+            AppBackground: "#0B0B16",
+            NavigationBackground: "#0D0D1A",
+            Surface: "#16162C",
+            SurfaceElevated: "#1D1D3A",
+            SurfaceSubtle: "#131326",
+            SurfaceHover: "#222244",
+            Border: "#303052",
+            BorderSubtle: "#1E1C3D",
+            BorderStrong: "#4A4780",
+            Divider: "#303052",
+            TextPrimary: "#FFFFFF",
+            TextSecondary: "#C4C4E8",
+            TextMuted: "#8585AD",
+            TextDisabled: "#4D4D70",
+            AccentPrimary: "#A100FF",
+            AccentSecondary: "#00E5FF",
+            AccentTertiary: "#FF007F",
+            AccentHover: "#B833FF",
+            AccentGlow: "#D000FF",
+            AccentSurface: "#1D1D3A",
+            AmbientGlow: "#4A00E0",
+            Download: "#00D8F6",
+            DownloadBright: "#00F0FF",
+            DownloadMuted: "#00D8F6",
+            DownloadGlow: "#00D8F6",
+            DownloadSurface: "#0D2235",
+            Upload: "#A855F7",
+            UploadBright: "#D000FF",
+            UploadDeep: "#8B5CF6",
+            UploadGlow: "#A855F7",
+            UploadSurface: "#25173B",
+            Success: "#39FF88",
+            SuccessSurface: "#122E22",
+            Warning: "#FFD166",
+            Danger: "#FF4D6D",
+            DangerSurface: "#33141E",
+            ChartGrid: "#303052",
+            ChartAxis: "#8585AD",
+            ChartTooltipBackground: "#1D1D3A",
+            ChartTooltipText: "#FFFFFF",
+            ChartSegmentOther: "#6E6E9B",
+            ProcessPalette: new[]
+            {
+                "#00F0FF", "#39FF88", "#FFD166", "#FF007F", "#A855F7", "#00D8F6",
+                "#818CF8", "#10B981", "#D000FF", "#8B5CF6", "#FF4D6D", "#00E5FF"
+            },
+            DownloadBarGradient: ("#22E3FF", "#0077A8"),
+            UploadBarGradient: ("#C56CFF", "#6D28D9"),
+            HeroDownloadGradient: ("#3800D8F6", "#0016162C"),
+            HeroUploadGradient: ("#38A855F7", "#0016162C"),
+            HeroUsageGradient: ("#284A00E0", "#0016162C"),
+            DownloadAreaGradient: ("#2200D8F6", "#0200D8F6"),
+            UploadAreaGradient: ("#22A855F7", "#02A855F7"),
+            ActiveNavGradient: ("#2EA100FF", "#08A100FF"),
+            GradientDownload: ("#00D8F6", "#00F0FF"),
+            GradientUpload: ("#A855F7", "#D000FF"),
+            GradientVioletPink: ("#A100FF", "#FF007F"),
+            GradientCyanPink: ("#00F0FF", "#FF007F")
+        ),
+        ["Deep Violet"] = new(
+            Id: "Deep Violet",
+            DisplayName: "Deep Violet",
+            Icon: "💜",
+            IsLight: false,
+            AppBackground: "#100817",
+            NavigationBackground: "#0A0410",
+            Surface: "#21122C",
+            SurfaceElevated: "#2B183A",
+            SurfaceSubtle: "#180D22",
+            SurfaceHover: "#381F4C",
+            Border: "#4A2A5C",
+            BorderSubtle: "#321C40",
+            BorderStrong: "#6C3B87",
+            Divider: "#4A2A5C",
+            TextPrimary: "#FFF7FF",
+            TextSecondary: "#D8C8E5",
+            TextMuted: "#9F8AAA",
+            TextDisabled: "#5A4566",
+            AccentPrimary: "#C026FF",
+            AccentSecondary: "#8B5CF6",
+            AccentTertiary: "#FF4ECD",
+            AccentHover: "#D24DFF",
+            AccentGlow: "#FF4ECD",
+            AccentSurface: "#2B183A",
+            AmbientGlow: "#7B2CBF",
+            Download: "#C026FF",
+            DownloadBright: "#D966FF",
+            DownloadMuted: "#C026FF",
+            DownloadGlow: "#C026FF",
+            DownloadSurface: "#2B123C",
+            Upload: "#FF4ECD",
+            UploadBright: "#FF7EE0",
+            UploadDeep: "#B5179E",
+            UploadGlow: "#FF4ECD",
+            UploadSurface: "#381232",
+            Success: "#5EEAD4",
+            SuccessSurface: "#122E2C",
+            Warning: "#FBBF24",
+            Danger: "#FB7185",
+            DangerSurface: "#38141E",
+            ChartGrid: "#4A2A5C",
+            ChartAxis: "#9F8AAA",
+            ChartTooltipBackground: "#2B183A",
+            ChartTooltipText: "#FFF7FF",
+            ChartSegmentOther: "#7E6E9E",
+            ProcessPalette: new[]
+            {
+                "#C026FF", "#FF4ECD", "#8B5CF6", "#E0AAFF", "#D946EF", "#7C3AED",
+                "#F43F5E", "#A855F7", "#C77DFF", "#9333EA", "#F472B6", "#5EEAD4"
+            },
+            DownloadBarGradient: ("#D966FF", "#7B2CBF"),
+            UploadBarGradient: ("#FF7EE0", "#B5179E"),
+            HeroDownloadGradient: ("#38C026FF", "#0021122C"),
+            HeroUploadGradient: ("#38FF4ECD", "#0021122C"),
+            HeroUsageGradient: ("#288B5CF6", "#0021122C"),
+            DownloadAreaGradient: ("#22C026FF", "#02C026FF"),
+            UploadAreaGradient: ("#22FF4ECD", "#02FF4ECD"),
+            ActiveNavGradient: ("#30C026FF", "#08C026FF"),
+            GradientDownload: ("#C026FF", "#D966FF"),
+            GradientUpload: ("#FF4ECD", "#FF7EE0"),
+            GradientVioletPink: ("#C026FF", "#FF4ECD"),
+            GradientCyanPink: ("#8B5CF6", "#FF4ECD")
+        ),
+        ["Cyber Ocean"] = new(
+            Id: "Cyber Ocean",
+            DisplayName: "Cyber Ocean",
+            Icon: "🌊",
+            IsLight: false,
+            AppBackground: "#061018",
+            NavigationBackground: "#030A10",
+            Surface: "#0D1C29",
+            SurfaceElevated: "#12283A",
+            SurfaceSubtle: "#09141F",
+            SurfaceHover: "#19364F",
+            Border: "#21465A",
+            BorderSubtle: "#153040",
+            BorderStrong: "#2E6280",
+            Divider: "#21465A",
+            TextPrimary: "#F2FCFF",
+            TextSecondary: "#B8D7E5",
+            TextMuted: "#7295A8",
+            TextDisabled: "#3D5968",
+            AccentPrimary: "#00E5FF",
+            AccentSecondary: "#008CFF",
+            AccentTertiary: "#00FFC6",
+            AccentHover: "#38EFFF",
+            AccentGlow: "#00FFC6",
+            AccentSurface: "#12283A",
+            AmbientGlow: "#005FB8",
+            Download: "#00E5FF",
+            DownloadBright: "#5CF2FF",
+            DownloadMuted: "#00E5FF",
+            DownloadGlow: "#00E5FF",
+            DownloadSurface: "#0A2938",
+            Upload: "#008CFF",
+            UploadBright: "#4DAEFF",
+            UploadDeep: "#005FB8",
+            UploadGlow: "#008CFF",
+            UploadSurface: "#0A243D",
+            Success: "#00FFC6",
+            SuccessSurface: "#083329",
+            Warning: "#FFD166",
+            Danger: "#FF647C",
+            DangerSurface: "#36141D",
+            ChartGrid: "#21465A",
+            ChartAxis: "#7295A8",
+            ChartTooltipBackground: "#12283A",
+            ChartTooltipText: "#F2FCFF",
+            ChartSegmentOther: "#64748B",
+            ProcessPalette: new[]
+            {
+                "#00E5FF", "#008CFF", "#00FFC6", "#38BDF8", "#06B6D4", "#60A5FA",
+                "#2DD4BF", "#0284C7", "#818CF8", "#22D3EE", "#67E8F9", "#3B82F6"
+            },
+            DownloadBarGradient: ("#5CF2FF", "#0072B5"),
+            UploadBarGradient: ("#4DAEFF", "#00529E"),
+            HeroDownloadGradient: ("#3800E5FF", "#000D1C29"),
+            HeroUploadGradient: ("#38008CFF", "#000D1C29"),
+            HeroUsageGradient: ("#28008CFF", "#000D1C29"),
+            DownloadAreaGradient: ("#2200E5FF", "#0200E5FF"),
+            UploadAreaGradient: ("#22008CFF", "#02008CFF"),
+            ActiveNavGradient: ("#3000E5FF", "#0800E5FF"),
+            GradientDownload: ("#00E5FF", "#5CF2FF"),
+            GradientUpload: ("#008CFF", "#4DAEFF"),
+            GradientVioletPink: ("#008CFF", "#00FFC6"),
+            GradientCyanPink: ("#00E5FF", "#00FFC6")
+        ),
+        ["Aurora"] = new(
+            Id: "Aurora",
+            DisplayName: "Aurora",
+            Icon: "🌃",
+            IsLight: false,
+            AppBackground: "#07110F",
+            NavigationBackground: "#040A09",
+            Surface: "#10201D",
+            SurfaceElevated: "#17302B",
+            SurfaceSubtle: "#0B1715",
+            SurfaceHover: "#1F423B",
+            Border: "#285047",
+            BorderSubtle: "#1B3832",
+            BorderStrong: "#3B7367",
+            Divider: "#285047",
+            TextPrimary: "#F3FFFA",
+            TextSecondary: "#C1DDD4",
+            TextMuted: "#78978F",
+            TextDisabled: "#435E57",
+            AccentPrimary: "#36F1B4",
+            AccentSecondary: "#7C5CFF",
+            AccentTertiary: "#22D3EE",
+            AccentHover: "#5BF5C5",
+            AccentGlow: "#36F1B4",
+            AccentSurface: "#17302B",
+            AmbientGlow: "#0E4A3F",
+            Download: "#22D3EE",
+            DownloadBright: "#67E8F9",
+            DownloadMuted: "#22D3EE",
+            DownloadGlow: "#22D3EE",
+            DownloadSurface: "#0E2E34",
+            Upload: "#7C5CFF",
+            UploadBright: "#A78BFA",
+            UploadDeep: "#5B21B6",
+            UploadGlow: "#7C5CFF",
+            UploadSurface: "#1F173D",
+            Success: "#36F1B4",
+            SuccessSurface: "#0D3325",
+            Warning: "#FACC15",
+            Danger: "#FB7185",
+            DangerSurface: "#38141E",
+            ChartGrid: "#285047",
+            ChartAxis: "#78978F",
+            ChartTooltipBackground: "#17302B",
+            ChartTooltipText: "#F3FFFA",
+            ChartSegmentOther: "#5E8E7E",
+            ProcessPalette: new[]
+            {
+                "#36F1B4", "#22D3EE", "#7C5CFF", "#10B981", "#A78BFA", "#34D399",
+                "#6EE7B7", "#06B6D4", "#C084FC", "#2DD4BF", "#F472B6", "#38BDF8"
+            },
+            DownloadBarGradient: ("#67E8F9", "#0E7490"),
+            UploadBarGradient: ("#A78BFA", "#581C87"),
+            HeroDownloadGradient: ("#3822D3EE", "#0010201D"),
+            HeroUploadGradient: ("#387C5CFF", "#0010201D"),
+            HeroUsageGradient: ("#2836F1B4", "#0010201D"),
+            DownloadAreaGradient: ("#2222D3EE", "#0222D3EE"),
+            UploadAreaGradient: ("#227C5CFF", "#027C5CFF"),
+            ActiveNavGradient: ("#3036F1B4", "#0836F1B4"),
+            GradientDownload: ("#22D3EE", "#67E8F9"),
+            GradientUpload: ("#7C5CFF", "#A78BFA"),
+            GradientVioletPink: ("#7C5CFF", "#36F1B4"),
+            GradientCyanPink: ("#22D3EE", "#36F1B4")
+        ),
+        ["Cyber Pink"] = new(
+            Id: "Cyber Pink",
+            DisplayName: "Cyber Pink",
+            Icon: "🌸",
+            IsLight: false,
+            AppBackground: "#130811",
+            NavigationBackground: "#0C040B",
+            Surface: "#261020",
+            SurfaceElevated: "#35142C",
+            SurfaceSubtle: "#1C0A18",
+            SurfaceHover: "#471A3C",
+            Border: "#522340",
+            BorderSubtle: "#3B182E",
+            BorderStrong: "#78335D",
+            Divider: "#522340",
+            TextPrimary: "#FFF5FC",
+            TextSecondary: "#E7C7DD",
+            TextMuted: "#A9859C",
+            TextDisabled: "#64465B",
+            AccentPrimary: "#FF1493",
+            AccentSecondary: "#FF4FD8",
+            AccentTertiary: "#9D4EDD",
+            AccentHover: "#FF3BA7",
+            AccentGlow: "#FF4FD8",
+            AccentSurface: "#35142C",
+            AmbientGlow: "#8A0E4F",
+            Download: "#FF4FD8",
+            DownloadBright: "#FF7FE2",
+            DownloadMuted: "#FF4FD8",
+            DownloadGlow: "#FF4FD8",
+            DownloadSurface: "#3B1333",
+            Upload: "#9D4EDD",
+            UploadBright: "#C77DFF",
+            UploadDeep: "#7209B7",
+            UploadGlow: "#9D4EDD",
+            UploadSurface: "#2D123D",
+            Success: "#5EEAD4",
+            SuccessSurface: "#122E2C",
+            Warning: "#FBBF24",
+            Danger: "#FF5C8A",
+            DangerSurface: "#3D1220",
+            ChartGrid: "#522340",
+            ChartAxis: "#A9859C",
+            ChartTooltipBackground: "#35142C",
+            ChartTooltipText: "#FFF5FC",
+            ChartSegmentOther: "#9D5C80",
+            ProcessPalette: new[]
+            {
+                "#FF1493", "#FF4FD8", "#9D4EDD", "#FF66B2", "#D946EF", "#FF007F",
+                "#C77DFF", "#E879F9", "#F43F5E", "#A855F7", "#FB7185", "#00F0FF"
+            },
+            DownloadBarGradient: ("#FF7FE2", "#C026D3"),
+            UploadBarGradient: ("#C77DFF", "#6B21A8"),
+            HeroDownloadGradient: ("#38FF4FD8", "#00261020"),
+            HeroUploadGradient: ("#389D4EDD", "#00261020"),
+            HeroUsageGradient: ("#28FF1493", "#00261020"),
+            DownloadAreaGradient: ("#22FF4FD8", "#02FF4FD8"),
+            UploadAreaGradient: ("#229D4EDD", "#029D4EDD"),
+            ActiveNavGradient: ("#30FF1493", "#08FF1493"),
+            GradientDownload: ("#FF4FD8", "#FF7FE2"),
+            GradientUpload: ("#9D4EDD", "#C77DFF"),
+            GradientVioletPink: ("#FF1493", "#FF4FD8"),
+            GradientCyanPink: ("#FF4FD8", "#9D4EDD")
+        ),
+        ["Arctic Light"] = new(
+            Id: "Arctic Light",
+            DisplayName: "Arctic Light",
+            Icon: "🤍",
+            IsLight: true,
+            AppBackground: "#F4F7FB",
+            NavigationBackground: "#EAEFF6",
+            Surface: "#FFFFFF",
+            SurfaceElevated: "#FFFFFF",
+            SurfaceSubtle: "#F0F4F9",
+            SurfaceHover: "#E4ECF4",
+            Border: "#D9E0EA",
+            BorderSubtle: "#E8EDF4",
+            BorderStrong: "#BAC6D6",
+            Divider: "#D9E0EA",
+            TextPrimary: "#111827",
+            TextSecondary: "#374151",
+            TextMuted: "#6B7280",
+            TextDisabled: "#9CA3AF",
+            AccentPrimary: "#6D28D9",
+            AccentSecondary: "#0891B2",
+            AccentTertiary: "#DB2777",
+            AccentHover: "#5B21B6",
+            AccentGlow: "#8B5CF6",
+            AccentSurface: "#F5F3FF",
+            AmbientGlow: "#DDD6FE",
+            Download: "#0891B2",
+            DownloadBright: "#06B6D4",
+            DownloadMuted: "#0891B2",
+            DownloadGlow: "#0891B2",
+            DownloadSurface: "#E0F2FE",
+            Upload: "#7C3AED",
+            UploadBright: "#8B5CF6",
+            UploadDeep: "#5B21B6",
+            UploadGlow: "#7C3AED",
+            UploadSurface: "#F3E8FF",
+            Success: "#059669",
+            SuccessSurface: "#ECFDF5",
+            Warning: "#D97706",
+            Danger: "#DC2626",
+            DangerSurface: "#FEF2F2",
+            ChartGrid: "#E2E8F0",
+            ChartAxis: "#6B7280",
+            ChartTooltipBackground: "#FFFFFF",
+            ChartTooltipText: "#111827",
+            ChartSegmentOther: "#94A3B8",
+            ProcessPalette: new[]
+            {
+                "#0891B2", "#7C3AED", "#059669", "#DB2777", "#D97706", "#2563EB",
+                "#9333EA", "#0D9488", "#EA580C", "#4F46E5", "#E11D48", "#0284C7"
+            },
+            DownloadBarGradient: ("#06B6D4", "#0891B2"),
+            UploadBarGradient: ("#8B5CF6", "#7C3AED"),
+            HeroDownloadGradient: ("#250891B2", "#00FFFFFF"),
+            HeroUploadGradient: ("#257C3AED", "#00FFFFFF"),
+            HeroUsageGradient: ("#186D28D9", "#00FFFFFF"),
+            DownloadAreaGradient: ("#200891B2", "#020891B2"),
+            UploadAreaGradient: ("#207C3AED", "#027C3AED"),
+            ActiveNavGradient: ("#256D28D9", "#086D28D9"),
+            GradientDownload: ("#0891B2", "#06B6D4"),
+            GradientUpload: ("#7C3AED", "#8B5CF6"),
+            GradientVioletPink: ("#6D28D9", "#DB2777"),
+            GradientCyanPink: ("#0891B2", "#DB2777")
+        )
+    };
+
     public IReadOnlyList<ThemeOption> AvailableThemes => Themes;
 
     public string CurrentThemeId { get; private set; } = "Neon Space";
 
-    public ThemeOption CurrentTheme => Themes.FirstOrDefault(t => t.Id == CurrentThemeId) ?? Themes[0];
+    public ThemeOption CurrentTheme => Themes.FirstOrDefault(t => t.Id.Equals(CurrentThemeId, StringComparison.OrdinalIgnoreCase)) ?? Themes[0];
+
+    public event Action<string>? ThemeChanged;
 
     public ThemeService(INetworkUsageRepository? repository = null)
     {
@@ -41,14 +503,18 @@ public class ThemeService : IThemeService
             try
             {
                 var savedTheme = await _repository.GetSettingAsync("AppTheme");
-                if (!string.IsNullOrWhiteSpace(savedTheme) && Themes.Any(t => t.Id == savedTheme))
+                if (!string.IsNullOrWhiteSpace(savedTheme) && Themes.Any(t => t.Id.Equals(savedTheme, StringComparison.OrdinalIgnoreCase)))
                 {
                     CurrentThemeId = savedTheme;
                     ApplyThemeInternal(savedTheme);
+                    return;
                 }
             }
             catch { }
         }
+
+        // Apply default if no saved theme
+        ApplyThemeInternal(CurrentThemeId);
     }
 
     public void ApplyTheme(string themeId)
@@ -58,6 +524,7 @@ public class ThemeService : IThemeService
 
         CurrentThemeId = matched.Id;
         ApplyThemeInternal(matched.Id);
+        ThemeChanged?.Invoke(matched.Id);
 
         if (_repository != null)
         {
@@ -72,9 +539,26 @@ public class ThemeService : IThemeService
         }
     }
 
+    public IReadOnlyList<string> GetProcessPaletteHex(string? themeId = null)
+    {
+        string targetId = themeId ?? CurrentThemeId;
+        if (ThemeDefinitions.TryGetValue(targetId, out var def))
+        {
+            return def.ProcessPalette;
+        }
+        return ThemeDefinitions["Neon Space"].ProcessPalette;
+    }
+
+    public static ThemeDefinition GetThemeDefinition(string themeId)
+    {
+        if (ThemeDefinitions.TryGetValue(themeId, out var def))
+            return def;
+        return ThemeDefinitions["Neon Space"];
+    }
+
     private static void ApplyThemeInternal(string themeId)
     {
-        var (bg, navBg, surf, surfElev, surfSubtle, surfHov, border, borderSubtle, borderStr, accent, accentBright, accentDeep, dl, dlBright, ul, ulBright, textPrim, textSec, textMuted) = GetThemePalette(themeId);
+        var def = GetThemeDefinition(themeId);
 
         void UpdateResources()
         {
@@ -82,69 +566,98 @@ public class ThemeService : IThemeService
 
             var res = Application.Current.Resources;
 
-            // Backgrounds & Surfaces
-            res["Brush.AppBackground"] = new SolidColorBrush(Color.Parse(bg));
-            res["Brush.NavigationBackground"] = new SolidColorBrush(Color.Parse(navBg));
-            res["Brush.Surface"] = new SolidColorBrush(Color.Parse(surf));
-            res["Brush.SurfaceElevated"] = new SolidColorBrush(Color.Parse(surfElev));
-            res["Brush.SurfaceSubtle"] = new SolidColorBrush(Color.Parse(surfSubtle));
-            res["Brush.SurfaceHover"] = new SolidColorBrush(Color.Parse(surfHov));
+            // Set RequestedThemeVariant for FluentTheme controls
+            Application.Current.RequestedThemeVariant = def.IsLight ? ThemeVariant.Light : ThemeVariant.Dark;
 
-            // Borders
-            res["Brush.Border"] = new SolidColorBrush(Color.Parse(border));
-            res["Brush.BorderSubtle"] = new SolidColorBrush(Color.Parse(borderSubtle));
-            res["Brush.BorderStrong"] = new SolidColorBrush(Color.Parse(borderStr));
+            // 1. Backgrounds & Surfaces
+            res["Brush.AppBackground"] = new SolidColorBrush(Color.Parse(def.AppBackground));
+            res["Brush.NavigationBackground"] = new SolidColorBrush(Color.Parse(def.NavigationBackground));
+            res["Brush.Surface"] = new SolidColorBrush(Color.Parse(def.Surface));
+            res["Brush.SurfaceElevated"] = new SolidColorBrush(Color.Parse(def.SurfaceElevated));
+            res["Brush.SurfaceSubtle"] = new SolidColorBrush(Color.Parse(def.SurfaceSubtle));
+            res["Brush.SurfaceHover"] = new SolidColorBrush(Color.Parse(def.SurfaceHover));
 
-            // Typography
-            res["Brush.TextPrimary"] = new SolidColorBrush(Color.Parse(textPrim));
-            res["Brush.TextSecondary"] = new SolidColorBrush(Color.Parse(textSec));
-            res["Brush.TextMuted"] = new SolidColorBrush(Color.Parse(textMuted));
+            // 2. Borders & Dividers
+            res["Brush.Border"] = new SolidColorBrush(Color.Parse(def.Border));
+            res["Brush.BorderSubtle"] = new SolidColorBrush(Color.Parse(def.BorderSubtle));
+            res["Brush.BorderStrong"] = new SolidColorBrush(Color.Parse(def.BorderStrong));
+            res["Brush.Divider"] = new SolidColorBrush(Color.Parse(def.Divider));
 
-            // Accents
-            res["Brush.Accent"] = new SolidColorBrush(Color.Parse(accent));
-            res["Brush.AccentBright"] = new SolidColorBrush(Color.Parse(accentBright));
-            res["Brush.AccentDeep"] = new SolidColorBrush(Color.Parse(accentDeep));
-            res["Brush.AccentGlow"] = new SolidColorBrush(Color.Parse(accent));
-            res["Brush.AmbientGlow"] = new SolidColorBrush(Color.Parse(accentDeep));
+            // 3. Typography
+            res["Brush.TextPrimary"] = new SolidColorBrush(Color.Parse(def.TextPrimary));
+            res["Brush.TextSecondary"] = new SolidColorBrush(Color.Parse(def.TextSecondary));
+            res["Brush.TextMuted"] = new SolidColorBrush(Color.Parse(def.TextMuted));
+            res["Brush.TextDisabled"] = new SolidColorBrush(Color.Parse(def.TextDisabled));
 
-            // Download & Upload
-            res["Brush.Download"] = new SolidColorBrush(Color.Parse(dl));
-            res["Brush.DownloadBright"] = new SolidColorBrush(Color.Parse(dlBright));
-            res["Brush.DownloadGlow"] = new SolidColorBrush(Color.Parse(dl));
-            res["Brush.Upload"] = new SolidColorBrush(Color.Parse(ul));
-            res["Brush.UploadBright"] = new SolidColorBrush(Color.Parse(ulBright));
-            res["Brush.UploadGlow"] = new SolidColorBrush(Color.Parse(ul));
+            // 4. Accents
+            res["Brush.Accent"] = new SolidColorBrush(Color.Parse(def.AccentPrimary));
+            res["Brush.AccentBright"] = new SolidColorBrush(Color.Parse(def.AccentSecondary));
+            res["Brush.AccentDeep"] = new SolidColorBrush(Color.Parse(def.AccentTertiary));
+            res["Brush.AccentHover"] = new SolidColorBrush(Color.Parse(def.AccentHover));
+            res["Brush.AccentGlow"] = new SolidColorBrush(Color.Parse(def.AccentGlow));
+            res["Brush.AccentSurface"] = new SolidColorBrush(Color.Parse(def.AccentSurface));
+            res["Brush.AmbientGlow"] = new SolidColorBrush(Color.Parse(def.AmbientGlow));
 
-            // Bar Gradients
-            var dlBarGrad = new LinearGradientBrush
+            // 5. Download Palette
+            res["Brush.Download"] = new SolidColorBrush(Color.Parse(def.Download));
+            res["Brush.DownloadBright"] = new SolidColorBrush(Color.Parse(def.DownloadBright));
+            res["Brush.DownloadMuted"] = new SolidColorBrush(Color.Parse(def.DownloadMuted));
+            res["Brush.DownloadGlow"] = new SolidColorBrush(Color.Parse(def.DownloadGlow));
+            res["Brush.DownloadSurface"] = new SolidColorBrush(Color.Parse(def.DownloadSurface));
+
+            // 6. Upload Palette
+            res["Brush.Upload"] = new SolidColorBrush(Color.Parse(def.Upload));
+            res["Brush.UploadBright"] = new SolidColorBrush(Color.Parse(def.UploadBright));
+            res["Brush.UploadDeep"] = new SolidColorBrush(Color.Parse(def.UploadDeep));
+            res["Brush.UploadGlow"] = new SolidColorBrush(Color.Parse(def.UploadGlow));
+            res["Brush.UploadSurface"] = new SolidColorBrush(Color.Parse(def.UploadSurface));
+
+            // 7. Status & Feedback
+            res["Brush.Success"] = new SolidColorBrush(Color.Parse(def.Success));
+            res["Brush.SuccessSurface"] = new SolidColorBrush(Color.Parse(def.SuccessSurface));
+            res["Brush.Warning"] = new SolidColorBrush(Color.Parse(def.Warning));
+            res["Brush.Danger"] = new SolidColorBrush(Color.Parse(def.Danger));
+            res["Brush.DangerSurface"] = new SolidColorBrush(Color.Parse(def.DangerSurface));
+
+            // 8. Charts, Gridlines & Tooltips
+            res["Brush.ChartGrid"] = new SolidColorBrush(Color.Parse(def.ChartGrid));
+            res["Brush.ChartAxis"] = new SolidColorBrush(Color.Parse(def.ChartAxis));
+            res["Brush.ChartTooltip"] = new SolidColorBrush(Color.Parse(def.ChartTooltipBackground));
+            res["Brush.ChartTooltipText"] = new SolidColorBrush(Color.Parse(def.ChartTooltipText));
+            res["Brush.ChartSegmentOther"] = new SolidColorBrush(Color.Parse(def.ChartSegmentOther));
+
+            // 9. 12 Process Chart Segment Brushes
+            for (int i = 0; i < def.ProcessPalette.Length; i++)
             {
-                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
-                EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
-                GradientStops = new GradientStops
-                {
-                    new(Color.Parse(dlBright), 0),
-                    new(Color.Parse(dl), 1)
-                }
-            };
-            res["Brush.DownloadBarGradient"] = dlBarGrad;
+                var brush = new SolidColorBrush(Color.Parse(def.ProcessPalette[i]));
+                res[$"Brush.ChartSegment{i + 1}"] = brush;
+                res[$"Brush.ProcessChart{i + 1}"] = brush;
+            }
 
-            var ulBarGrad = new LinearGradientBrush
-            {
-                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
-                EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
-                GradientStops = new GradientStops
-                {
-                    new(Color.Parse(ulBright), 0),
-                    new(Color.Parse(ul), 1)
-                }
-            };
-            res["Brush.UploadBarGradient"] = ulBarGrad;
+            // 10. Linear Gradients
+            res["Brush.DownloadBarGradient"] = CreateLinearGradient(def.DownloadBarGradient.Start, def.DownloadBarGradient.End, isVertical: true);
+            res["Brush.UploadBarGradient"] = CreateLinearGradient(def.UploadBarGradient.Start, def.UploadBarGradient.End, isVertical: true);
+            res["Brush.HeroDownloadGradient"] = CreateLinearGradient(def.HeroDownloadGradient.Start, def.HeroDownloadGradient.End, isVertical: true);
+            res["Brush.HeroUploadGradient"] = CreateLinearGradient(def.HeroUploadGradient.Start, def.HeroUploadGradient.End, isVertical: true);
+            res["Brush.HeroUsageGradient"] = CreateLinearGradient(def.HeroUsageGradient.Start, def.HeroUsageGradient.End, isVertical: true);
+            res["Brush.DownloadAreaGradient"] = CreateLinearGradient(def.DownloadAreaGradient.Start, def.DownloadAreaGradient.End, isVertical: true);
+            res["Brush.UploadAreaGradient"] = CreateLinearGradient(def.UploadAreaGradient.Start, def.UploadAreaGradient.End, isVertical: true);
+            res["Brush.ActiveNavGradient"] = CreateLinearGradient(def.ActiveNavGradient.Start, def.ActiveNavGradient.End, isVertical: false);
+            res["Brush.GradientDownload"] = CreateLinearGradient(def.GradientDownload.Start, def.GradientDownload.End, isVertical: false);
+            res["Brush.GradientUpload"] = CreateLinearGradient(def.GradientUpload.Start, def.GradientUpload.End, isVertical: false);
+            res["Brush.GradientVioletPink"] = CreateLinearGradient(def.GradientVioletPink.Start, def.GradientVioletPink.End, isVertical: false);
+            res["Brush.GradientCyanPink"] = CreateLinearGradient(def.GradientCyanPink.Start, def.GradientCyanPink.End, isVertical: false);
 
-            // System overrides
-            res["SystemRegionBrush"] = new SolidColorBrush(Color.Parse(bg));
-            res["SystemControlBackgroundAltHighBrush"] = new SolidColorBrush(Color.Parse(bg));
-            res["SystemControlBackgroundBaseLowBrush"] = new SolidColorBrush(Color.Parse(surf));
-            res["SystemControlBackgroundChromeLowBrush"] = new SolidColorBrush(Color.Parse(surfElev));
+            // 11. FluentTheme System Overrides
+            res["SystemRegionBrush"] = new SolidColorBrush(Color.Parse(def.AppBackground));
+            res["SystemControlBackgroundAltHighBrush"] = new SolidColorBrush(Color.Parse(def.AppBackground));
+            res["SystemControlBackgroundBaseLowBrush"] = new SolidColorBrush(Color.Parse(def.Surface));
+            res["SystemControlBackgroundChromeMediumLowBrush"] = new SolidColorBrush(Color.Parse(def.Surface));
+            res["SystemControlBackgroundChromeLowBrush"] = new SolidColorBrush(Color.Parse(def.SurfaceElevated));
+            res["SystemControlBackgroundListLowBrush"] = new SolidColorBrush(Color.Parse(def.Surface));
+            res["SystemControlForegroundBaseHighBrush"] = new SolidColorBrush(Color.Parse(def.TextPrimary));
+            res["SystemControlForegroundBaseMediumBrush"] = new SolidColorBrush(Color.Parse(def.TextSecondary));
+            res["SystemControlForegroundBaseMediumLowBrush"] = new SolidColorBrush(Color.Parse(def.TextMuted));
         }
 
         if (Dispatcher.UIThread.CheckAccess())
@@ -157,65 +670,17 @@ public class ThemeService : IThemeService
         }
     }
 
-    private static (
-        string bg, string navBg, string surf, string surfElev, string surfSubtle, string surfHov,
-        string border, string borderSubtle, string borderStr,
-        string accent, string accentBright, string accentDeep,
-        string dl, string dlBright,
-        string ul, string ulBright,
-        string textPrim, string textSec, string textMuted
-    ) GetThemePalette(string themeId)
+    private static LinearGradientBrush CreateLinearGradient(string startHex, string endHex, bool isVertical)
     {
-        return themeId switch
+        return new LinearGradientBrush
         {
-            "Deep Violet" => (
-                "#0E0720", "#0A0417", "#180D33", "#24144B", "#140A2B", "#2B1758",
-                "#3D207A", "#2A1654", "#5D31B8",
-                "#9D4EDD", "#C77DFF", "#7B2CBF",
-                "#38BDF8", "#7DD3FC",
-                "#C77DFF", "#E0AAFF",
-                "#FFFFFF", "#B8A9D9", "#7E6E9E"
-            ),
-            "Cyber Ocean" => (
-                "#040D1A", "#020812", "#0A192F", "#112A4D", "#071324", "#16355F",
-                "#1E4378", "#122C52", "#2A5EAA",
-                "#00F0FF", "#38BDF8", "#0284C7",
-                "#00F0FF", "#38BDF8",
-                "#818CF8", "#A5B4FC",
-                "#FFFFFF", "#94A3B8", "#64748B"
-            ),
-            "Aurora" => (
-                "#051512", "#030E0C", "#0B2520", "#123932", "#081C18", "#194C43",
-                "#1F5E52", "#14423A", "#2B8272",
-                "#10B981", "#34D399", "#059669",
-                "#06B6D4", "#22D3EE",
-                "#34D399", "#6EE7B7",
-                "#FFFFFF", "#A7F3D0", "#5E8E7E"
-            ),
-            "Cyber Pink" => (
-                "#160614", "#10040E", "#260C22", "#3B1335", "#1E091B", "#4D1945",
-                "#6A225F", "#4A1743", "#943085",
-                "#FF007F", "#FF3399", "#D9006C",
-                "#00F0FF", "#38BDF8",
-                "#FF3399", "#FF66B2",
-                "#FFFFFF", "#F472B6", "#9D5C80"
-            ),
-            "Arctic Light" => (
-                "#0F172A", "#0B1120", "#1E293B", "#334155", "#182030", "#3E4F69",
-                "#475569", "#2F3D4E", "#64748B",
-                "#38BDF8", "#7DD3FC", "#0284C7",
-                "#38BDF8", "#7DD3FC",
-                "#A78BFA", "#C4B5FD",
-                "#FFFFFF", "#CBD5E1", "#64748B"
-            ),
-            _ => ( // Neon Space (Default)
-                "#0B0B16", "#0D0D1A", "#16162C", "#1B1C38", "#131326", "#222244",
-                "#2D2B55", "#1E1C3D", "#4A4780",
-                "#A100FF", "#D000FF", "#7A00CC",
-                "#00D8F6", "#00F0FF",
-                "#A855F7", "#D000FF",
-                "#FFFFFF", "#A0A0C0", "#6E6E9B"
-            )
+            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+            EndPoint = isVertical ? new RelativePoint(0, 1, RelativeUnit.Relative) : new RelativePoint(1, 0, RelativeUnit.Relative),
+            GradientStops = new GradientStops
+            {
+                new(Color.Parse(startHex), 0),
+                new(Color.Parse(endHex), 1)
+            }
         };
     }
 }

@@ -29,11 +29,16 @@ public class SemanticBrushConverter : IValueConverter
             _ => "Brush.TextPrimary"
         };
 
-        if (Application.Current != null &&
-            Application.Current.TryGetResource(resourceKey, Application.Current.ActualThemeVariant, out var resource) &&
-            resource is IBrush brush)
+        if (Application.Current != null)
         {
-            return brush;
+            if (Application.Current.TryGetResource(resourceKey, Application.Current.ActualThemeVariant, out var resource) && resource is IBrush brush)
+            {
+                return brush;
+            }
+            if (Application.Current.Resources.TryGetValue(resourceKey, out var res) && res is IBrush b)
+            {
+                return b;
+            }
         }
 
         return null;

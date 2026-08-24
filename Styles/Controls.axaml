@@ -1,5 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
     <!-- Base Window Style -->
     <Style Selector="Window">
         <Setter Property="Background" Value="{DynamicResource Brush.AppBackground}" />
@@ -38,10 +39,92 @@
     <Style Selector="Button.SidebarItem.active /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.ActiveNavGradient}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Download}" />
-        <Setter Property="BorderThickness" Value="1,0,0,0" />
+        <Setter Property="BorderThickness" Value="2,0,0,0" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
     <Style Selector="Button.SidebarItem.active">
         <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!-- ComboBox Base & Secondary Styling -->
+    <Style Selector="ComboBox">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
+        <Setter Property="Padding" Value="12,6" />
+    </Style>
+    <Style Selector="ComboBox:pointerover /template/ Border#Background">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
+    </Style>
+    <Style Selector="ComboBoxItem">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
+    </Style>
+    <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    </Style>
+    <Style Selector="ComboBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!-- TextBox / SearchBox -->
+    <Style Selector="TextBox">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="SelectionForegroundBrush" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
+        <Setter Property="Padding" Value="12,8" />
+    </Style>
+    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
+    </Style>
+    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="TextBox.SearchBox">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
+    </Style>
+
+    <!-- CheckBox Styling -->
+    <Style Selector="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    </Style>
+    <Style Selector="CheckBox:checked /template/ Border#PART_Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+
+    <!-- ProgressBar Styling -->
+    <Style Selector="ProgressBar">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Pill}" />
+    </Style>
+
+    <!-- ToolTip Styling -->
+    <Style Selector="ToolTip">
+        <Setter Property="Background" Value="{DynamicResource Brush.ChartTooltip}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.ChartTooltipText}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
+        <Setter Property="Padding" Value="10,6" />
     </Style>
 </Styles>

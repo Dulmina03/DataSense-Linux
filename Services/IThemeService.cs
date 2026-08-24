@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -13,6 +14,8 @@ public interface IThemeService
     IReadOnlyList<ThemeOption> AvailableThemes { get; }
     string CurrentThemeId { get; }
     ThemeOption CurrentTheme { get; }
+    event Action<string>? ThemeChanged;
     void ApplyTheme(string themeId);
     Task InitializeAsync();
+    IReadOnlyList<string> GetProcessPaletteHex(string? themeId = null);
 }

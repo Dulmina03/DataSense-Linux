@@ -301,7 +301,7 @@
                                             BorderThickness="1"
                                             CornerRadius="10"
                                             Padding="14,12"
-                                            BoxShadow="0 8 20 0 #50000000">
+                                            BoxShadow="0 4 16 0 #25000000">
                                         <StackPanel Spacing="8" MinWidth="130">
                                             <TextBlock Text="{Binding HoverTimestampText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
                                             <Border Height="1" Background="{DynamicResource Brush.Border}" Opacity="0.6"/>
@@ -441,7 +441,7 @@
                                             BorderThickness="1"
                                             CornerRadius="10"
                                             Padding="14,12"
-                                            BoxShadow="0 8 20 0 #50000000">
+                                            BoxShadow="0 4 16 0 #25000000">
                                         <StackPanel Spacing="8" MinWidth="130">
                                             <TextBlock Text="{Binding TwelveMonthHoverTimestampText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
                                             <Border Height="1" Background="{DynamicResource Brush.Border}" Opacity="0.6"/>
@@ -642,17 +642,9 @@
                         <ItemsControl ItemsSource="{Binding NetworkUsageItems}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:NetworkUsageItemViewModel">
-                                    <Border Margin="0,0,0,12" Padding="18,16" CornerRadius="10" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
-                                        <!-- Subtle Dark Navy + Soft Ambient Glow -->
-                                        <Border.Background>
-                                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                                <GradientStop Color="#1816162C" Offset="0"/>
-                                                <GradientStop Color="#1000D8F6" Offset="0.4"/>
-                                                <GradientStop Color="#0CA855F7" Offset="0.85"/>
-                                                <GradientStop Color="#1816162C" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Border.Background>
-
+                                    <Border Margin="0,0,0,12" Padding="18,16" CornerRadius="10"
+                                            Background="{DynamicResource Brush.SurfaceElevated}"
+                                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
                                         <StackPanel Spacing="14">
                                             <!-- Top Row: Identity Dot + Network Name + Subtitle on Left, 3 Metrics on Right -->
                                             <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">

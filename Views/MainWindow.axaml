@@ -148,24 +148,9 @@
         </Border>
 
         <!-- MAIN CONTENT AREA -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,*" Background="{DynamicResource Brush.AppBackground}">
-
-            <!-- Context Header (Top Bar) -->
-            <Border Grid.Row="0" Background="{DynamicResource Brush.AppBackground}" BorderBrush="Transparent" BorderThickness="0" Padding="32,24,32,0">
-                <Grid ColumnDefinitions="*,Auto">
-                    <!-- Current Page Context (Only shown when not Dashboard, as Dashboard has its own large header) -->
-                    <TextBlock Grid.Column="0"
-                               Text="{Binding CurrentPage.Title}"
-                               Classes="PageTitle"
-                               IsVisible="{Binding !IsDashboardActive}"
-                               VerticalAlignment="Center"/>
-
-                    <!-- We optionally can put global actions here -->
-                </Grid>
-            </Border>
-
+        <Grid Grid.Column="1" Background="{DynamicResource Brush.AppBackground}">
             <!-- Dynamic Page Content -->
-            <ContentControl Grid.Row="1" Content="{Binding CurrentPage}" />
+            <ContentControl Content="{Binding CurrentPage}" />
         </Grid>
     </Grid>
 </Window>

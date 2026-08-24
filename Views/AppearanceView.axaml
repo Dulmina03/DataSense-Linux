@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DataSense.ViewModels"
+             xmlns:srv="using:DataSense.Services"
              x:Class="DataSense.Views.AppearanceView"
              x:DataType="vm:SettingsViewModel">
 
@@ -21,8 +22,8 @@
                     <Grid ColumnDefinitions="*,*">
                         <StackPanel Grid.Column="0" Spacing="{DynamicResource Spacing.XS}" Margin="0,0,24,0">
                             <TextBlock Text="CURRENT THEME MODE" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold"/>
-                            <TextBlock Text="Fluent Dark" Classes="DisplayMetric" Foreground="{DynamicResource Brush.Accent}"/>
-                            <TextBlock Text="System accent sync active" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                            <TextBlock Text="{Binding SelectedTheme.DisplayName}" Classes="LargeMetric" Foreground="{DynamicResource Brush.Accent}"/>
+                            <TextBlock Text="Dynamic semantic color system active" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Spacing="{DynamicResource Spacing.XS}">
@@ -44,10 +45,16 @@
                                 <TextBlock Text="Color Theme" Classes="Body" FontWeight="Medium" Foreground="{DynamicResource Brush.TextPrimary}"/>
                                 <TextBlock Text="Select your preferred desktop application theme palette." Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
                             </StackPanel>
-                            <ComboBox Grid.Column="1" SelectedIndex="0" MinWidth="200" Classes="Secondary">
-                                <ComboBoxItem Content="Fluent Dark (Default)"/>
-                                <ComboBoxItem Content="Fluent Light"/>
-                                <ComboBoxItem Content="System Auto Sync"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableThemes}"
+                                      SelectedItem="{Binding SelectedTheme}"
+                                      MinWidth="220"
+                                      Classes="Secondary">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate DataType="srv:ThemeOption">
+                                        <TextBlock Text="{Binding FormattedName}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
                             </ComboBox>
                         </Grid>
 

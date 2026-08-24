@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
+using DataSense.Helpers;
 using DataSense.Models;
 
 namespace DataSense.Database;
@@ -983,7 +985,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
     public async Task<IEnumerable<string>> GetAvailableNetworksAsync()
     {
-        var results = new List<string>();
+        var rawNetworks = new List<string>();
         using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
@@ -994,9 +996,24 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
-            results.Add(reader.GetString(0));
+            rawNetworks.Add(reader.GetString(0));
         }
-        return results;
+
+        // Deduplicate and filter out placeholder names when valid SSIDs exist
+        var validNetworks = rawNetworks
+            .Where(name => NetworkIdentityValidator.IsValidNetworkName(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (validNetworks.Count > 0)
+        {
+            return validNetworks;
+        }
+
+        return rawNetworks
+            .Select(name => NetworkIdentityValidator.NormalizeNetworkName(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     public async Task<NetworkAnalyticsSummary> GetNetworkSummaryAsync(string networkName, DateTime start, DateTime end)
