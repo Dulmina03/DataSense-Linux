@@ -673,30 +673,25 @@ public class HistoryViewModelTests : IDisposable
         vm.SelectMonth();
         await vm.LoadAsync(showLoading: false);
 
-        // 1. Live Session verified
-        Assert.True(vm.HasLiveSession);
-        Assert.NotNull(vm.CurrentLiveSession);
-        Assert.Equal("SLT Fiber", vm.CurrentLiveSession.DisplayName);
-        Assert.True(vm.CurrentLiveSession.IsActive);
+        // 1. Network Usage state verified
+        Assert.True(vm.HasNetworkUsage);
+        Assert.Equal("MONTHLY NETWORK USAGE", vm.NetworkUsageSectionTitle);
 
-        // 2. Counts: 3 sessions, 2 distinct networks
-        Assert.Equal("3 SESSIONS · 2 NETWORKS", vm.SessionNetworkCountText);
-
-        // 3. Monthly aggregated groups: Exactly 2 networks
-        Assert.Equal(2, vm.MonthlyNetworkSummaries.Count);
-        var slt = vm.MonthlyNetworkSummaries.FirstOrDefault(m => m.NetworkName == "SLT Fiber");
+        // 2. Monthly aggregated groups: Exactly 2 networks
+        Assert.Equal(2, vm.NetworkUsageItems.Count);
+        var slt = vm.NetworkUsageItems.FirstOrDefault(m => m.NetworkName == "SLT Fiber");
         Assert.NotNull(slt);
         Assert.Equal(6_000_000, slt.BytesDownloaded); // 4M + 2M
         Assert.Equal(1_500_000, slt.BytesUploaded);   // 1M + 0.5M
         Assert.Equal(7_500_000, slt.TotalBytes);
 
-        var dialog = vm.MonthlyNetworkSummaries.FirstOrDefault(m => m.NetworkName == "Dialog 4G");
+        var dialog = vm.NetworkUsageItems.FirstOrDefault(m => m.NetworkName == "Dialog 4G");
         Assert.NotNull(dialog);
         Assert.Equal(1_000_000, dialog.BytesDownloaded);
         Assert.Equal(200_000, dialog.BytesUploaded);
         Assert.Equal(1_200_000, dialog.TotalBytes);
 
-        // 4. Monthly totals
+        // 3. Monthly totals
         Assert.NotEmpty(vm.MonthlyTotalDownloadText);
         Assert.NotEmpty(vm.MonthlyTotalUploadText);
         Assert.NotEmpty(vm.MonthlyTotalUsageText);

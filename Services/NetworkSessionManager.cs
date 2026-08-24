@@ -15,9 +15,12 @@ public class NetworkSessionManager : IDisposable
     private NetworkSession? _currentSession;
     public NetworkSession? CurrentSession => _currentSession;
     private string? _currentInterface;
+    private string? _currentNetworkName;
     private long _sessionStartDownloaded;
     private long _sessionStartUploaded;
-    
+    private DateTime? _lastDbUpdate;
+    private DateTime _lastNetworkCheck = DateTime.MinValue;
+
     private readonly SemaphoreSlim _lock = new(1, 1);
 
     public NetworkSessionManager(
@@ -41,6 +44,46 @@ public class NetworkSessionManager : IDisposable
         _ = FinalizeCurrentSessionAsync();
     }
 
+    public static string ResolveNetworkName(NetworkConnectionDetails details, string interfaceName)
+    {
+        // Priority 1 & 2: Active Wi-Fi SSID
+        if (!string.IsNullOrWhiteSpace(details.WifiSsid) &&
+            details.WifiSsid != "—" &&
+            details.WifiSsid != "None" &&
+            details.WifiSsid != "--" &&
+            !details.WifiSsid.Equals("Wi-Fi", StringComparison.OrdinalIgnoreCase))
+        {
+            return details.WifiSsid.Trim();
+        }
+
+        // Priority 3: NetworkManager Connection Profile Name (e.g. SLT Fiber, Dialog 4G, Hotspot)
+        if (!string.IsNullOrWhiteSpace(details.ConnectionName) &&
+            details.ConnectionName != "—" &&
+            details.ConnectionName != "None" &&
+            details.ConnectionName != "--" &&
+            !details.ConnectionName.Equals("Wi-Fi", StringComparison.OrdinalIgnoreCase) &&
+            !details.ConnectionName.StartsWith("Wired connection", StringComparison.OrdinalIgnoreCase) &&
+            !details.ConnectionName.StartsWith("Wired Connection", StringComparison.OrdinalIgnoreCase) &&
+            !details.ConnectionName.Equals("Ethernet", StringComparison.OrdinalIgnoreCase))
+        {
+            return details.ConnectionName.Trim();
+        }
+
+        // Ethernet detection
+        if (details.ConnectionType.Equals("ethernet", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Ethernet";
+        }
+
+        // Priority 4: Interface fallback
+        if (!string.IsNullOrWhiteSpace(interfaceName) && interfaceName != "None" && interfaceName != "Disconnected")
+        {
+            return $"Interface: {interfaceName}";
+        }
+
+        return "Unknown Network";
+    }
+
     private async void OnNetworkUsageUpdated(NetworkUsage usage)
     {
         await _lock.WaitAsync();
@@ -48,44 +91,64 @@ public class NetworkSessionManager : IDisposable
         {
             var iface = usage.InterfaceName;
             bool isDisconnected = string.IsNullOrEmpty(iface) || iface == "None" || iface == "Disconnected";
+            var now = DateTime.UtcNow;
 
-            // If interface changed
-            if (_currentInterface != iface)
+            // Check for network switch (e.g., interface change or SSID change every 5 seconds)
+            bool shouldCheckNetworkIdentity = _currentInterface != iface || (now - _lastNetworkCheck).TotalSeconds > 5;
+            string? detectedNetworkName = _currentNetworkName;
+            NetworkConnectionDetails? details = null;
+
+            if (shouldCheckNetworkIdentity && !isDisconnected && _connectionService != null)
+            {
+                try
+                {
+                    details = await _connectionService.GetConnectionDetailsAsync(iface!);
+                    detectedNetworkName = ResolveNetworkName(details, iface!);
+                    _lastNetworkCheck = now;
+                }
+                catch { }
+            }
+
+            bool networkChanged = _currentInterface != iface ||
+                                 (!string.IsNullOrEmpty(_currentNetworkName) &&
+                                  !string.IsNullOrEmpty(detectedNetworkName) &&
+                                  !string.Equals(_currentNetworkName, detectedNetworkName, StringComparison.OrdinalIgnoreCase));
+
+            // If interface or network SSID changed
+            if (networkChanged || (_currentSession == null && !isDisconnected))
             {
                 // Finalize previous session
                 await FinalizeCurrentSessionAsync();
-                
+
                 _currentInterface = iface;
+                _currentNetworkName = detectedNetworkName;
 
                 if (!isDisconnected)
                 {
-                    // Start new session
-                    var details = await _connectionService.GetConnectionDetailsAsync(iface!);
-                    
-                    string networkName = "Unknown Network";
-                    if (details.ConnectionType.Equals("wifi", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(details.WifiSsid))
+                    if (details == null && _connectionService != null)
                     {
-                        networkName = details.WifiSsid;
+                        try
+                        {
+                            details = await _connectionService.GetConnectionDetailsAsync(iface!);
+                            detectedNetworkName = ResolveNetworkName(details, iface!);
+                            _currentNetworkName = detectedNetworkName;
+                        }
+                        catch { }
                     }
-                    else if (details.ConnectionType.Equals("ethernet", StringComparison.OrdinalIgnoreCase))
-                    {
-                        networkName = "Ethernet";
-                    }
-                    else if (!string.IsNullOrEmpty(details.ConnectionName) && details.ConnectionName != "—")
-                    {
-                        networkName = details.ConnectionName;
-                    }
+
+                    string networkName = !string.IsNullOrEmpty(detectedNetworkName) ? detectedNetworkName : "Unknown Network";
+                    string connType = details?.ConnectionType ?? (iface != null && (iface.StartsWith("wl") || iface.StartsWith("wlan")) ? "WiFi" : "Ethernet");
 
                     _currentSession = new NetworkSession
                     {
-                        InterfaceName = iface!,
-                        ConnectionType = details.ConnectionType,
+                        InterfaceName = iface ?? "Unknown",
+                        ConnectionType = connType,
                         NetworkName = networkName,
                         StartTime = DateTime.UtcNow,
                         BytesDownloaded = 0,
                         BytesUploaded = 0
                     };
-                    
+
                     _sessionStartDownloaded = usage.BytesReceived;
                     _sessionStartUploaded = usage.BytesSent;
 
@@ -97,10 +160,8 @@ public class NetworkSessionManager : IDisposable
                 // Update ongoing session bytes
                 long currentDownloadedDelta = usage.BytesReceived - _sessionStartDownloaded;
                 long currentUploadedDelta = usage.BytesSent - _sessionStartUploaded;
-                
-                // Handle counter resets (if delta is negative, just add to it, assuming a reset. Wait, if counter resets, usage.BytesReceived is smaller than start.
-                // For simplicity, if it's smaller, we just reset the start tracker)
-                if (currentDownloadedDelta < 0) 
+
+                if (currentDownloadedDelta < 0)
                 {
                     _sessionStartDownloaded = usage.BytesReceived;
                     currentDownloadedDelta = 0;
@@ -111,19 +172,13 @@ public class NetworkSessionManager : IDisposable
                     currentUploadedDelta = 0;
                 }
 
-
-                // Only update DB periodically if significant change or every minute?
-                // Let's just update the in-memory object and we'll save it to DB every 10 seconds or on end.
-                // We can use a modulo of ticks or time. 
-                // Since this fires every second, we'll just update it in memory, and we update DB if we hit a 10s threshold.
-                var now = DateTime.UtcNow;
                 if ((now - (_lastDbUpdate ?? DateTime.MinValue)).TotalSeconds > 10)
                 {
                     _currentSession.BytesDownloaded += currentDownloadedDelta;
                     _currentSession.BytesUploaded += currentUploadedDelta;
                     _sessionStartDownloaded = usage.BytesReceived;
                     _sessionStartUploaded = usage.BytesSent;
-                    
+
                     await _repository.UpdateSessionAsync(_currentSession);
                     _lastDbUpdate = now;
                 }
@@ -134,8 +189,6 @@ public class NetworkSessionManager : IDisposable
             _lock.Release();
         }
     }
-    
-    private DateTime? _lastDbUpdate;
 
     private async Task FinalizeCurrentSessionAsync()
     {
