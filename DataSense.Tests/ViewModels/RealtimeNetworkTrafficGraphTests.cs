@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using DataSense.Models;
+using DataSense.Services;
 using DataSense.ViewModels;
 using Xunit;
 
@@ -26,6 +29,22 @@ public class RealtimeNetworkTrafficGraphTests
     }
 
     [Fact]
+    public void RealtimeNetworkPoint_FormatsPeriodBytes_WhenDownloadBytesSpecified()
+    {
+        var point = new RealtimeNetworkPoint
+        {
+            CustomLabel = "Aug 24",
+            DownloadBytes = 104857600, // 100 MB
+            UploadBytes = 52428800     // 50 MB
+        };
+
+        Assert.Equal("100.0 MB", point.DownloadSpeedText);
+        Assert.Equal("50.0 MB", point.UploadSpeedText);
+        Assert.Equal("150.0 MB", point.TotalSpeedText);
+        Assert.Equal("Aug 24", point.TimeText);
+    }
+
+    [Fact]
     public void RealtimeNetworkPoint_CombinedRate_IsSumOfDownloadAndUpload()
     {
         var point = new RealtimeNetworkPoint
@@ -35,5 +54,26 @@ public class RealtimeNetworkTrafficGraphTests
         };
 
         Assert.Equal(1500, point.CombinedRateBytesPerSec);
+    }
+
+    [Fact]
+    public async Task LinuxNetworkMonitorService_ResetMeasurement_ClearsPreviousState()
+    {
+        var monitor = new LinuxNetworkMonitorService();
+        monitor.ResetMeasurement();
+
+        // Querying non-existent interface returns null
+        var usage = await monitor.GetUsageAsync("non_existent_iface_xyz");
+        Assert.Null(usage);
+    }
+
+    [Fact]
+    public async Task LinuxNetworkMonitorService_ReturnsNull_ForEmptyOrDisconnectedInterface()
+    {
+        var monitor = new LinuxNetworkMonitorService();
+
+        Assert.Null(await monitor.GetUsageAsync(""));
+        Assert.Null(await monitor.GetUsageAsync("None"));
+        Assert.Null(await monitor.GetUsageAsync("Disconnected"));
     }
 }

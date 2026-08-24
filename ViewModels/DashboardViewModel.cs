@@ -172,6 +172,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private RealtimeNetworkPoint? _hoveredRealtimePoint;
     [ObservableProperty] private bool   _isHoveringRealtimeGraph = false;
     [ObservableProperty] private double _hoverLineX = 0;
+    [ObservableProperty] private double _hoverDownloadY = 180;
+    [ObservableProperty] private double _hoverUploadY = 180;
+    [ObservableProperty] private double _hoverTooltipX = 0;
 
     [ObservableProperty] private double _latestDownloadX = 0;
     [ObservableProperty] private double _latestDownloadY = 180;
@@ -180,6 +183,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     private const int MaxRealtimePoints = 60;
     private string _lastInterfaceName = string.Empty;
+    private readonly List<RealtimeNetworkPoint> _historicalGraphPoints = new();
 
     /// <summary>
     /// Pixel width of the chart canvas.  Updated by the view's SizeChanged handler.
@@ -196,6 +200,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     // ── Period Analytics ────────────────────────────────────────────────────
 
     [ObservableProperty] private AnalyticsPeriod _selectedPeriod = AnalyticsPeriod.Last7Days;
+    [ObservableProperty] private bool _isPeriodToday = false;
+    [ObservableProperty] private bool _isPeriod7Days = true;
+    [ObservableProperty] private bool _isPeriod30Days = false;
     
     [ObservableProperty] private string _periodTotalDownloadedText = "—";
     [ObservableProperty] private string _periodTotalUploadedText   = "—";
@@ -367,13 +374,23 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task SelectPeriodAsync(string periodString)
     {
-        if (Enum.TryParse<AnalyticsPeriod>(periodString, out var period))
+        AnalyticsPeriod newPeriod = SelectedPeriod;
+        if (periodString.Equals("Today", StringComparison.OrdinalIgnoreCase))
+            newPeriod = AnalyticsPeriod.Today;
+        else if (periodString.Equals("7Days", StringComparison.OrdinalIgnoreCase) || periodString.Equals("Last7Days", StringComparison.OrdinalIgnoreCase))
+            newPeriod = AnalyticsPeriod.Last7Days;
+        else if (periodString.Equals("30Days", StringComparison.OrdinalIgnoreCase) || periodString.Equals("Last30Days", StringComparison.OrdinalIgnoreCase))
+            newPeriod = AnalyticsPeriod.Last30Days;
+        else if (Enum.TryParse<AnalyticsPeriod>(periodString, out var parsed))
+            newPeriod = parsed;
+
+        if (SelectedPeriod != newPeriod)
         {
-            if (SelectedPeriod != period)
-            {
-                SelectedPeriod = period;
-                await LoadPeriodAnalyticsAsync(showLoading: true);
-            }
+            SelectedPeriod = newPeriod;
+            IsPeriodToday = SelectedPeriod == AnalyticsPeriod.Today;
+            IsPeriod7Days = SelectedPeriod == AnalyticsPeriod.Last7Days;
+            IsPeriod30Days = SelectedPeriod == AnalyticsPeriod.Last30Days;
+            await LoadPeriodAnalyticsAsync(showLoading: true);
         }
     }
 
@@ -622,82 +639,175 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     public void RebuildRealtimeChartGeometry()
     {
-        if (RealtimeTrafficPoints.Count == 0)
-        {
-            RealtimeDownloadAreaGeometry = null;
-            RealtimeDownloadLineGeometry = null;
-            RealtimeUploadAreaGeometry = null;
-            RealtimeUploadLineGeometry = null;
-            TimeAxisLabels.Clear();
-            return;
-        }
-
-        double maxObserved = Math.Max(PeakDownloadRateInWindow, PeakUploadRateInWindow);
-        double yMax = Math.Max(102400.0, maxObserved * 1.25); // 100 KB/s minimum scale floor
-
-        YAxisTopText = ByteFormatter.FormatSpeed(yMax);
-        YAxisMidHighText = ByteFormatter.FormatSpeed(yMax * 0.75);
-        YAxisMidText = ByteFormatter.FormatSpeed(yMax * 0.50);
-        YAxisMidLowText = ByteFormatter.FormatSpeed(yMax * 0.25);
-        YAxisMinText = "0 B/s";
-
         double canvasWidth = Math.Max(300.0, ChartWidth - 78.0);
         double canvasHeight = 180.0;
-        int count = RealtimeTrafficPoints.Count;
 
-        var downloadPoints = new List<Point>();
-        var uploadPoints = new List<Point>();
-
-        for (int i = 0; i < count; i++)
+        if (SelectedPeriod == AnalyticsPeriod.Today)
         {
-            var p = RealtimeTrafficPoints[i];
-            double x = count == 1 ? canvasWidth : (double)i / (count - 1) * canvasWidth;
-
-            double dlRatio = Math.Clamp(p.DownloadRateBytesPerSec / yMax, 0.0, 1.0);
-            double ulRatio = Math.Clamp(p.UploadRateBytesPerSec / yMax, 0.0, 1.0);
-
-            double dlY = canvasHeight - (dlRatio * (canvasHeight - 20.0)) - 10.0;
-            double ulY = canvasHeight - (ulRatio * (canvasHeight - 20.0)) - 10.0;
-
-            p.CanvasX = x;
-            p.DownloadY = dlY;
-            p.UploadY = ulY;
-
-            downloadPoints.Add(new Point(x, dlY));
-            uploadPoints.Add(new Point(x, ulY));
-        }
-
-        // Build curve geometries
-        var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
-        var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, canvasHeight, canvasWidth);
-
-        RealtimeDownloadLineGeometry = dlLine;
-        RealtimeDownloadAreaGeometry = dlArea;
-        RealtimeUploadLineGeometry = ulLine;
-        RealtimeUploadAreaGeometry = ulArea;
-
-        // Set latest dot positions
-        if (downloadPoints.Count > 0)
-        {
-            LatestDownloadX = downloadPoints.Last().X;
-            LatestDownloadY = downloadPoints.Last().Y;
-            LatestUploadX = uploadPoints.Last().X;
-            LatestUploadY = uploadPoints.Last().Y;
-        }
-
-        // Rebuild time axis labels (5 labels across the time window)
-        TimeAxisLabels.Clear();
-        if (count > 0)
-        {
-            int step = Math.Max(1, (count - 1) / 4);
-            for (int i = 0; i < count; i += step)
+            if (RealtimeTrafficPoints.Count == 0)
             {
-                TimeAxisLabels.Add(RealtimeTrafficPoints[i].ShortTimeText);
-                if (TimeAxisLabels.Count == 5) break;
+                RealtimeDownloadAreaGeometry = null;
+                RealtimeDownloadLineGeometry = null;
+                RealtimeUploadAreaGeometry = null;
+                RealtimeUploadLineGeometry = null;
+                TimeAxisLabels.Clear();
+                HasRealtimeGraphData = false;
+                return;
             }
-            while (TimeAxisLabels.Count < 5 && count > 0)
+
+            HasRealtimeGraphData = true;
+            double maxObserved = Math.Max(PeakDownloadRateInWindow, PeakUploadRateInWindow);
+            double yMax = Math.Max(102400.0, maxObserved * 1.25); // 100 KB/s minimum scale floor
+
+            YAxisTopText = ByteFormatter.FormatSpeed(yMax);
+            YAxisMidHighText = ByteFormatter.FormatSpeed(yMax * 0.75);
+            YAxisMidText = ByteFormatter.FormatSpeed(yMax * 0.50);
+            YAxisMidLowText = ByteFormatter.FormatSpeed(yMax * 0.25);
+            YAxisMinText = "0 B/s";
+
+            int count = RealtimeTrafficPoints.Count;
+            var downloadPoints = new List<Point>();
+            var uploadPoints = new List<Point>();
+
+            for (int i = 0; i < count; i++)
             {
-                TimeAxisLabels.Add(RealtimeTrafficPoints.Last().ShortTimeText);
+                var p = RealtimeTrafficPoints[i];
+                double x = count == 1 ? canvasWidth : (double)i / (count - 1) * canvasWidth;
+
+                double dlRatio = Math.Clamp(p.DownloadRateBytesPerSec / yMax, 0.0, 1.0);
+                double ulRatio = Math.Clamp(p.UploadRateBytesPerSec / yMax, 0.0, 1.0);
+
+                double dlY = canvasHeight - (dlRatio * (canvasHeight - 20.0)) - 10.0;
+                double ulY = canvasHeight - (ulRatio * (canvasHeight - 20.0)) - 10.0;
+
+                p.CanvasX = x;
+                p.DownloadY = dlY;
+                p.UploadY = ulY;
+
+                downloadPoints.Add(new Point(x, dlY));
+                uploadPoints.Add(new Point(x, ulY));
+            }
+
+            var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
+            var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, canvasHeight, canvasWidth);
+
+            RealtimeDownloadLineGeometry = dlLine;
+            RealtimeDownloadAreaGeometry = dlArea;
+            RealtimeUploadLineGeometry = ulLine;
+            RealtimeUploadAreaGeometry = ulArea;
+
+            if (downloadPoints.Count > 0)
+            {
+                LatestDownloadX = downloadPoints.Last().X;
+                LatestDownloadY = downloadPoints.Last().Y;
+                LatestUploadX = uploadPoints.Last().X;
+                LatestUploadY = uploadPoints.Last().Y;
+            }
+
+            TimeAxisLabels.Clear();
+            if (count > 0)
+            {
+                int step = Math.Max(1, (count - 1) / 4);
+                for (int i = 0; i < count; i += step)
+                {
+                    TimeAxisLabels.Add(RealtimeTrafficPoints[i].ShortTimeText);
+                    if (TimeAxisLabels.Count == 5) break;
+                }
+                while (TimeAxisLabels.Count < 5 && count > 0)
+                {
+                    TimeAxisLabels.Add(RealtimeTrafficPoints.Last().ShortTimeText);
+                }
+            }
+        }
+        else
+        {
+            // SelectedPeriod is Last7Days or Last30Days
+            var items = DailyChartItems.ToList();
+            if (items.Count == 0 || !items.Any(i => i.HasData))
+            {
+                RealtimeDownloadAreaGeometry = null;
+                RealtimeDownloadLineGeometry = null;
+                RealtimeUploadAreaGeometry = null;
+                RealtimeUploadLineGeometry = null;
+                TimeAxisLabels.Clear();
+                HasRealtimeGraphData = false;
+                return;
+            }
+
+            HasRealtimeGraphData = true;
+            long maxBytes = items.Max(i => Math.Max(i.BytesDownloaded, i.BytesUploaded));
+            double yMax = Math.Max(1048576.0, maxBytes * 1.25); // 1 MB minimum scale floor
+
+            YAxisTopText = ByteFormatter.FormatBytes((long)yMax);
+            YAxisMidHighText = ByteFormatter.FormatBytes((long)(yMax * 0.75));
+            YAxisMidText = ByteFormatter.FormatBytes((long)(yMax * 0.50));
+            YAxisMidLowText = ByteFormatter.FormatBytes((long)(yMax * 0.25));
+            YAxisMinText = "0 B";
+
+            int count = items.Count;
+            var downloadPoints = new List<Point>();
+            var uploadPoints = new List<Point>();
+            _historicalGraphPoints.Clear();
+
+            for (int i = 0; i < count; i++)
+            {
+                var item = items[i];
+                double x = count == 1 ? canvasWidth : (double)i / (count - 1) * canvasWidth;
+
+                double dlRatio = Math.Clamp(item.BytesDownloaded / yMax, 0.0, 1.0);
+                double ulRatio = Math.Clamp(item.BytesUploaded / yMax, 0.0, 1.0);
+
+                double dlY = canvasHeight - (dlRatio * (canvasHeight - 20.0)) - 10.0;
+                double ulY = canvasHeight - (ulRatio * (canvasHeight - 20.0)) - 10.0;
+
+                var pt = new RealtimeNetworkPoint
+                {
+                    CustomLabel = item.DayLabel,
+                    DownloadBytes = item.BytesDownloaded,
+                    UploadBytes = item.BytesUploaded,
+                    CanvasX = x,
+                    DownloadY = dlY,
+                    UploadY = ulY
+                };
+                _historicalGraphPoints.Add(pt);
+
+                downloadPoints.Add(new Point(x, dlY));
+                uploadPoints.Add(new Point(x, ulY));
+            }
+
+            var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
+            var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, canvasHeight, canvasWidth);
+
+            RealtimeDownloadLineGeometry = dlLine;
+            RealtimeDownloadAreaGeometry = dlArea;
+            RealtimeUploadLineGeometry = ulLine;
+            RealtimeUploadAreaGeometry = ulArea;
+
+            if (downloadPoints.Count > 0)
+            {
+                LatestDownloadX = downloadPoints.Last().X;
+                LatestDownloadY = downloadPoints.Last().Y;
+                LatestUploadX = uploadPoints.Last().X;
+                LatestUploadY = uploadPoints.Last().Y;
+            }
+
+            TimeAxisLabels.Clear();
+            if (count <= 7)
+            {
+                foreach (var it in items) TimeAxisLabels.Add(it.DayLabel);
+            }
+            else
+            {
+                int step = Math.Max(1, (count - 1) / 4);
+                for (int i = 0; i < count; i += step)
+                {
+                    TimeAxisLabels.Add(items[i].DayLabel);
+                    if (TimeAxisLabels.Count == 5) break;
+                }
+                while (TimeAxisLabels.Count < 5 && count > 0)
+                {
+                    TimeAxisLabels.Add(items.Last().DayLabel);
+                }
             }
         }
     }
@@ -760,18 +870,37 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     public void UpdateRealtimeHover(double mouseX)
     {
-        if (RealtimeTrafficPoints.Count == 0)
+        double canvasWidth = Math.Max(300.0, ChartWidth - 78.0);
+        RealtimeNetworkPoint? closest = null;
+
+        if (SelectedPeriod == AnalyticsPeriod.Today)
         {
-            IsHoveringRealtimeGraph = false;
-            HoveredRealtimePoint = null;
-            return;
+            if (RealtimeTrafficPoints.Count == 0)
+            {
+                IsHoveringRealtimeGraph = false;
+                HoveredRealtimePoint = null;
+                return;
+            }
+            closest = RealtimeTrafficPoints.OrderBy(p => Math.Abs(p.CanvasX - mouseX)).FirstOrDefault();
+        }
+        else
+        {
+            if (_historicalGraphPoints.Count == 0)
+            {
+                IsHoveringRealtimeGraph = false;
+                HoveredRealtimePoint = null;
+                return;
+            }
+            closest = _historicalGraphPoints.OrderBy(p => Math.Abs(p.CanvasX - mouseX)).FirstOrDefault();
         }
 
-        var closest = RealtimeTrafficPoints.OrderBy(p => Math.Abs(p.CanvasX - mouseX)).FirstOrDefault();
         if (closest != null)
         {
             HoveredRealtimePoint = closest;
             HoverLineX = closest.CanvasX;
+            HoverDownloadY = closest.DownloadY;
+            HoverUploadY = closest.UploadY;
+            HoverTooltipX = Math.Clamp(closest.CanvasX - 80, 10, canvasWidth - 170);
             IsHoveringRealtimeGraph = true;
         }
     }
@@ -1081,7 +1210,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                             LabelY = h.LabelY
                         });
                     }
-                    IsChartEmpty = !hourlyItems.Any(i => i.HasData);
+                    IsChartEmpty = RealtimeTrafficPoints.Count == 0 && !hourlyItems.Any(i => i.HasData);
+                    RebuildRealtimeChartGeometry();
                 });
             }
             else
@@ -1099,6 +1229,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                     DailyChartItems.Clear();
                     foreach (var item in dailyItems) DailyChartItems.Add(item);
                     IsChartEmpty = !dailyItems.Any(i => i.HasData);
+                    RebuildRealtimeChartGeometry();
                 });
             }
 

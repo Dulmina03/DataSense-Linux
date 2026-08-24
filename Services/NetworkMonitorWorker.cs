@@ -14,6 +14,7 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
     private Task? _runTask;
     private readonly object _stateLock = new();
     private bool _disposed;
+    private string? _previousInterface;
 
     public string? ActiveInterface { get; private set; }
     public bool IsRunning => _cts != null && !_cts.IsCancellationRequested;
@@ -84,8 +85,15 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
             try
             {
                 string? activeIface = await DetectActiveInterfaceAsync();
-                if (!string.IsNullOrEmpty(activeIface))
+                if (!string.IsNullOrEmpty(activeIface) && activeIface != "None" && activeIface != "Disconnected")
                 {
+                    if (_previousInterface != null && _previousInterface != activeIface)
+                    {
+                        // Interface changed (e.g. Wi-Fi <-> Ethernet) -> reset baseline to prevent cross-interface spike
+                        _networkMonitorService.ResetMeasurement(activeIface);
+                    }
+                    _previousInterface = activeIface;
+
                     var usage = await _networkMonitorService.GetUsageAsync(activeIface);
                     if (usage != null)
                     {
@@ -103,8 +111,6 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
                         ActiveInterface = activeIface;
                         DownloadSpeed = 0;
                         UploadSpeed = 0;
-                        TotalBytesDownloaded = 0;
-                        TotalBytesUploaded = 0;
 
                         var fallbackUsage = new NetworkUsage
                         {
@@ -117,15 +123,14 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
                 }
                 else
                 {
-                    ActiveInterface = null;
+                    _previousInterface = null;
+                    ActiveInterface = "Disconnected";
                     DownloadSpeed = 0;
                     UploadSpeed = 0;
-                    TotalBytesDownloaded = 0;
-                    TotalBytesUploaded = 0;
 
                     var fallbackUsage = new NetworkUsage
                     {
-                        InterfaceName = "None",
+                        InterfaceName = "Disconnected",
                         Timestamp = DateTime.UtcNow
                     };
                     LatestUsage = fallbackUsage;
@@ -157,7 +162,14 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
             return routeInterface;
         }
 
-        // 2. Fallback: Query INetworkMonitorService for available interfaces
+        // 2. Try IPv6 default route in /proc/net/ipv6_route
+        string? ipv6RouteInterface = GetDefaultIpv6RouteInterface();
+        if (!string.IsNullOrEmpty(ipv6RouteInterface))
+        {
+            return ipv6RouteInterface;
+        }
+
+        // 3. Fallback: Query INetworkMonitorService for available interfaces (sorted with operational ones first)
         var available = await _networkMonitorService.GetAvailableInterfacesAsync();
         var availableList = available.ToList();
         if (availableList.Any())
@@ -179,7 +191,7 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
             var lines = File.ReadAllLines(routePath);
             foreach (var line in lines.Skip(1))
             {
-                var parts = line.Split('\t', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var parts = line.Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 if (parts.Length < 8) continue;
 
                 var iface = parts[0];
@@ -187,7 +199,7 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
                 var mask = parts[7];
 
                 // Default route destination is 00000000 and mask is 00000000
-                if (destination == "00000000" && mask == "00000000")
+                if (destination == "00000000" && mask == "00000000" && iface != "lo")
                 {
                     return iface;
                 }
@@ -196,6 +208,39 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error reading default route: {ex}");
+        }
+
+        return null;
+    }
+
+    private string? GetDefaultIpv6RouteInterface()
+    {
+        const string ipv6RoutePath = "/proc/net/ipv6_route";
+        if (!File.Exists(ipv6RoutePath))
+            return null;
+
+        try
+        {
+            var lines = File.ReadAllLines(ipv6RoutePath);
+            foreach (var line in lines)
+            {
+                var parts = line.Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (parts.Length < 10) continue;
+
+                var dest = parts[0];
+                var prefix = parts[1];
+                var iface = parts[9];
+
+                // Default route has destination 00000000000000000000000000000000 and prefix 00
+                if (dest.StartsWith("00000000") && prefix == "00" && iface != "lo")
+                {
+                    return iface;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error reading default IPv6 route: {ex}");
         }
 
         return null;

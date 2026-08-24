@@ -16,4 +16,9 @@ public interface INetworkMonitorService
     /// Returns null if the interface is not found.
     /// </summary>
     Task<NetworkUsage?> GetUsageAsync(string interfaceName);
+
+    /// <summary>
+    /// Resets previous measurements for the specified interface or all interfaces to prevent false spikes.
+    /// </summary>
+    void ResetMeasurement(string? interfaceName = null);
 }
