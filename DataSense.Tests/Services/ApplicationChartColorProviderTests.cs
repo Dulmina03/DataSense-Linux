@@ -29,16 +29,18 @@ public class ApplicationChartColorProviderTests
     {
         var provider = new ApplicationChartColorProvider();
 
-        // Presets matching reference visual identity
+        // Presets matching reference 12-color visual identity
         Assert.Equal(0, provider.GetColorIndex("brave"));
         Assert.Equal(0, provider.GetColorIndex("chrome"));
-        Assert.Equal(1, provider.GetColorIndex("spotify"));
-        Assert.Equal(2, provider.GetColorIndex("steam"));
-        Assert.Equal(3, provider.GetColorIndex("discord"));
-        Assert.Equal(4, provider.GetColorIndex("code"));
-        Assert.Equal(5, provider.GetColorIndex("telegram"));
-        Assert.Equal(6, provider.GetColorIndex("python"));
+        Assert.Equal(1, provider.GetColorIndex("code"));
+        Assert.Equal(2, provider.GetColorIndex("telegram"));
+        Assert.Equal(5, provider.GetColorIndex("python"));
+        Assert.Equal(6, provider.GetColorIndex("docker"));
         Assert.Equal(7, provider.GetColorIndex("git"));
+        Assert.Equal(8, provider.GetColorIndex("spotify"));
+        Assert.Equal(9, provider.GetColorIndex("slack"));
+        Assert.Equal(10, provider.GetColorIndex("steam"));
+        Assert.Equal(11, provider.GetColorIndex("discord"));
     }
 
     [Fact]
@@ -71,6 +73,6 @@ public class ApplicationChartColorProviderTests
         Assert.Equal("Brush.ChartSegmentOther", token);
 
         string hex = provider.GetColorHex(otherIdentifier);
-        Assert.Equal("#64748B", hex);
+        Assert.Equal("#6E6E9B", hex);
     }
 }

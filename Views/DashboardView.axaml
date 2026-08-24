@@ -21,7 +21,7 @@
                 <!-- Right: Status Badges -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
                     <!-- Live Connection Status Pill -->
-                    <Border CornerRadius="16" Background="#142820" BorderBrush="{DynamicResource Brush.Success}" BorderThickness="1" Padding="12,6">
+                    <Border CornerRadius="16" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Success}" BorderThickness="1" Padding="12,6">
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                             <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Success}"/>
                             <TextBlock Text="Live connection" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Success}"/>
@@ -39,47 +39,91 @@
                 </StackPanel>
             </Grid>
 
-            <!-- ── 2. LARGE HERO NETWORK ANALYTICS SURFACE ─────────────────────────────────── -->
+            <!-- ── 2. LARGE HERO NETWORK ANALYTICS SURFACE (FLOATING GLOW CARDS) ─────────────── -->
             <Border Classes="HeroSurface" Padding="20">
                 <StackPanel Spacing="16">
                     <!-- Hero Header Label -->
                     <TextBlock Text="HERO NETWORK ANALYTICS" Classes="Caption" FontWeight="Bold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextSecondary}"/>
 
-                    <!-- 3 Major Metric Columns -->
-                    <Grid ColumnDefinitions="*,12,*,12,*">
-                        <!-- DOWNLOAD (Electric Cyan with Top Glow Gradient) -->
-                        <Border Grid.Column="0" Background="{DynamicResource Brush.HeroDownloadGradient}" BorderBrush="#3322D3EE" BorderThickness="1" CornerRadius="12" Padding="18">
-                            <StackPanel Spacing="10">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0" Text="DOWNLOAD" Classes="Caption" FontWeight="SemiBold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                                    <TextBlock Grid.Column="1" Text="↓" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}"/>
+                    <!-- 3 Floating Glow Metric Instruments -->
+                    <Grid ColumnDefinitions="*,16,*,16,*">
+                        <!-- 1. DOWNLOAD FLOATING GLOW CARD (Electric Violet Glow) -->
+                        <Border Grid.Column="0" Background="{DynamicResource Brush.HeroDownloadGradient}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="14" Padding="20">
+                            <StackPanel Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <!-- Minimal Vector Download Icon (Tray + Arrow) -->
+                                        <Path Data="M 7 2 L 7 9 M 4 6.5 L 7 9.5 L 10 6.5 M 2.5 10.5 L 2.5 12 C 2.5 12.5 3 13 3.5 13 L 10.5 13 C 11 13 11.5 12.5 11.5 12 L 11.5 10.5" Width="14" Height="14" Stroke="{DynamicResource Brush.Download}" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round" VerticalAlignment="Center"/>
+                                        <TextBlock Text="DOWNLOAD" Classes="Caption" FontWeight="Bold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="2" CornerRadius="6" Background="{DynamicResource Brush.SurfaceElevated}" Padding="6,2" VerticalAlignment="Center">
+                                        <TextBlock Text="LIVE" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}"/>
+                                    </Border>
                                 </Grid>
-                                <TextBlock Text="{Binding DownloadSpeedText}" Classes="LargeMetric" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}"/>
-                                <Path Data="M 0 15 Q 30 0 60 10 T 120 5 L 120 20 L 0 20 Z" Fill="{DynamicResource Brush.DownloadAreaGradient}" Stroke="{DynamicResource Brush.Download}" StrokeThickness="1.5" Height="22" Stretch="Fill"/>
+
+                                <TextBlock Text="{Binding DownloadSpeedText}" Classes="LargeMetric" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}" Margin="0,2"/>
+
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="Peak in window:" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                        <TextBlock Text="{Binding PeakLiveDownloadSpeedText}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Path Data="M 0 15 Q 30 0 60 10 T 120 5 L 120 20 L 0 20 Z" Fill="{DynamicResource Brush.DownloadAreaGradient}" Stroke="{DynamicResource Brush.Download}" StrokeThickness="1.5" Height="24" Stretch="Fill"/>
                             </StackPanel>
                         </Border>
 
-                        <!-- UPLOAD (Violet with Top Glow Gradient) -->
-                        <Border Grid.Column="2" Background="{DynamicResource Brush.HeroUploadGradient}" BorderBrush="#33A855F7" BorderThickness="1" CornerRadius="12" Padding="18">
-                            <StackPanel Spacing="10">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0" Text="UPLOAD" Classes="Caption" FontWeight="SemiBold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                                    <TextBlock Grid.Column="1" Text="↑" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}"/>
+                        <!-- 2. UPLOAD FLOATING GLOW CARD (Electric Cyan Glow) -->
+                        <Border Grid.Column="2" Background="{DynamicResource Brush.HeroUploadGradient}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="14" Padding="20">
+                            <StackPanel Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <!-- Minimal Vector Upload Icon (Tray + Arrow) -->
+                                        <Path Data="M 7 9.5 L 7 2.5 M 4 5 L 7 2 L 10 5 M 2.5 10.5 L 2.5 12 C 2.5 12.5 3 13 3.5 13 L 10.5 13 C 11 13 11.5 12.5 11.5 12 L 11.5 10.5" Width="14" Height="14" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round" VerticalAlignment="Center"/>
+                                        <TextBlock Text="UPLOAD" Classes="Caption" FontWeight="Bold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="2" CornerRadius="6" Background="{DynamicResource Brush.SurfaceElevated}" Padding="6,2" VerticalAlignment="Center">
+                                        <TextBlock Text="LIVE" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}"/>
+                                    </Border>
                                 </Grid>
-                                <TextBlock Text="{Binding UploadSpeedText}" Classes="LargeMetric" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}"/>
-                                <Path Data="M 0 15 Q 30 5 60 15 T 120 8 L 120 20 L 0 20 Z" Fill="{DynamicResource Brush.UploadAreaGradient}" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="1.5" Height="22" Stretch="Fill"/>
+
+                                <TextBlock Text="{Binding UploadSpeedText}" Classes="LargeMetric" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}" Margin="0,2"/>
+
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="Peak in window:" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                        <TextBlock Text="{Binding PeakLiveUploadSpeedText}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Path Data="M 0 15 Q 30 5 60 15 T 120 8 L 120 20 L 0 20 Z" Fill="{DynamicResource Brush.UploadAreaGradient}" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="1.5" Height="24" Stretch="Fill"/>
                             </StackPanel>
                         </Border>
 
-                        <!-- TODAY'S USAGE (Neutral / High Contrast with Subtle Glow) -->
-                        <Border Grid.Column="4" Background="{DynamicResource Brush.HeroUsageGradient}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Padding="18">
-                            <StackPanel Spacing="10">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0" Text="TODAY'S USAGE" Classes="Caption" FontWeight="SemiBold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                                    <TextBlock Grid.Column="1" Text="📊" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                        <!-- 3. TODAY'S USAGE FLOATING GLOW CARD (Ambient Purple Glow) -->
+                        <Border Grid.Column="4" Background="{DynamicResource Brush.HeroUsageGradient}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="14" Padding="20">
+                            <StackPanel Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <!-- Minimal Vector Data Cylinder / Analytics Stack Icon -->
+                                        <Path Data="M 2.5 4 C 2.5 2.6 4.5 1.5 7 1.5 C 9.5 1.5 11.5 2.6 11.5 4 C 11.5 5.4 9.5 6.5 7 6.5 C 4.5 6.5 2.5 5.4 2.5 4 Z M 2.5 7.5 C 2.5 8.9 4.5 10 7 10 C 9.5 10 11.5 8.9 11.5 7.5 M 2.5 4 L 2.5 11 C 2.5 12.4 4.5 13.5 7 13.5 C 9.5 13.5 11.5 12.4 11.5 11 L 11.5 4" Width="14" Height="14" Stroke="{DynamicResource Brush.TextSecondary}" StrokeThickness="1.4" StrokeLineCap="Round" StrokeJoin="Round" VerticalAlignment="Center"/>
+                                        <TextBlock Text="TODAY'S USAGE" Classes="Caption" FontWeight="Bold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="2" CornerRadius="6" Background="{DynamicResource Brush.SurfaceElevated}" Padding="6,2" VerticalAlignment="Center">
+                                        <TextBlock Text="TOTAL" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                    </Border>
                                 </Grid>
-                                <TextBlock Text="{Binding TodayTotalText}" Classes="LargeMetric" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"/>
-                                <Path Data="M 0 16 Q 30 8 60 14 T 120 10 L 120 20 L 0 20 Z" Fill="{DynamicResource Brush.AccentSurface}" Stroke="{DynamicResource Brush.AccentHover}" StrokeThickness="1.5" Height="22" Stretch="Fill"/>
+
+                                <TextBlock Text="{Binding TodayTotalText}" Classes="LargeMetric" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" Margin="0,2"/>
+
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="Daily transfer activity" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Path Data="M 0 16 Q 30 8 60 14 T 120 10 L 120 20 L 0 20 Z" Fill="{DynamicResource Brush.SurfaceElevated}" Stroke="{DynamicResource Brush.BorderStrong}" StrokeThickness="1.5" Height="24" Stretch="Fill"/>
                             </StackPanel>
                         </Border>
                     </Grid>
@@ -151,7 +195,7 @@
                             </Border>
 
                             <!-- Live Download Speed -->
-                            <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="#3322D3EE" BorderThickness="1" CornerRadius="8" Padding="10,6" VerticalAlignment="Center">
+                            <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="10,6" VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                     <TextBlock Text="↓" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
                                     <TextBlock Text="{Binding CurrentLiveDownloadSpeedText}" Classes="MetricSmall" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
@@ -159,7 +203,7 @@
                             </Border>
 
                             <!-- Live Upload Speed -->
-                            <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="#33A855F7" BorderThickness="1" CornerRadius="8" Padding="10,6" VerticalAlignment="Center">
+                            <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="10,6" VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                     <TextBlock Text="↑" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
                                     <TextBlock Text="{Binding CurrentLiveUploadSpeedText}" Classes="MetricSmall" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
@@ -216,11 +260,11 @@
                                 <!-- Glowing Head Dots on Latest Sample Point (NOW) -->
                                 <Canvas IsVisible="{Binding HasRealtimeGraphData}">
                                     <!-- Cyan Download Endpoint with subtle outer ring -->
-                                    <Ellipse Canvas.Left="{Binding LatestDownloadX}" Canvas.Top="{Binding LatestDownloadY}" Width="12" Height="12" Margin="-6,-6,0,0" Fill="#2222D3EE" Stroke="{DynamicResource Brush.Download}" StrokeThickness="1"/>
+                                    <Ellipse Canvas.Left="{Binding LatestDownloadX}" Canvas.Top="{Binding LatestDownloadY}" Width="12" Height="12" Margin="-6,-6,0,0" Fill="{DynamicResource Brush.SurfaceElevated}" Stroke="{DynamicResource Brush.Download}" StrokeThickness="1"/>
                                     <Ellipse Canvas.Left="{Binding LatestDownloadX}" Canvas.Top="{Binding LatestDownloadY}" Width="6" Height="6" Margin="-3,-3,0,0" Fill="{DynamicResource Brush.Download}"/>
 
                                     <!-- Violet Upload Endpoint with subtle outer ring -->
-                                    <Ellipse Canvas.Left="{Binding LatestUploadX}" Canvas.Top="{Binding LatestUploadY}" Width="12" Height="12" Margin="-6,-6,0,0" Fill="#28A855F7" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="1"/>
+                                    <Ellipse Canvas.Left="{Binding LatestUploadX}" Canvas.Top="{Binding LatestUploadY}" Width="12" Height="12" Margin="-6,-6,0,0" Fill="{DynamicResource Brush.SurfaceElevated}" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="1"/>
                                     <Ellipse Canvas.Left="{Binding LatestUploadX}" Canvas.Top="{Binding LatestUploadY}" Width="6" Height="6" Margin="-3,-3,0,0" Fill="{DynamicResource Brush.Upload}"/>
                                 </Canvas>
 
