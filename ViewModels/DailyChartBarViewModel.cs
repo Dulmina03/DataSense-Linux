@@ -45,9 +45,21 @@ public sealed class DailyChartBarViewModel
     /// <summary>Top Y of the download segment (Canvas.Top).</summary>
     public double DownloadBarY { get; init; }
 
+    /// <summary>Center X coordinate of this bar column for trend lines and hover guides.</summary>
+    public double CenterX => BarX + BarWidth / 2.0;
+
+    /// <summary>Top Y coordinate of the stacked bar for trend lines.</summary>
+    public double TopY => TotalBytes > 0 ? UploadBarY : DownloadBarY;
+
+    /// <summary>Combined pixel height of the stacked download and upload segments.</summary>
+    public double TotalBarHeight => DownloadBarHeight + UploadBarHeight;
+
     /// <summary>Y offset for the day label below the chart area.</summary>
     public double LabelY { get; init; }
 
     /// <summary>True when this bar has any usage to render.</summary>
     public bool HasData => TotalBytes > 0;
+
+    /// <summary>True if this is the latest/active interval bar.</summary>
+    public bool IsLatest { get; init; }
 }

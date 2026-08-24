@@ -35,11 +35,29 @@ public partial class DashboardView : UserControl
         }
     }
 
+    private void TimelineGraph_PointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (DataContext is DashboardViewModel vm && sender is Control control)
+        {
+            var pos = e.GetPosition(control);
+            vm.UpdateTimelineHover(pos.X);
+        }
+    }
+
+    private void TimelineGraph_PointerExited(object? sender, PointerEventArgs e)
+    {
+        if (DataContext is DashboardViewModel vm)
+        {
+            vm.ClearTimelineHover();
+        }
+    }
+
     private void RealtimeGraph_PointerMoved(object? sender, PointerEventArgs e)
     {
         if (DataContext is DashboardViewModel vm && sender is Control control)
         {
             var pos = e.GetPosition(control);
+            vm.UpdateTimelineHover(pos.X);
             vm.UpdateRealtimeHover(pos.X);
         }
     }
@@ -48,6 +66,7 @@ public partial class DashboardView : UserControl
     {
         if (DataContext is DashboardViewModel vm)
         {
+            vm.ClearTimelineHover();
             vm.ClearRealtimeHover();
         }
     }

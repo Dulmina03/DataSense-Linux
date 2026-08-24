@@ -1,4 +1,5 @@
 using System;
+using Avalonia.Media;
 
 namespace DataSense.Models;
 
@@ -32,4 +33,27 @@ public class ProcessNetworkUsage
     /// Composite key combining PID and start time ticks to distinguish PID reuse.
     /// </summary>
     public string ProcessIdentityKey { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Resolved human-friendly application display name (e.g. "Brave Web Browser", "Visual Studio Code").
+    /// </summary>
+    public string ApplicationDisplayName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Resolved application icon from Linux desktop theme or clean generic fallback.
+    /// </summary>
+    public IImage? ApplicationIcon { get; set; }
+
+    /// <summary>
+    /// Indicates whether the display name is distinct from the raw process identifier.
+    /// </summary>
+    public bool HasDistinctProcessIdentifier =>
+        !string.IsNullOrWhiteSpace(ApplicationDisplayName) &&
+        !string.Equals(ApplicationDisplayName, ProcessIdentifier, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Effective display name for UI presentation.
+    /// </summary>
+    public string EffectiveDisplayName =>
+        !string.IsNullOrWhiteSpace(ApplicationDisplayName) ? ApplicationDisplayName : ProcessIdentifier;
 }

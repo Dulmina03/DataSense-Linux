@@ -12,6 +12,43 @@ namespace DataSense.Tests.ViewModels;
 public class RealtimeNetworkTrafficGraphTests
 {
     [Fact]
+    public void LiveThroughputSample_FormatsSpeedAndLabelsCorrectly()
+    {
+        var sample = new LiveThroughputSample
+        {
+            Timestamp = new DateTime(2026, 8, 24, 13, 30, 0, DateTimeKind.Utc),
+            DownloadBytesPerSecond = 26214400, // 25 MB/s
+            UploadBytesPerSecond = 8388608,    // 8 MB/s
+            SecondsAgo = 15,
+            CanvasX = 350.0,
+            DownloadY = 40.0,
+            UploadY = 120.0
+        };
+
+        Assert.Equal("25.0 MB/s", sample.DownloadSpeedText);
+        Assert.Equal("8.0 MB/s", sample.UploadSpeedText);
+        Assert.Equal("33.0 MB/s", sample.TotalSpeedText);
+        Assert.Equal("-15s (13:30:00)", sample.TimeText);
+        Assert.Equal("-15s", sample.ShortTimeText);
+        Assert.Equal(34603008, sample.CombinedBytesPerSecond);
+    }
+
+    [Fact]
+    public void LiveThroughputSample_WhenSecondsAgoIsZero_FormatsNow()
+    {
+        var sample = new LiveThroughputSample
+        {
+            Timestamp = new DateTime(2026, 8, 24, 13, 30, 0, DateTimeKind.Utc),
+            DownloadBytesPerSecond = 1048576,
+            UploadBytesPerSecond = 524288,
+            SecondsAgo = 0
+        };
+
+        Assert.Equal("NOW (13:30:00)", sample.TimeText);
+        Assert.Equal("NOW", sample.ShortTimeText);
+    }
+
+    [Fact]
     public void RealtimeNetworkPoint_FormatsSpeedTextsCorrectly()
     {
         var point = new RealtimeNetworkPoint
@@ -54,6 +91,31 @@ public class RealtimeNetworkTrafficGraphTests
         };
 
         Assert.Equal(1500, point.CombinedRateBytesPerSec);
+    }
+
+    [Fact]
+    public void DailyChartBarViewModel_ComputesGeometryAndHeightsCorrectly()
+    {
+        var bar = new DailyChartBarViewModel
+        {
+            DayLabel = "Aug 24",
+            BytesDownloaded = 1000,
+            BytesUploaded = 500,
+            TotalBytes = 1500,
+            BarX = 50,
+            BarWidth = 20,
+            DownloadBarHeight = 40,
+            UploadBarHeight = 20,
+            DownloadBarY = 130,
+            UploadBarY = 110,
+            IsLatest = true
+        };
+
+        Assert.Equal(60, bar.CenterX);
+        Assert.Equal(110, bar.TopY);
+        Assert.Equal(60, bar.TotalBarHeight);
+        Assert.True(bar.HasData);
+        Assert.True(bar.IsLatest);
     }
 
     [Fact]

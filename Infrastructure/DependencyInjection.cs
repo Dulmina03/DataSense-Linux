@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddSingleton<ILinuxCapabilityService, LinuxCapabilityService>();
         services.AddSingleton<INativeNotificationService, NativeNotificationService>();
         services.AddSingleton<ILinuxStartupService, LinuxStartupService>();
+        services.AddSingleton<IAppIconService, LinuxApplicationIconService>();
 
         // Database & Infrastructure
         services.AddSingleton<IPerformanceMonitor, PerformanceMonitor>();
