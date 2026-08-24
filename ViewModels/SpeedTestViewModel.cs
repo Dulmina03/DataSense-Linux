@@ -609,48 +609,23 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
 
         IsTesting = true;
         ActionButtonText = "TESTING...";
-        DisplaySpeedValue = "0.0";
-        DisplayPhaseText = "TESTING";
-        DisplayPhaseIcon = "⚡";
-        ActivePhaseSemanticColor = "Info";
-        StatusText = "Connecting to Cloudflare CDN diagnostic node...";
-        UpdateActiveArc(0.0);
-
         _realtimeSamples.Clear();
         HasRealtimeGraphData = false;
         _testStopwatch.Restart();
 
-        IsPingActive = true;
-        IsPingDone = false;
         IsDownloadActive = false;
         IsDownloadDone = false;
         IsUploadActive = false;
         IsUploadDone = false;
+        IsPingActive = false;
+        IsPingDone = false;
 
         try
         {
-            // ── 1. Ping Phase ─────────────────────────────────────────────────
-            StatusText = "Measuring network latency...";
-            DisplayPhaseText = "PING";
-            DisplayUnitText = "ms";
-            DisplayPhaseIcon = "⚡";
-            ActivePhaseSemanticColor = "Info";
-            ActiveMeterBrushKey = "Brush.Accent";
+            // Start ping measurement asynchronously in background
+            var pingTask = _speedTestService.TestPingAsync(token);
 
-            double ping = await _speedTestService.TestPingAsync(token);
-            token.ThrowIfCancellationRequested();
-
-            PingText = ping > 0 ? $"{ping:F0} ms" : "Error";
-            PingValueText = ping > 0 ? $"{ping:F0}" : "—";
-            DisplaySpeedValue = ping > 0 ? $"{ping:F0}" : "—";
-
-            double jitter = ping > 0 ? Math.Max(0.5, ping * 0.12) : 0;
-            JitterText = ping > 0 ? $"{jitter:F1} ms" : "—";
-
-            IsPingActive = false;
-            IsPingDone = true;
-
-            // ── 2. Download Phase ─────────────────────────────────────────────
+            // ── 1. Download Phase (Starts from 0 and increases in Cyan) ─────────
             CurrentStage = SpeedTestStage.Download;
             StatusText = "Measuring download bandwidth...";
             DisplayPhaseText = "DOWNLOAD";
@@ -658,6 +633,9 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
             DisplayPhaseIcon = "☁️↓";
             ActivePhaseSemanticColor = "Download";
             ActiveMeterBrushKey = "Brush.Download";
+            CurrentSpeedValue = 0.0;
+            DisplaySpeedValue = "0.0";
+            UpdateActiveArc(0.0);
             IsDownloadActive = true;
 
             double finalDownloadMbps = await _speedTestService.TestDownloadAsync(speedMbps =>
@@ -681,16 +659,24 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
             IsDownloadActive = false;
             IsDownloadDone = true;
 
-            // ── 3. Upload Phase ───────────────────────────────────────────────
+            // ── 2. Transition: Reset Meter to 0 and switch to Upload color ─────
             CurrentStage = SpeedTestStage.Upload;
-            StatusText = "Measuring upload throughput...";
+            StatusText = "Preparing upload test...";
             DisplayPhaseText = "UPLOAD";
             DisplayUnitText = "MB/s";
             DisplayPhaseIcon = "☁️↑";
             ActivePhaseSemanticColor = "Upload";
             ActiveMeterBrushKey = "Brush.Upload";
+            CurrentSpeedValue = 0.0;
+            DisplaySpeedValue = "0.0";
+            UpdateActiveArc(0.0);
             IsUploadActive = true;
 
+            // Smooth visual pause so user clearly sees the meter drop to 0 and switch to Purple
+            await Task.Delay(350, token);
+
+            // ── 3. Upload Phase (Starts from 0 and increases in Purple) ─────────
+            StatusText = "Measuring upload throughput...";
             double finalUploadMbps = await _speedTestService.TestUploadAsync(speedMbps =>
             {
                 double speedMBps = speedMbps / 8.0;
@@ -712,7 +698,24 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
             IsUploadActive = false;
             IsUploadDone = true;
 
-            // ── 4. Completion ─────────────────────────────────────────────────
+            // ── 4. Finalize Ping ───────────────────────────────────────────────
+            double ping = 0;
+            try
+            {
+                ping = await pingTask;
+            }
+            catch
+            {
+                ping = await _speedTestService.TestPingAsync(token);
+            }
+
+            PingText = ping > 0 ? $"{ping:F0} ms" : "—";
+            PingValueText = ping > 0 ? $"{ping:F0}" : "—";
+            double jitter = ping > 0 ? Math.Max(0.5, ping * 0.12) : 0;
+            JitterText = ping > 0 ? $"{jitter:F1} ms" : "—";
+            IsPingDone = true;
+
+            // ── 5. Completion ─────────────────────────────────────────────────
             CurrentStage = SpeedTestStage.Completed;
             StatusText = "Diagnostic test complete";
             ActionButtonText = "RUN AGAIN";
