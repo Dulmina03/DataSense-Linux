@@ -29,6 +29,23 @@ public partial class HistoryView : UserControl
         }
     }
 
+    private void TwelveMonthGraph_PointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (DataContext is HistoryViewModel vm && sender is Visual visual)
+        {
+            var point = e.GetPosition(visual);
+            vm.UpdateTwelveMonthHoverPosition(point.X, point.Y);
+        }
+    }
+
+    private void TwelveMonthGraph_PointerExited(object? sender, PointerEventArgs e)
+    {
+        if (DataContext is HistoryViewModel vm)
+        {
+            vm.ClearTwelveMonthHover();
+        }
+    }
+
     private void HistoricalChart_SizeChanged(object? sender, SizeChangedEventArgs e)
     {
         if (DataContext is HistoryViewModel vm && e.NewSize.Width > 50 && e.NewSize.Height > 50)

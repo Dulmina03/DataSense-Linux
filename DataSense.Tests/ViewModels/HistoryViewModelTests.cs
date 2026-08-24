@@ -59,11 +59,11 @@ public class HistoryViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task TodayHourlyAggregation_Generates24HourlyBuckets_WithRealCounters()
+    public async Task TodayTwoHourAggregation_GeneratesExactly12TwoHourBuckets_WithRealCounters()
     {
         var today = DateTime.UtcNow.Date;
 
-        // Hour 10 cumulative counter progression
+        // Hour 10 cumulative counter progression (belongs to Bucket 5: 10–12)
         await _dbContext.Repository.SaveUsageAsync(new NetworkUsage
         {
             Timestamp = today.AddHours(10).AddMinutes(1),
@@ -79,7 +79,7 @@ public class HistoryViewModelTests : IDisposable
             BytesSent = 700_000       // Delta = 500,000
         });
 
-        // Hour 14 cumulative counter progression
+        // Hour 14 cumulative counter progression (belongs to Bucket 7: 14–16)
         await _dbContext.Repository.SaveUsageAsync(new NetworkUsage
         {
             Timestamp = today.AddHours(14).AddMinutes(5),
@@ -107,11 +107,20 @@ public class HistoryViewModelTests : IDisposable
         await vm.LoadAsync(showLoading: false);
 
         Assert.Equal(HistoryPeriodType.Today, vm.SelectedPeriod);
-        Assert.Equal(24, vm.HistoricalChartPoints.Count);
-        Assert.Equal(2_000_000, vm.HistoricalChartPoints[10].DownloadBytes);
-        Assert.Equal(500_000, vm.HistoricalChartPoints[10].UploadBytes);
-        Assert.Equal(3_000_000, vm.HistoricalChartPoints[14].DownloadBytes);
-        Assert.Equal(1_000_000, vm.HistoricalChartPoints[14].UploadBytes);
+        Assert.Equal(12, vm.HistoricalChartPoints.Count);
+
+        // Bucket 5: 10–12
+        Assert.Equal("10–12", vm.HistoricalChartPoints[5].Label);
+        Assert.Equal(2_000_000, vm.HistoricalChartPoints[5].DownloadBytes);
+        Assert.Equal(500_000, vm.HistoricalChartPoints[5].UploadBytes);
+
+        // Bucket 7: 14–16
+        Assert.Equal("14–16", vm.HistoricalChartPoints[7].Label);
+        Assert.Equal(3_000_000, vm.HistoricalChartPoints[7].DownloadBytes);
+        Assert.Equal(1_000_000, vm.HistoricalChartPoints[7].UploadBytes);
+
+        // Bucket 0: 00–02
+        Assert.Equal("00–02", vm.HistoricalChartPoints[0].Label);
         Assert.Equal(0, vm.HistoricalChartPoints[0].DownloadBytes);
     }
 
@@ -181,9 +190,29 @@ public class HistoryViewModelTests : IDisposable
         await vm.LoadAsync(showLoading: false);
 
         Assert.Equal(expectedDays, vm.HistoricalChartPoints.Count);
-        Assert.Equal(expectedDays, vm.MonthlyBreakdownItems.Count);
         Assert.Equal(1, vm.HistoricalChartPoints[0].Timestamp.Day);
         Assert.Equal(expectedDays, vm.HistoricalChartPoints[^1].Timestamp.Day);
+
+        // Chart #2 remains 12 months
+        Assert.Equal(12, vm.TwelveMonthChartPoints.Count);
+    }
+
+    [Fact]
+    public async Task TwelveMonthUsageBreakdown_AlwaysMaintains12Months_JanThroughDec()
+    {
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.Equal(12, vm.TwelveMonthChartPoints.Count);
+        Assert.Equal("Jan", vm.TwelveMonthChartPoints[0].Label);
+        Assert.Equal("Dec", vm.TwelveMonthChartPoints[11].Label);
     }
 
     [Fact]
@@ -329,18 +358,18 @@ public class HistoryViewModelTests : IDisposable
             _colorProvider,
             _monitorWorker);
 
-        // 1. Switch to Today
+        // 1. Switch to Today (12 buckets)
         vm.SelectToday();
         await vm.LoadAsync(showLoading: false);
-        Assert.Equal(24, vm.HistoricalChartPoints.Count);
-        Assert.True(vm.HistoricalChartPoints[12].DownloadBarHeight > 0);
+        Assert.Equal(12, vm.HistoricalChartPoints.Count);
+        Assert.True(vm.HistoricalChartPoints[6].DownloadBarHeight > 0);
 
-        // 2. Switch to 7 Days
+        // 2. Switch to 7 Days (7 buckets)
         vm.SelectLast7Days();
         await vm.LoadAsync(showLoading: false);
         Assert.Equal(7, vm.HistoricalChartPoints.Count);
 
-        // 3. Switch to Month
+        // 3. Switch to Month (28-31 buckets)
         vm.SelectMonth();
         await vm.LoadAsync(showLoading: false);
         Assert.True(vm.HistoricalChartPoints.Count >= 28);
@@ -406,6 +435,7 @@ public class HistoryViewModelTests : IDisposable
 
         Assert.True(vm.FilteredNetworkSessions.Count >= 2);
         Assert.True(vm.FilteredApplications.Count >= 2);
+        Assert.True(vm.ApplicationBreakdownItems.Count >= 2);
 
         // Filter by "Dialog"
         vm.SearchText = "Dialog";
@@ -492,9 +522,21 @@ public class HistoryViewModelTests : IDisposable
 
         Assert.True(vm.IsHoverActive);
         Assert.Equal(targetPoint.CanvasX, vm.HoverX);
-        Assert.Equal(targetPoint.Label, vm.HoverTimestampText);
+        Assert.Equal(targetPoint.FullTitle, vm.HoverTimestampText);
 
         vm.ClearHover();
         Assert.False(vm.IsHoverActive);
+
+        // Also test TwelveMonth hover
+        Assert.NotEmpty(vm.TwelveMonthChartPoints);
+        var targetMonthPoint = vm.TwelveMonthChartPoints[3];
+        vm.UpdateTwelveMonthHoverPosition(targetMonthPoint.CanvasX, 50.0);
+
+        Assert.True(vm.IsTwelveMonthHoverActive);
+        Assert.Equal(targetMonthPoint.CanvasX, vm.TwelveMonthHoverX);
+        Assert.Equal(targetMonthPoint.FullTitle, vm.TwelveMonthHoverTimestampText);
+
+        vm.ClearTwelveMonthHover();
+        Assert.False(vm.IsTwelveMonthHoverActive);
     }
 }

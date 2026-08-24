@@ -52,6 +52,7 @@ public class HistoricalGraphSample
 {
     public DateTime Timestamp { get; set; }
     public string Label { get; set; } = string.Empty;
+    public string FullTitle { get; set; } = string.Empty;
     public long DownloadBytes { get; set; }
     public long UploadBytes { get; set; }
     public long TotalBytes => DownloadBytes + UploadBytes;
@@ -125,15 +126,18 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
     public ObservableCollection<ApplicationHistoricalProfile> Applications { get; } = new();
     public ObservableCollection<ApplicationHistoricalProfile> FilteredApplications { get; } = new();
-    public ObservableCollection<ApplicationHistoricalProfile> MonthlyApplicationBreakdown { get; } = new();
+    public ObservableCollection<ApplicationHistoricalProfile> ApplicationBreakdownItems { get; } = new();
 
     public ObservableCollection<MonthSelectItem> AvailableMonths { get; } = new();
     public ObservableCollection<string> Interfaces { get; } = new();
 
     public string[] SortOptions { get; } = ["Total (Desc)", "Download (Desc)", "Upload (Desc)", "Share (Desc)"];
 
+    // Chart #1: Selected Period Network Usage (12 buckets for Today, 7 for 7-Days, 28-31 for Month)
     public ObservableCollection<HistoricalGraphSample> HistoricalChartPoints { get; } = new();
-    public ObservableCollection<HistoricalGraphSample> MonthlyBreakdownItems { get; } = new();
+
+    // Chart #2: Monthly Usage Breakdown (Always 12 calendar months: Jan - Dec)
+    public ObservableCollection<HistoricalGraphSample> TwelveMonthChartPoints { get; } = new();
 
     // ── State ──────────────────────────────────────────────────────────────────
 
@@ -171,15 +175,12 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _averageUsageTrendText = "Active days only";
     [ObservableProperty] private string _averageUsageTrendColor = "TextSecondary";
 
-    // ── Historical Graph State ─────────────────────────────────────────────────
+    // ── Chart #1 (Network Usage) State ─────────────────────────────────────────
 
     [ObservableProperty] private bool _hasHistoricalGraphData;
-    [ObservableProperty] private bool _hasMonthlyBreakdown;
-
-    // Generous, clearly readable bar dimensions with prominent separation
-    [ObservableProperty] private double _downloadBarWidth = 26.0;
-    [ObservableProperty] private double _uploadBarWidth = 26.0;
-    [ObservableProperty] private double _barGap = 6.0;
+    [ObservableProperty] private double _downloadBarWidth = 32.0;
+    [ObservableProperty] private double _uploadBarWidth = 32.0;
+    [ObservableProperty] private double _barGap = 8.0;
 
     [ObservableProperty] private string _yAxisTopText = "1 MB";
     [ObservableProperty] private string _yAxisMidHighText = "750 KB";
@@ -187,18 +188,10 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _yAxisMidLowText = "250 KB";
     [ObservableProperty] private string _yAxisMinText = "0 B";
 
-    [ObservableProperty] private string _xAxisLabel0 = "";
-    [ObservableProperty] private string _xAxisLabel1 = "";
-    [ObservableProperty] private string _xAxisLabel2 = "";
-    [ObservableProperty] private string _xAxisLabel3 = "";
-    [ObservableProperty] private string _xAxisLabel4 = "";
-    [ObservableProperty] private string _xAxisLabel5 = "";
-    [ObservableProperty] private string _xAxisLabel6 = "";
-
     [ObservableProperty] private double _chartWidth = 900.0;
-    [ObservableProperty] private double _chartHeight = 250.0;
+    [ObservableProperty] private double _chartHeight = 300.0;
 
-    // Hover Tooltip
+    // Chart #1 Hover Tooltip
     [ObservableProperty] private bool _isHoverActive;
     [ObservableProperty] private double _hoverX;
     [ObservableProperty] private double _hoverY;
@@ -206,6 +199,28 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _hoverDownloadText = "";
     [ObservableProperty] private string _hoverUploadText = "";
     [ObservableProperty] private string _hoverTotalText = "";
+
+    // ── Chart #2 (Monthly Usage Breakdown - 12 Months) State ───────────────────
+
+    [ObservableProperty] private bool _hasTwelveMonthData;
+    [ObservableProperty] private double _twelveMonthDownloadBarWidth = 18.0;
+    [ObservableProperty] private double _twelveMonthUploadBarWidth = 18.0;
+    [ObservableProperty] private double _twelveMonthBarGap = 4.0;
+
+    [ObservableProperty] private string _twelveMonthYAxisTopText = "1 GB";
+    [ObservableProperty] private string _twelveMonthYAxisMidHighText = "750 MB";
+    [ObservableProperty] private string _twelveMonthYAxisMidText = "500 MB";
+    [ObservableProperty] private string _twelveMonthYAxisMidLowText = "250 MB";
+    [ObservableProperty] private string _twelveMonthYAxisMinText = "0 B";
+
+    // Chart #2 Hover Tooltip
+    [ObservableProperty] private bool _isTwelveMonthHoverActive;
+    [ObservableProperty] private double _twelveMonthHoverX;
+    [ObservableProperty] private double _twelveMonthHoverY;
+    [ObservableProperty] private string _twelveMonthHoverTimestampText = "";
+    [ObservableProperty] private string _twelveMonthHoverDownloadText = "";
+    [ObservableProperty] private string _twelveMonthHoverUploadText = "";
+    [ObservableProperty] private string _twelveMonthHoverTotalText = "";
 
     // ── Panel Flags ────────────────────────────────────────────────────────────
 
@@ -248,22 +263,22 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
         AverageUsageLabel = value == HistoryPeriodType.Today ? "AVG / HOUR" : "AVG / DAY";
 
-        // Assign large, readable bar dimensions with prominent separation
+        // Assign large, readable bar dimensions with prominent separation for Chart #1
         switch (value)
         {
             case HistoryPeriodType.Today:
-                DownloadBarWidth = 10.0;
-                UploadBarWidth = 10.0;
-                BarGap = 3.0;
+                DownloadBarWidth = 18.0;
+                UploadBarWidth = 18.0;
+                BarGap = 4.0;
                 break;
             case HistoryPeriodType.Last7Days:
-                DownloadBarWidth = 26.0;
-                UploadBarWidth = 26.0;
-                BarGap = 6.0;
+                DownloadBarWidth = 32.0;
+                UploadBarWidth = 32.0;
+                BarGap = 8.0;
                 break;
             case HistoryPeriodType.Month:
-                DownloadBarWidth = 6.0;
-                UploadBarWidth = 6.0;
+                DownloadBarWidth = 8.0;
+                UploadBarWidth = 8.0;
                 BarGap = 2.0;
                 break;
         }
@@ -276,11 +291,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
     partial void OnSelectedMonthChanged(MonthSelectItem? value)
     {
-        if (!_initialising && SelectedPeriod == HistoryPeriodType.Month)
-        {
-            _ = LoadAsync(showLoading: true);
-        }
-        else if (!_initialising)
+        if (!_initialising)
         {
             _ = LoadAsync(showLoading: true);
         }
@@ -372,23 +383,6 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         };
     }
 
-    public (DateTime start, DateTime end) ComputeSelectedMonthRange()
-    {
-        var utcNow = DateTime.UtcNow;
-        if (SelectedMonth != null)
-        {
-            var start = new DateTime(SelectedMonth.Year, SelectedMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-            var end = start.AddMonths(1).AddTicks(-1);
-            return (start, end);
-        }
-        else
-        {
-            var start = new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-            var end = start.AddMonths(1).AddTicks(-1);
-            return (start, end);
-        }
-    }
-
     public async Task LoadAsync(bool showLoading = true)
     {
         if (showLoading)
@@ -397,7 +391,6 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             {
                 IsLoading = true;
                 HasHistoricalGraphData = false;
-                HasMonthlyBreakdown = false;
             });
         }
         ErrorMessage = null;
@@ -405,10 +398,9 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         try
         {
             var (start, end) = ComputeDateRange();
-            var (mStart, mEnd) = ComputeSelectedMonthRange();
             string? ifaceFilter = SelectedInterface == "All" ? null : SelectedInterface;
 
-            // 1. Fetch Daily or Hourly Usage
+            // 1. Fetch Daily or Hourly Usage for Chart #1 & Overview
             List<DailyUsageRecord> dailyList = new();
             List<HourlyUsageRecord> hourlyList = new();
 
@@ -424,11 +416,29 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             // 2. Fetch Sessions
             var sessions = (await _repository.GetSessionsAsync(start, end, ifaceFilter)).ToList();
 
-            // 3. Fetch Top Applications for the period
+            // 3. Fetch Top Applications for the selected period (Chart #3 & Explorer)
             var topApps = (await _repository.GetTopProcessesAsync(start, end, 30)).ToList();
 
-            // 4. Fetch Monthly Breakdown daily records
-            var monthDailyList = (await _repository.GetDailyUsageAsync(mStart, mEnd, ifaceFilter)).ToList();
+            // 4. Fetch 12 Calendar Months for Chart #2 (January to December of active year)
+            int activeYear = SelectedMonth != null ? SelectedMonth.Year : DateTime.UtcNow.Year;
+            var twelveMonthSamples = new List<HistoricalGraphSample>(12);
+            for (int m = 1; m <= 12; m++)
+            {
+                var mStart = new DateTime(activeYear, m, 1, 0, 0, 0, DateTimeKind.Utc);
+                var mEnd = mStart.AddMonths(1).AddTicks(-1);
+                var mDaily = (await _repository.GetDailyUsageAsync(mStart, mEnd, ifaceFilter)).ToList();
+                long mDl = mDaily.Sum(d => d.BytesDownloaded);
+                long mUl = mDaily.Sum(d => d.BytesUploaded);
+
+                twelveMonthSamples.Add(new HistoricalGraphSample
+                {
+                    Timestamp = mStart,
+                    Label = mStart.ToString("MMM", CultureInfo.InvariantCulture),
+                    FullTitle = mStart.ToString("MMMM yyyy", CultureInfo.InvariantCulture),
+                    DownloadBytes = mDl,
+                    UploadBytes = mUl
+                });
+            }
 
             // 5. Compute Totals & Averages
             long totalDl = SelectedPeriod == HistoryPeriodType.Today
@@ -511,7 +521,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 .OrderByDescending(s => s.TotalBytes)
                 .ToList();
 
-            // 8. Map Application Profiles
+            // 8. Map Application Profiles (Chart #3 & Explorer)
             long grandAppTotal = topApps.Sum(a => a.BytesDownloaded + a.BytesUploaded);
             var mappedApps = topApps
                 .GroupBy(a => a.ProcessName.Trim().ToLowerInvariant())
@@ -545,29 +555,11 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 mappedApps[i].DisplayIndex = i;
             }
 
-            // 9. Build active Historical Chart points list
+            // 9. Build Chart #1 Samples (12 buckets for Today, 7 for 7-Days, 28-31 for Month)
             var chartPoints = BuildHistoricalGraphSamples(dailyList, hourlyList, start, end);
 
-            // 10. Build Monthly Breakdown daily list
-            var mDailyDict = monthDailyList.ToDictionary(d => d.Day.Date, d => d);
-            int mDaysInMonth = DateTime.DaysInMonth(mStart.Year, mStart.Month);
-            var mBreakdown = new List<HistoricalGraphSample>();
-
-            for (int d = 1; d <= mDaysInMonth; d++)
-            {
-                var day = new DateTime(mStart.Year, mStart.Month, d, 0, 0, 0, DateTimeKind.Utc);
-                mDailyDict.TryGetValue(day, out var rec);
-                mBreakdown.Add(new HistoricalGraphSample
-                {
-                    Timestamp = day,
-                    Label = day.ToString("MMM dd", CultureInfo.InvariantCulture),
-                    DownloadBytes = rec?.BytesDownloaded ?? 0,
-                    UploadBytes = rec?.BytesUploaded ?? 0
-                });
-            }
-
-            // 11. Scale Bar Heights (using generous 250px vertical height)
-            ScaleBarHeights(chartPoints, mBreakdown);
+            // 10. Scale Bar Heights for Chart #1 & Chart #2
+            ScaleBarHeights(chartPoints, twelveMonthSamples);
 
             // Post all results to UI
             RunOnUI(() =>
@@ -594,24 +586,24 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 foreach (var a in mappedApps)
                     Applications.Add(a);
 
-                MonthlyApplicationBreakdown.Clear();
+                ApplicationBreakdownItems.Clear();
                 foreach (var a in mappedApps.Take(8))
-                    MonthlyApplicationBreakdown.Add(a);
+                    ApplicationBreakdownItems.Add(a);
 
                 HistoricalChartPoints.Clear();
                 foreach (var p in chartPoints)
                     HistoricalChartPoints.Add(p);
 
-                MonthlyBreakdownItems.Clear();
-                foreach (var p in mBreakdown)
-                    MonthlyBreakdownItems.Add(p);
+                TwelveMonthChartPoints.Clear();
+                foreach (var p in twelveMonthSamples)
+                    TwelveMonthChartPoints.Add(p);
 
                 ApplyFilters();
 
                 IsDataState = totalUsage > 0 || NetworkSessions.Count > 0 || Applications.Count > 0;
                 IsEmpty = !IsDataState;
                 HasHistoricalGraphData = HistoricalChartPoints.Count > 0;
-                HasMonthlyBreakdown = MonthlyBreakdownItems.Count > 0;
+                HasTwelveMonthData = TwelveMonthChartPoints.Count > 0;
 
                 if (showLoading) IsLoading = false;
             });
@@ -625,7 +617,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 IsEmpty = true;
                 IsDataState = false;
                 HasHistoricalGraphData = false;
-                HasMonthlyBreakdown = false;
+                HasTwelveMonthData = false;
             });
         }
     }
@@ -640,29 +632,32 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
         if (SelectedPeriod == HistoryPeriodType.Today)
         {
+            // Exactly 12 two-hour buckets: 00-02, 02-04, 04-06, ..., 22-24
             var hourlyDict = hourlyList.ToDictionary(h => h.Hour, h => h);
-            for (int h = 0; h < 24; h++)
+            for (int b = 0; b < 12; b++)
             {
-                hourlyDict.TryGetValue(h, out var rec);
+                int h0 = b * 2;
+                int h1 = b * 2 + 1;
+                hourlyDict.TryGetValue(h0, out var rec0);
+                hourlyDict.TryGetValue(h1, out var rec1);
+
+                long dl = (rec0?.BytesDownloaded ?? 0) + (rec1?.BytesDownloaded ?? 0);
+                long ul = (rec0?.BytesUploaded ?? 0) + (rec1?.BytesUploaded ?? 0);
+
+                string label = $"{h0:D2}–{h1 + 1:D2}";
                 chartPoints.Add(new HistoricalGraphSample
                 {
-                    Timestamp = start.Date.AddHours(h),
-                    Label = $"{h:00}:00",
-                    DownloadBytes = rec?.BytesDownloaded ?? 0,
-                    UploadBytes = rec?.BytesUploaded ?? 0
+                    Timestamp = start.Date.AddHours(h0),
+                    Label = label,
+                    FullTitle = $"Today, {h0:D2}:00–{h1 + 1:D2}:00",
+                    DownloadBytes = dl,
+                    UploadBytes = ul
                 });
             }
-
-            XAxisLabel0 = "00:00";
-            XAxisLabel1 = "04:00";
-            XAxisLabel2 = "08:00";
-            XAxisLabel3 = "12:00";
-            XAxisLabel4 = "16:00";
-            XAxisLabel5 = "20:00";
-            XAxisLabel6 = "NOW";
         }
         else if (SelectedPeriod == HistoryPeriodType.Last7Days)
         {
+            // Exactly 7 daily buckets (Monday through Sunday)
             var dailyDict = dailyList.ToDictionary(d => d.Day.Date, d => d);
             for (int i = 6; i >= 0; i--)
             {
@@ -671,22 +666,16 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 chartPoints.Add(new HistoricalGraphSample
                 {
                     Timestamp = day,
-                    Label = day.ToString("ddd, MMM d", CultureInfo.InvariantCulture),
+                    Label = day.ToString("ddd", CultureInfo.InvariantCulture),
+                    FullTitle = day.ToString("dddd, MMM d", CultureInfo.InvariantCulture),
                     DownloadBytes = rec?.BytesDownloaded ?? 0,
                     UploadBytes = rec?.BytesUploaded ?? 0
                 });
             }
-
-            XAxisLabel0 = chartPoints[0].Timestamp.ToString("ddd");
-            XAxisLabel1 = chartPoints[1].Timestamp.ToString("ddd");
-            XAxisLabel2 = chartPoints[2].Timestamp.ToString("ddd");
-            XAxisLabel3 = chartPoints[3].Timestamp.ToString("ddd");
-            XAxisLabel4 = chartPoints[4].Timestamp.ToString("ddd");
-            XAxisLabel5 = chartPoints[5].Timestamp.ToString("ddd");
-            XAxisLabel6 = chartPoints[6].Timestamp.ToString("ddd");
         }
         else // Month
         {
+            // Every day in the selected calendar month (28, 29, 30, or 31 days)
             int daysInMonth = DateTime.DaysInMonth(start.Year, start.Month);
             var dailyDict = dailyList.ToDictionary(d => d.Day.Date, d => d);
 
@@ -697,69 +686,68 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 chartPoints.Add(new HistoricalGraphSample
                 {
                     Timestamp = day,
-                    Label = day.ToString("MMM d", CultureInfo.InvariantCulture),
+                    Label = d.ToString(),
+                    FullTitle = day.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture),
                     DownloadBytes = rec?.BytesDownloaded ?? 0,
                     UploadBytes = rec?.BytesUploaded ?? 0
                 });
             }
-
-            string monthName = start.ToString("MMM");
-            XAxisLabel0 = $"{monthName} 1";
-            XAxisLabel1 = $"{monthName} 5";
-            XAxisLabel2 = $"{monthName} 10";
-            XAxisLabel3 = $"{monthName} 15";
-            XAxisLabel4 = $"{monthName} 20";
-            XAxisLabel5 = $"{monthName} 25";
-            XAxisLabel6 = $"{monthName} {daysInMonth}";
         }
 
         return chartPoints;
     }
 
-    private void ScaleBarHeights(List<HistoricalGraphSample> chartPoints, List<HistoricalGraphSample> mBreakdown)
+    private void ScaleBarHeights(List<HistoricalGraphSample> chartPoints, List<HistoricalGraphSample> twelveMonthSamples)
     {
-        const double ChartContentHeight = 250.0;
+        const double Chart1ContentHeight = 300.0;
+        const double Chart2ContentHeight = 280.0;
 
-        // 1. Scale Historical Chart Points
-        double maxObserved = chartPoints.Count > 0 ? chartPoints.Max(p => Math.Max(p.DownloadBytes, p.UploadBytes)) : 0;
-        double yMax = CalculateStableYMax(maxObserved);
+        // 1. Scale Chart #1 (Network Usage)
+        double maxObserved1 = chartPoints.Count > 0 ? chartPoints.Max(p => Math.Max(p.DownloadBytes, p.UploadBytes)) : 0;
+        double yMax1 = CalculateStableYMax(maxObserved1);
 
-        YAxisTopText = ByteFormatter.FormatBytes((long)yMax);
-        YAxisMidHighText = ByteFormatter.FormatBytes((long)(yMax * 0.75));
-        YAxisMidText = ByteFormatter.FormatBytes((long)(yMax * 0.50));
-        YAxisMidLowText = ByteFormatter.FormatBytes((long)(yMax * 0.25));
+        YAxisTopText = ByteFormatter.FormatBytes((long)yMax1);
+        YAxisMidHighText = ByteFormatter.FormatBytes((long)(yMax1 * 0.75));
+        YAxisMidText = ByteFormatter.FormatBytes((long)(yMax1 * 0.50));
+        YAxisMidLowText = ByteFormatter.FormatBytes((long)(yMax1 * 0.25));
         YAxisMinText = "0 B";
 
         double canvasWidth = Math.Max(ChartWidth, 200.0);
-        int count = chartPoints.Count;
+        int count1 = chartPoints.Count;
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < count1; i++)
         {
             var p = chartPoints[i];
-            p.CanvasX = count == 1 ? canvasWidth / 2 : (double)i / (count - 1) * canvasWidth;
+            p.CanvasX = count1 == 1 ? canvasWidth / 2 : (double)i / (count1 - 1) * canvasWidth;
 
-            double dlRatio = yMax > 0 ? Math.Clamp((double)p.DownloadBytes / yMax, 0.0, 1.0) : 0.0;
-            double ulRatio = yMax > 0 ? Math.Clamp((double)p.UploadBytes / yMax, 0.0, 1.0) : 0.0;
+            double dlRatio = yMax1 > 0 ? Math.Clamp((double)p.DownloadBytes / yMax1, 0.0, 1.0) : 0.0;
+            double ulRatio = yMax1 > 0 ? Math.Clamp((double)p.UploadBytes / yMax1, 0.0, 1.0) : 0.0;
 
-            p.DownloadBarHeight = dlRatio * ChartContentHeight;
-            p.UploadBarHeight = ulRatio * ChartContentHeight;
+            p.DownloadBarHeight = dlRatio * Chart1ContentHeight;
+            p.UploadBarHeight = ulRatio * Chart1ContentHeight;
         }
 
-        // 2. Scale Monthly Breakdown Items
-        double mMaxObserved = mBreakdown.Count > 0 ? mBreakdown.Max(p => Math.Max(p.DownloadBytes, p.UploadBytes)) : 0;
-        double mYMax = CalculateStableYMax(mMaxObserved);
+        // 2. Scale Chart #2 (Monthly Usage Breakdown - 12 Months)
+        double maxObserved2 = twelveMonthSamples.Count > 0 ? twelveMonthSamples.Max(p => Math.Max(p.DownloadBytes, p.UploadBytes)) : 0;
+        double yMax2 = CalculateStableYMax(maxObserved2);
 
-        int mCount = mBreakdown.Count;
-        for (int i = 0; i < mCount; i++)
+        TwelveMonthYAxisTopText = ByteFormatter.FormatBytes((long)yMax2);
+        TwelveMonthYAxisMidHighText = ByteFormatter.FormatBytes((long)(yMax2 * 0.75));
+        TwelveMonthYAxisMidText = ByteFormatter.FormatBytes((long)(yMax2 * 0.50));
+        TwelveMonthYAxisMidLowText = ByteFormatter.FormatBytes((long)(yMax2 * 0.25));
+        TwelveMonthYAxisMinText = "0 B";
+
+        int count2 = twelveMonthSamples.Count;
+        for (int i = 0; i < count2; i++)
         {
-            var p = mBreakdown[i];
-            p.CanvasX = mCount == 1 ? canvasWidth / 2 : (double)i / (mCount - 1) * canvasWidth;
+            var p = twelveMonthSamples[i];
+            p.CanvasX = count2 == 1 ? canvasWidth / 2 : (double)i / (count2 - 1) * canvasWidth;
 
-            double dlRatio = mYMax > 0 ? Math.Clamp((double)p.DownloadBytes / mYMax, 0.0, 1.0) : 0.0;
-            double ulRatio = mYMax > 0 ? Math.Clamp((double)p.UploadBytes / mYMax, 0.0, 1.0) : 0.0;
+            double dlRatio = yMax2 > 0 ? Math.Clamp((double)p.DownloadBytes / yMax2, 0.0, 1.0) : 0.0;
+            double ulRatio = yMax2 > 0 ? Math.Clamp((double)p.UploadBytes / yMax2, 0.0, 1.0) : 0.0;
 
-            p.DownloadBarHeight = dlRatio * ChartContentHeight;
-            p.UploadBarHeight = ulRatio * ChartContentHeight;
+            p.DownloadBarHeight = dlRatio * Chart2ContentHeight;
+            p.UploadBarHeight = ulRatio * Chart2ContentHeight;
         }
     }
 
@@ -769,7 +757,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         {
             ChartWidth = width;
             ChartHeight = height;
-            ScaleBarHeights(HistoricalChartPoints.ToList(), MonthlyBreakdownItems.ToList());
+            ScaleBarHeights(HistoricalChartPoints.ToList(), TwelveMonthChartPoints.ToList());
         }
     }
 
@@ -786,11 +774,10 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         {
             IsHoverActive = true;
             HoverX = closest.CanvasX;
-            // Position tooltip card above the tallest bar with safe boundary clamp
-            HoverY = 250.0 - Math.Max(closest.DownloadBarHeight, closest.UploadBarHeight) - 15.0;
-            HoverY = Math.Clamp(HoverY, 10.0, 200.0);
+            HoverY = 300.0 - Math.Max(closest.DownloadBarHeight, closest.UploadBarHeight) - 15.0;
+            HoverY = Math.Clamp(HoverY, 10.0, 240.0);
 
-            HoverTimestampText = closest.Label;
+            HoverTimestampText = !string.IsNullOrEmpty(closest.FullTitle) ? closest.FullTitle : closest.Label;
             HoverDownloadText = closest.DownloadFormatted;
             HoverUploadText = closest.UploadFormatted;
             HoverTotalText = closest.TotalFormatted;
@@ -800,6 +787,34 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     public void ClearHover()
     {
         IsHoverActive = false;
+    }
+
+    public void UpdateTwelveMonthHoverPosition(double mouseX, double mouseY)
+    {
+        if (TwelveMonthChartPoints.Count == 0)
+        {
+            IsTwelveMonthHoverActive = false;
+            return;
+        }
+
+        var closest = TwelveMonthChartPoints.OrderBy(p => Math.Abs(p.CanvasX - mouseX)).FirstOrDefault();
+        if (closest != null)
+        {
+            IsTwelveMonthHoverActive = true;
+            TwelveMonthHoverX = closest.CanvasX;
+            TwelveMonthHoverY = 280.0 - Math.Max(closest.DownloadBarHeight, closest.UploadBarHeight) - 15.0;
+            TwelveMonthHoverY = Math.Clamp(TwelveMonthHoverY, 10.0, 220.0);
+
+            TwelveMonthHoverTimestampText = !string.IsNullOrEmpty(closest.FullTitle) ? closest.FullTitle : closest.Label;
+            TwelveMonthHoverDownloadText = closest.DownloadFormatted;
+            TwelveMonthHoverUploadText = closest.UploadFormatted;
+            TwelveMonthHoverTotalText = closest.TotalFormatted;
+        }
+    }
+
+    public void ClearTwelveMonthHover()
+    {
+        IsTwelveMonthHoverActive = false;
     }
 
     private static double CalculateStableYMax(double maxObserved)
