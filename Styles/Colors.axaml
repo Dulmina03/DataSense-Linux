@@ -64,32 +64,32 @@
 
             <!-- Curated 12-Segment Process Donut Palette -->
             <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#00F0FF"/> <!-- 1: Electric Cyan -->
-            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#A855F7"/> <!-- 2: Electric Violet -->
-            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#D000FF"/> <!-- 3: Neon Magenta -->
-            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#FF007F"/> <!-- 4: Hot Pink / Rose -->
-            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#00E5FF"/> <!-- 5: Electric Turquoise -->
-            <SolidColorBrush x:Key="Brush.ChartSegment6" Color="#8B5CF6"/> <!-- 6: Soft Purple -->
+            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#34D399"/> <!-- 2: Emerald -->
+            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#FBBF24"/> <!-- 3: Amber -->
+            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#FF007F"/> <!-- 4: Hot Pink -->
+            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#A855F7"/> <!-- 5: Violet -->
+            <SolidColorBrush x:Key="Brush.ChartSegment6" Color="#60A5FA"/> <!-- 6: Sky Blue -->
             <SolidColorBrush x:Key="Brush.ChartSegment7" Color="#818CF8"/> <!-- 7: Indigo -->
             <SolidColorBrush x:Key="Brush.ChartSegment8" Color="#14B8A6"/> <!-- 8: Teal -->
-            <SolidColorBrush x:Key="Brush.ChartSegment9" Color="#34D399"/> <!-- 9: Emerald -->
-            <SolidColorBrush x:Key="Brush.ChartSegment10" Color="#60A5FA"/> <!-- 10: Soft Blue -->
-            <SolidColorBrush x:Key="Brush.ChartSegment11" Color="#FBBF24"/> <!-- 11: Amber -->
-            <SolidColorBrush x:Key="Brush.ChartSegment12" Color="#FB7185"/> <!-- 12: Rose -->
+            <SolidColorBrush x:Key="Brush.ChartSegment9" Color="#D000FF"/> <!-- 9: Magenta -->
+            <SolidColorBrush x:Key="Brush.ChartSegment10" Color="#8B5CF6"/> <!-- 10: Purple -->
+            <SolidColorBrush x:Key="Brush.ChartSegment11" Color="#FB7185"/> <!-- 11: Rose -->
+            <SolidColorBrush x:Key="Brush.ChartSegment12" Color="#00E5FF"/> <!-- 12: Turquoise -->
             <SolidColorBrush x:Key="Brush.ChartSegmentOther" Color="#6E6E9B"/> <!-- Other: Subdued Muted Purple/Blue -->
 
             <!-- Process Chart Semantic Aliases -->
             <SolidColorBrush x:Key="Brush.ProcessChart1" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart2" Color="#A855F7"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart3" Color="#D000FF"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart2" Color="#34D399"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart3" Color="#FBBF24"/>
             <SolidColorBrush x:Key="Brush.ProcessChart4" Color="#FF007F"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart5" Color="#00E5FF"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart6" Color="#8B5CF6"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart5" Color="#A855F7"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart6" Color="#60A5FA"/>
             <SolidColorBrush x:Key="Brush.ProcessChart7" Color="#818CF8"/>
             <SolidColorBrush x:Key="Brush.ProcessChart8" Color="#14B8A6"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart9" Color="#34D399"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart10" Color="#60A5FA"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart11" Color="#FBBF24"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart12" Color="#FB7185"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart9" Color="#D000FF"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart10" Color="#8B5CF6"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart11" Color="#FB7185"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart12" Color="#00E5FF"/>
 
             <!-- Floating Glow & Area Gradient Brushes -->
             <LinearGradientBrush x:Key="Brush.HeroDownloadGradient" StartPoint="0%,0%" EndPoint="0%,100%">
@@ -218,32 +218,32 @@
 
             <!-- Curated 12-Segment Process Donut Palette -->
             <SolidColorBrush x:Key="Brush.ChartSegment1" Color="#00F0FF"/> <!-- 1: Electric Cyan -->
-            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#A855F7"/> <!-- 2: Electric Violet -->
-            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#D000FF"/> <!-- 3: Neon Magenta -->
-            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#FF007F"/> <!-- 4: Hot Pink / Rose -->
-            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#00E5FF"/> <!-- 5: Electric Turquoise -->
-            <SolidColorBrush x:Key="Brush.ChartSegment6" Color="#8B5CF6"/> <!-- 6: Soft Purple -->
+            <SolidColorBrush x:Key="Brush.ChartSegment2" Color="#34D399"/> <!-- 2: Emerald -->
+            <SolidColorBrush x:Key="Brush.ChartSegment3" Color="#FBBF24"/> <!-- 3: Amber -->
+            <SolidColorBrush x:Key="Brush.ChartSegment4" Color="#FF007F"/> <!-- 4: Hot Pink -->
+            <SolidColorBrush x:Key="Brush.ChartSegment5" Color="#A855F7"/> <!-- 5: Violet -->
+            <SolidColorBrush x:Key="Brush.ChartSegment6" Color="#60A5FA"/> <!-- 6: Sky Blue -->
             <SolidColorBrush x:Key="Brush.ChartSegment7" Color="#818CF8"/> <!-- 7: Indigo -->
             <SolidColorBrush x:Key="Brush.ChartSegment8" Color="#14B8A6"/> <!-- 8: Teal -->
-            <SolidColorBrush x:Key="Brush.ChartSegment9" Color="#34D399"/> <!-- 9: Emerald -->
-            <SolidColorBrush x:Key="Brush.ChartSegment10" Color="#60A5FA"/> <!-- 10: Soft Blue -->
-            <SolidColorBrush x:Key="Brush.ChartSegment11" Color="#FBBF24"/> <!-- 11: Amber -->
-            <SolidColorBrush x:Key="Brush.ChartSegment12" Color="#FB7185"/> <!-- 12: Rose -->
+            <SolidColorBrush x:Key="Brush.ChartSegment9" Color="#D000FF"/> <!-- 9: Magenta -->
+            <SolidColorBrush x:Key="Brush.ChartSegment10" Color="#8B5CF6"/> <!-- 10: Purple -->
+            <SolidColorBrush x:Key="Brush.ChartSegment11" Color="#FB7185"/> <!-- 11: Rose -->
+            <SolidColorBrush x:Key="Brush.ChartSegment12" Color="#00E5FF"/> <!-- 12: Turquoise -->
             <SolidColorBrush x:Key="Brush.ChartSegmentOther" Color="#6E6E9B"/> <!-- Other: Subdued Muted Purple/Blue -->
 
             <!-- Process Chart Semantic Aliases -->
             <SolidColorBrush x:Key="Brush.ProcessChart1" Color="#00F0FF"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart2" Color="#A855F7"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart3" Color="#D000FF"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart2" Color="#34D399"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart3" Color="#FBBF24"/>
             <SolidColorBrush x:Key="Brush.ProcessChart4" Color="#FF007F"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart5" Color="#00E5FF"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart6" Color="#8B5CF6"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart5" Color="#A855F7"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart6" Color="#60A5FA"/>
             <SolidColorBrush x:Key="Brush.ProcessChart7" Color="#818CF8"/>
             <SolidColorBrush x:Key="Brush.ProcessChart8" Color="#14B8A6"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart9" Color="#34D399"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart10" Color="#60A5FA"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart11" Color="#FBBF24"/>
-            <SolidColorBrush x:Key="Brush.ProcessChart12" Color="#FB7185"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart9" Color="#D000FF"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart10" Color="#8B5CF6"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart11" Color="#FB7185"/>
+            <SolidColorBrush x:Key="Brush.ProcessChart12" Color="#00E5FF"/>
 
             <!-- Floating Glow & Area Gradient Brushes -->
             <LinearGradientBrush x:Key="Brush.HeroDownloadGradient" StartPoint="0%,0%" EndPoint="0%,100%">

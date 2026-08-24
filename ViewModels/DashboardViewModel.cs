@@ -256,12 +256,14 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     // ── Process Analytics ───────────────────────────────────────────────────
     public ObservableCollection<ProcessNetworkUsage> LiveProcessTraffic { get; } = new();
     public ObservableCollection<ApplicationHistoricalProfile> TopProcesses { get; } = new();
+    public ObservableCollection<ApplicationHistoricalProfile> TopMonthProcesses { get; } = new();
 
     [ObservableProperty] private bool _hasLiveProcessTraffic = false;
     [ObservableProperty] private string _downloadHeavyProcessText = "—";
     [ObservableProperty] private string _uploadHeavyProcessText = "—";
     [ObservableProperty] private string _topProcessesBaselineText = "Collecting process usage baseline...";
     [ObservableProperty] private bool _hasTopProcesses = false;
+    [ObservableProperty] private bool _hasTopMonthProcesses = false;
     [ObservableProperty] private string _topAppInsightText = "Analyzing application behavior...";
 
     // ── Forecast & Budget ────────────────────────────────────────────────────
@@ -590,12 +592,14 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                     .ToList();
 
                 long totalBytes = liveGrouped.Sum(p => p.TotalBytes);
-                if (totalBytes > 0)
+                for (int i = 0; i < liveGrouped.Count; i++)
                 {
-                    foreach (var p in liveGrouped)
+                    var p = liveGrouped[i];
+                    if (totalBytes > 0)
                     {
                         p.PercentageOfTotal = (double)p.TotalBytes / totalBytes * 100.0;
                     }
+                    p.DisplayIndex = i;
                 }
 
                 TopProcesses.Clear();
@@ -604,6 +608,16 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                     TopProcesses.Add(p);
                 }
                 HasTopProcesses = TopProcesses.Count > 0;
+
+                if (!HasTopMonthProcesses || TopMonthProcesses.Count == 0)
+                {
+                    TopMonthProcesses.Clear();
+                    foreach (var p in liveGrouped)
+                    {
+                        TopMonthProcesses.Add(p);
+                    }
+                    HasTopMonthProcesses = TopMonthProcesses.Count > 0;
+                }
             }
         });
     }
@@ -1290,12 +1304,74 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             }
 
             long totalProcessBytes = topProcessesList.Sum(p => p.TotalBytes);
-            if (totalProcessBytes > 0)
+            for (int i = 0; i < topProcessesList.Count; i++)
             {
-                foreach (var p in topProcessesList)
+                var p = topProcessesList[i];
+                if (totalProcessBytes > 0)
                 {
                     p.PercentageOfTotal = (double)p.TotalBytes / totalProcessBytes * 100.0;
                 }
+                p.DisplayIndex = i;
+            }
+
+            // Prepare Top Monthly Processes
+            var topMonthProcessesList = rawTop
+                .GroupBy(p => p.ProcessName.Trim().ToLowerInvariant())
+                .Select(g =>
+                {
+                    var first = g.First();
+                    long monthBytes = g.Sum(x => x.ThirtyDayTotalBytes > 0 ? x.ThirtyDayTotalBytes : x.TotalBytes);
+                    return new ApplicationHistoricalProfile
+                    {
+                        ProcessName = first.ProcessName,
+                        Pid = first.Pid,
+                        ExecutablePath = first.ExecutablePath,
+                        UserName = first.UserName,
+                        DataSource = first.DataSource,
+                        DownloadBytes = g.Sum(x => x.DownloadBytes),
+                        UploadBytes = g.Sum(x => x.UploadBytes),
+                        TodayBytes = g.Sum(x => x.TodayBytes),
+                        YesterdayBytes = g.Sum(x => x.YesterdayBytes),
+                        SevenDayTotalBytes = g.Sum(x => x.SevenDayTotalBytes),
+                        ThirtyDayTotalBytes = monthBytes,
+                        ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessName, first.ExecutablePath),
+                        ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessName, first.ExecutablePath)
+                    };
+                })
+                .OrderByDescending(p => p.ThirtyDayTotalBytes > 0 ? p.ThirtyDayTotalBytes : p.TotalBytes)
+                .Take(5)
+                .ToList();
+
+            if (topMonthProcessesList.Count == 0 && topProcessesList.Count > 0)
+            {
+                topMonthProcessesList = topProcessesList.Select(p => new ApplicationHistoricalProfile
+                {
+                    ProcessName = p.ProcessName,
+                    Pid = p.Pid,
+                    ExecutablePath = p.ExecutablePath,
+                    UserName = p.UserName,
+                    DataSource = p.DataSource,
+                    DownloadBytes = p.DownloadBytes,
+                    UploadBytes = p.UploadBytes,
+                    TodayBytes = p.TodayBytes,
+                    YesterdayBytes = p.YesterdayBytes,
+                    SevenDayTotalBytes = p.SevenDayTotalBytes,
+                    ThirtyDayTotalBytes = p.ThirtyDayTotalBytes > 0 ? p.ThirtyDayTotalBytes : p.TotalBytes,
+                    ApplicationDisplayName = p.ApplicationDisplayName,
+                    ApplicationIcon = p.ApplicationIcon
+                }).ToList();
+            }
+
+            long totalMonthProcessBytes = topMonthProcessesList.Sum(p => p.ThirtyDayTotalBytes > 0 ? p.ThirtyDayTotalBytes : p.TotalBytes);
+            for (int i = 0; i < topMonthProcessesList.Count; i++)
+            {
+                var p = topMonthProcessesList[i];
+                long bytes = p.ThirtyDayTotalBytes > 0 ? p.ThirtyDayTotalBytes : p.TotalBytes;
+                if (totalMonthProcessBytes > 0)
+                {
+                    p.PercentageOfTotal = (double)bytes / totalMonthProcessBytes * 100.0;
+                }
+                p.DisplayIndex = i;
             }
 
             var dlHeavy = topProcessesList.Count > 0 ? topProcessesList.MaxBy(p => p.TodayBytes) : null; // simplified max
@@ -1332,8 +1408,15 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 {
                     TopProcesses.Add(process);
                 }
-
                 HasTopProcesses = TopProcesses.Count > 0;
+
+                TopMonthProcesses.Clear();
+                foreach (var process in topMonthProcessesList)
+                {
+                    TopMonthProcesses.Add(process);
+                }
+                HasTopMonthProcesses = TopMonthProcesses.Count > 0;
+
                 TopAppInsightText = insight;
                 
                 if (dlHeavy != null && dlHeavy.TodayBytes > 0)

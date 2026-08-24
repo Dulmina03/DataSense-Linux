@@ -52,7 +52,6 @@
                             <StackPanel Spacing="12">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                        <!-- Minimal Vector Download Icon (Tray + Arrow) -->
                                         <Path Data="M 7 2 L 7 9 M 4 6.5 L 7 9.5 L 10 6.5 M 2.5 10.5 L 2.5 12 C 2.5 12.5 3 13 3.5 13 L 10.5 13 C 11 13 11.5 12.5 11.5 12 L 11.5 10.5" Width="14" Height="14" Stroke="{DynamicResource Brush.Download}" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round" VerticalAlignment="Center"/>
                                         <TextBlock Text="DOWNLOAD" Classes="Caption" FontWeight="Bold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
                                     </StackPanel>
@@ -69,8 +68,6 @@
                                         <TextBlock Text="{Binding PeakLiveDownloadSpeedText}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}"/>
                                     </StackPanel>
                                 </Grid>
-
-                                <Path Data="M 0 15 Q 30 0 60 10 T 120 5 L 120 20 L 0 20 Z" Fill="{DynamicResource Brush.DownloadAreaGradient}" Stroke="{DynamicResource Brush.Download}" StrokeThickness="1.5" Height="24" Stretch="Fill"/>
                             </StackPanel>
                         </Border>
 
@@ -79,7 +76,6 @@
                             <StackPanel Spacing="12">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                        <!-- Minimal Vector Upload Icon (Tray + Arrow) -->
                                         <Path Data="M 7 9.5 L 7 2.5 M 4 5 L 7 2 L 10 5 M 2.5 10.5 L 2.5 12 C 2.5 12.5 3 13 3.5 13 L 10.5 13 C 11 13 11.5 12.5 11.5 12 L 11.5 10.5" Width="14" Height="14" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round" VerticalAlignment="Center"/>
                                         <TextBlock Text="UPLOAD" Classes="Caption" FontWeight="Bold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
                                     </StackPanel>
@@ -96,8 +92,6 @@
                                         <TextBlock Text="{Binding PeakLiveUploadSpeedText}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}"/>
                                     </StackPanel>
                                 </Grid>
-
-                                <Path Data="M 0 15 Q 30 5 60 15 T 120 8 L 120 20 L 0 20 Z" Fill="{DynamicResource Brush.UploadAreaGradient}" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="1.5" Height="24" Stretch="Fill"/>
                             </StackPanel>
                         </Border>
 
@@ -106,7 +100,6 @@
                             <StackPanel Spacing="12">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                        <!-- Minimal Vector Data Cylinder / Analytics Stack Icon -->
                                         <Path Data="M 2.5 4 C 2.5 2.6 4.5 1.5 7 1.5 C 9.5 1.5 11.5 2.6 11.5 4 C 11.5 5.4 9.5 6.5 7 6.5 C 4.5 6.5 2.5 5.4 2.5 4 Z M 2.5 7.5 C 2.5 8.9 4.5 10 7 10 C 9.5 10 11.5 8.9 11.5 7.5 M 2.5 4 L 2.5 11 C 2.5 12.4 4.5 13.5 7 13.5 C 9.5 13.5 11.5 12.4 11.5 11 L 11.5 4" Width="14" Height="14" Stroke="{DynamicResource Brush.TextSecondary}" StrokeThickness="1.4" StrokeLineCap="Round" StrokeJoin="Round" VerticalAlignment="Center"/>
                                         <TextBlock Text="TODAY'S USAGE" Classes="Caption" FontWeight="Bold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
                                     </StackPanel>
@@ -122,8 +115,6 @@
                                         <TextBlock Text="Daily transfer activity" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
                                     </StackPanel>
                                 </Grid>
-
-                                <Path Data="M 0 16 Q 30 8 60 14 T 120 10 L 120 20 L 0 20 Z" Fill="{DynamicResource Brush.SurfaceElevated}" Stroke="{DynamicResource Brush.BorderStrong}" StrokeThickness="1.5" Height="24" Stretch="Fill"/>
                             </StackPanel>
                         </Border>
                     </Grid>
@@ -367,7 +358,7 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="models:ApplicationHistoricalProfile">
-                                        <Path Fill="{Binding ProcessName, Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
+                                        <Path Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
                                               Stroke="{DynamicResource Brush.Surface}"
                                               StrokeThickness="1"
                                               ToolTip.Tip="{Binding TooltipSummary}">
@@ -397,7 +388,7 @@
                                 <DataTemplate DataType="models:ApplicationHistoricalProfile">
                                     <Border Padding="6,4" CornerRadius="6" Background="Transparent" ToolTip.Tip="{Binding TooltipSummary}">
                                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
-                                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding ProcessName, Converter={x:Static conv:ProcessIndexColorConverter.Instance}}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                             <TextBlock Grid.Column="1" Text="{Binding EffectiveDisplayName}" Classes="Body" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="2" Text="{Binding TotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="BodySecondary" Margin="10,0" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="3" Text="{Binding PercentageOfTotal, StringFormat='{}{0:F1}%'}" Classes="Body" FontWeight="SemiBold" VerticalAlignment="Center" Width="44" TextAlignment="Right"/>
@@ -414,53 +405,39 @@
                     <StackPanel Spacing="16">
                         <TextBlock Text="This Month's Process Network Traffic" Classes="PanelTitle"/>
 
-                        <!-- Download vs Upload Monthly Donut Ring (Perfect 1:1 Circular Geometry) -->
-                        <Grid Width="200" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <!-- Download Arc Segment (Cyan) -->
-                            <Path Fill="{DynamicResource Brush.Download}"
-                                  Stroke="{DynamicResource Brush.Surface}"
-                                  StrokeThickness="1">
-                                <Path.Data>
-                                    <MultiBinding Converter="{x:Static conv:DonutArcPathConverter.Instance}">
-                                        <Binding Source="{x:False}"/>
-                                        <Binding Path="DownloadColumnWidth"/>
-                                        <Binding Path="UploadColumnWidth"/>
-                                    </MultiBinding>
-                                </Path.Data>
-                                <ToolTip.Tip>
-                                    <Border Padding="10" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="6" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
-                                        <StackPanel Spacing="4">
-                                            <TextBlock Text="Download Traffic" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}"/>
-                                            <Border Height="1" Background="{DynamicResource Brush.Border}"/>
-                                            <TextBlock Text="{Binding MonthDownloadedText, StringFormat='Total: {0}'}" Classes="Caption" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding DownloadRatioText, StringFormat='Share: {0}'}" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                                        </StackPanel>
-                                    </Border>
-                                </ToolTip.Tip>
-                            </Path>
+                        <!-- Empty State when no monthly processes available -->
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" Margin="0,28" IsVisible="{Binding !HasTopMonthProcesses}">
+                            <Border Width="40" Height="40" CornerRadius="10" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="⚡" Classes="Body" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="No monthly process traffic recorded" Classes="Body" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                            <TextBlock Text="Monthly application usage will accumulate as network activity is monitored." Classes="Caption" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextMuted}"/>
+                        </StackPanel>
 
-                            <!-- Upload Arc Segment (Purple) -->
-                            <Path Fill="{DynamicResource Brush.Upload}"
-                                  Stroke="{DynamicResource Brush.Surface}"
-                                  StrokeThickness="1">
-                                <Path.Data>
-                                    <MultiBinding Converter="{x:Static conv:DonutArcPathConverter.Instance}">
-                                        <Binding Source="{x:True}"/>
-                                        <Binding Path="DownloadColumnWidth"/>
-                                        <Binding Path="UploadColumnWidth"/>
-                                    </MultiBinding>
-                                </Path.Data>
-                                <ToolTip.Tip>
-                                    <Border Padding="10" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="6" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
-                                        <StackPanel Spacing="4">
-                                            <TextBlock Text="Upload Traffic" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}"/>
-                                            <Border Height="1" Background="{DynamicResource Brush.Border}"/>
-                                            <TextBlock Text="{Binding MonthUploadedText, StringFormat='Total: {0}'}" Classes="Caption" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding UploadRatioText, StringFormat='Share: {0}'}" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                                        </StackPanel>
-                                    </Border>
-                                </ToolTip.Tip>
-                            </Path>
+                        <!-- Multi-Segment Monthly Process Donut Chart (Perfect 1:1 Circular Geometry) -->
+                        <Grid Width="200" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding HasTopMonthProcesses}">
+                            <ItemsControl ItemsSource="{Binding TopMonthProcesses}" Width="200" Height="200">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Panel Width="200" Height="200"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="models:ApplicationHistoricalProfile">
+                                        <Path Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
+                                              Stroke="{DynamicResource Brush.Surface}"
+                                              StrokeThickness="1"
+                                              ToolTip.Tip="{Binding TooltipSummary}">
+                                            <Path.Data>
+                                                <MultiBinding Converter="{x:Static conv:DonutArcPathConverter.Instance}">
+                                                    <Binding />
+                                                    <Binding Path="((vm:DashboardViewModel)DataContext).TopMonthProcesses" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                                </MultiBinding>
+                                            </Path.Data>
+                                        </Path>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
                             <!-- Donut Center Hole -->
                             <Border Width="116" Height="116" CornerRadius="100" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
@@ -471,22 +448,21 @@
                             </Border>
                         </Grid>
 
-                        <!-- Monthly Download / Upload Readouts -->
-                        <StackPanel Spacing="10" Margin="0,4,0,0">
-                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{DynamicResource Brush.Download}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Grid.Column="1" Text="Download Traffic" Classes="Body" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="2" Text="{Binding MonthDownloadedText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}" Margin="8,0" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="3" Text="{Binding DownloadRatioText}" Classes="Caption" VerticalAlignment="Center"/>
-                            </Grid>
-                            <Border Height="1" Background="{DynamicResource Brush.Border}"/>
-                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{DynamicResource Brush.Upload}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Grid.Column="1" Text="Upload Traffic" Classes="Body" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="2" Text="{Binding MonthUploadedText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}" Margin="8,0" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="3" Text="{Binding UploadRatioText}" Classes="Caption" VerticalAlignment="Center"/>
-                            </Grid>
-                        </StackPanel>
+                        <!-- Monthly Process Legend Table (Deterministic Color Dots) -->
+                        <ItemsControl ItemsSource="{Binding TopMonthProcesses}" Margin="0,4,0,0" IsVisible="{Binding HasTopMonthProcesses}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="models:ApplicationHistoricalProfile">
+                                    <Border Padding="6,4" CornerRadius="6" Background="Transparent" ToolTip.Tip="{Binding TooltipSummary}">
+                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
+                                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding EffectiveDisplayName}" Classes="Body" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding TotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="BodySecondary" Margin="10,0" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding PercentageOfTotal, StringFormat='{}{0:F1}%'}" Classes="Body" FontWeight="SemiBold" VerticalAlignment="Center" Width="44" TextAlignment="Right"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </Border>
 

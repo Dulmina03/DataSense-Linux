@@ -88,15 +88,23 @@ public class ProcessIndexColorConverter : IValueConverter
     {
         if (value is ApplicationHistoricalProfile profile)
         {
+            if (profile.DisplayIndex >= 0)
+                return ApplicationChartColorProvider.Instance.GetColorBrushByIndex(profile.DisplayIndex);
             return ApplicationChartColorProvider.Instance.GetColorBrush(profile.ProcessName);
+        }
+        if (value is int idx)
+        {
+            return ApplicationChartColorProvider.Instance.GetColorBrushByIndex(idx);
         }
         if (value is string str)
         {
+            if (int.TryParse(str, out int parsedIdx))
+                return ApplicationChartColorProvider.Instance.GetColorBrushByIndex(parsedIdx);
             return ApplicationChartColorProvider.Instance.GetColorBrush(str);
         }
         if (parameter != null && int.TryParse(parameter.ToString(), out int pIdx))
         {
-            return ApplicationChartColorProvider.Instance.GetColorBrush(pIdx.ToString());
+            return ApplicationChartColorProvider.Instance.GetColorBrushByIndex(pIdx);
         }
 
         return ApplicationChartColorProvider.Instance.GetColorBrush(value?.ToString());

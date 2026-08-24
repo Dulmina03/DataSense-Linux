@@ -172,6 +172,9 @@ public class ApplicationHistoricalProfile
     /// <summary>Resolved application icon from Linux desktop theme or generic fallback.</summary>
     public Avalonia.Media.IImage? ApplicationIcon { get; set; }
 
+    /// <summary>Visual index in current chart display (0 to 11) for deterministic multi-color rendering.</summary>
+    public int DisplayIndex { get; set; } = -1;
+
     /// <summary>Effective display name for UI rendering.</summary>
     public string EffectiveDisplayName =>
         !string.IsNullOrWhiteSpace(ApplicationDisplayName) ? ApplicationDisplayName : ProcessName;
