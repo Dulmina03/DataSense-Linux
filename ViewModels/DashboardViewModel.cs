@@ -617,7 +617,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 usage.DownloadSpeed,
                 usage.UploadSpeed,
                 usage.BytesReceived,
-                usage.BytesSent);
+            usage.BytesSent);
 
             AddRealtimeTrafficSample(
                 usage.DownloadSpeed,
@@ -638,6 +638,48 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             _ = LoadConnectionDetailsAsync(usage.InterfaceName);
             _ = LoadAnalyticsAsync(showLoading: false);
         }
+    }
+
+    private double _currentYMax = 100 * 1024.0; // 100 KB/s initial scale
+
+    private double CalculateStableYMax(double maxObserved)
+    {
+        double[] niceScales = {
+            100 * 1024.0,        // 100 KB/s
+            250 * 1024.0,        // 250 KB/s
+            500 * 1024.0,        // 500 KB/s
+            1 * 1024 * 1024.0,   // 1 MB/s
+            2 * 1024 * 1024.0,   // 2 MB/s
+            5 * 1024 * 1024.0,   // 5 MB/s
+            10 * 1024 * 1024.0,  // 10 MB/s
+            20 * 1024 * 1024.0,  // 20 MB/s
+            25 * 1024 * 1024.0,  // 25 MB/s
+            50 * 1024 * 1024.0,  // 50 MB/s
+            100 * 1024 * 1024.0, // 100 MB/s
+            250 * 1024 * 1024.0, // 250 MB/s
+            500 * 1024 * 1024.0, // 500 MB/s
+            1024 * 1024 * 1024.0 // 1 GB/s
+        };
+
+        double target = Math.Max(100 * 1024.0, maxObserved * 1.20);
+        double chosen = niceScales[0];
+        foreach (var s in niceScales)
+        {
+            if (s >= target)
+            {
+                chosen = s;
+                break;
+            }
+            chosen = s;
+        }
+
+        // Hysteresis: scale up immediately, scale down only when traffic is consistently below half
+        if (chosen > _currentYMax || chosen < _currentYMax * 0.50)
+        {
+            _currentYMax = chosen;
+        }
+
+        return _currentYMax;
     }
 
     public void AddRealtimeTrafficSample(double downloadSpeed, double uploadSpeed, string? interfaceName)
@@ -727,37 +769,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
         HasRealtimeGraphData = true;
         double maxObserved = Math.Max(PeakDownloadRateInWindow, PeakUploadRateInWindow);
-        double yMax = Math.Max(102400.0, maxObserved * 1.20); // 100 KB/s minimum scale floor, 20% headroom
+        double yMax = CalculateStableYMax(maxObserved);
 
-        // Determine friendly unit and division scale
-        string unit;
-        double divisor;
-        if (yMax >= 1024 * 1024 * 1024)
-        {
-            unit = "GB/s";
-            divisor = 1024.0 * 1024.0 * 1024.0;
-        }
-        else if (yMax >= 1024 * 1024)
-        {
-            unit = "Mbps";
-            divisor = 1024.0 * 1024.0 / 8.0;
-        }
-        else
-        {
-            unit = "KB/s";
-            divisor = 1024.0;
-        }
-
-        YAxisUnitText = unit;
-        double scaledMax = yMax / divisor;
-        YAxisLevel6Text = (scaledMax * 1.0).ToString("0.0");
-        YAxisLevel5Text = (scaledMax * 5.0 / 6.0).ToString("0.0");
-        YAxisLevel4Text = (scaledMax * 4.0 / 6.0).ToString("0.0");
-        YAxisLevel3Text = (scaledMax * 3.0 / 6.0).ToString("0.0");
-        YAxisLevel2Text = (scaledMax * 2.0 / 6.0).ToString("0.0");
-        YAxisLevel1Text = (scaledMax * 1.0 / 6.0).ToString("0.0");
-        YAxisLevel0Text = "0";
-
+        // 5-Level Y-Axis Labels
         YAxisTopText = ByteFormatter.FormatSpeed(yMax);
         YAxisMidHighText = ByteFormatter.FormatSpeed(yMax * 0.75);
         YAxisMidText = ByteFormatter.FormatSpeed(yMax * 0.50);
