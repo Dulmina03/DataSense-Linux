@@ -125,31 +125,19 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- ── DOWNLOAD ANIMATION LAYER (CYAN) ── -->
-                            <Panel IsVisible="{Binding IsDownloadActive}">
-                                <Path Data="{Binding MeterActiveScaleTicksGeometry}" Stroke="{DynamicResource Brush.Download}" StrokeThickness="2" StrokeLineCap="Round"/>
-                                <Path Data="{Binding MeterSecondaryArc}" Stroke="{DynamicResource Brush.Download}" StrokeThickness="2" Opacity="0.4" StrokeLineCap="Round" />
-                                <Path Data="{Binding MeterActiveArc}" Stroke="{DynamicResource Brush.Download}" StrokeThickness="8" StrokeLineCap="Round" />
-                                <Path Data="{Binding MeterActiveDomeArc}" Stroke="{DynamicResource Brush.Download}" StrokeThickness="3" Opacity="0.85" StrokeLineCap="Round" />
-                            </Panel>
-
-                            <!-- ── UPLOAD ANIMATION LAYER (PURPLE) ── -->
-                            <Panel IsVisible="{Binding IsUploadActive}">
-                                <Path Data="{Binding MeterActiveScaleTicksGeometry}" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="2" StrokeLineCap="Round"/>
-                                <Path Data="{Binding MeterSecondaryArc}" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="2" Opacity="0.4" StrokeLineCap="Round" />
-                                <Path Data="{Binding MeterActiveArc}" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="8" StrokeLineCap="Round" />
-                                <Path Data="{Binding MeterActiveDomeArc}" Stroke="{DynamicResource Brush.Upload}" StrokeThickness="3" Opacity="0.85" StrokeLineCap="Round" />
-                            </Panel>
-
-                            <!-- ── IDLE / PING / COMPLETED LAYER (ACCENT) ── -->
-                            <Panel IsVisible="{Binding !IsDownloadActive, FallbackValue=True}">
-                                <Panel IsVisible="{Binding !IsUploadActive}">
-                                    <Path Data="{Binding MeterActiveScaleTicksGeometry}" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="2" StrokeLineCap="Round"/>
-                                    <Path Data="{Binding MeterSecondaryArc}" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="2" Opacity="0.4" StrokeLineCap="Round" />
-                                    <Path Data="{Binding MeterActiveArc}" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="8" StrokeLineCap="Round" />
-                                    <Path Data="{Binding MeterActiveDomeArc}" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="3" Opacity="0.85" StrokeLineCap="Round" />
-                                </Panel>
-                            </Panel>
+                            <!-- ── ACTIVE ANIMATION LAYER (DYNAMIC THEME BRUSH) ── -->
+                            <Path Data="{Binding MeterActiveScaleTicksGeometry}"
+                                  Stroke="{Binding ActivePhaseSemanticColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}"
+                                  StrokeThickness="2" StrokeLineCap="Round"/>
+                            <Path Data="{Binding MeterSecondaryArc}"
+                                  Stroke="{Binding ActivePhaseSemanticColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}"
+                                  StrokeThickness="2" Opacity="0.4" StrokeLineCap="Round" />
+                            <Path Data="{Binding MeterActiveArc}"
+                                  Stroke="{Binding ActivePhaseSemanticColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}"
+                                  StrokeThickness="8" StrokeLineCap="Round" />
+                            <Path Data="{Binding MeterActiveDomeArc}"
+                                  Stroke="{Binding ActivePhaseSemanticColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}"
+                                  StrokeThickness="3" Opacity="0.85" StrokeLineCap="Round" />
 
                             <!-- ── Central Focal Numeric Readout ── -->
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-10,0,0" Spacing="2">

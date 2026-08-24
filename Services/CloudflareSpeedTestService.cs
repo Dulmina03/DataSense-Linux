@@ -1,5 +1,7 @@
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +15,7 @@ public class CloudflareSpeedTestService : ISpeedTestService
     public CloudflareSpeedTestService()
     {
         _httpClient = new HttpClient();
-        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        _httpClient.Timeout = TimeSpan.FromSeconds(35);
     }
 
     public async Task<double> TestPingAsync(CancellationToken cancellationToken)
@@ -54,7 +56,7 @@ public class CloudflareSpeedTestService : ISpeedTestService
                 totalBytesRead += bytesRead;
                 
                 // Report intermediate speed (Mbps)
-                if (sw.Elapsed.TotalSeconds > 0.1)
+                if (sw.Elapsed.TotalSeconds > 0.08)
                 {
                     double currentSpeedMbps = (totalBytesRead * 8.0 / 1_000_000.0) / sw.Elapsed.TotalSeconds;
                     progressCallback(currentSpeedMbps);
@@ -74,13 +76,13 @@ public class CloudflareSpeedTestService : ISpeedTestService
     {
         try
         {
-            // Upload a 10MB payload
+            // Upload a 12MB payload with streaming chunk progress
             var url = "https://speed.cloudflare.com/__up";
-            int payloadSize = 10000000;
+            int payloadSize = 12000000;
             var payload = new byte[payloadSize];
             new Random().NextBytes(payload);
             
-            var content = new ByteArrayContent(payload);
+            var content = new ProgressUploadContent(payload, progressCallback, chunkSize: 65536);
             
             var sw = Stopwatch.StartNew();
             using var response = await _httpClient.PostAsync(url, content, cancellationToken);
@@ -94,6 +96,55 @@ public class CloudflareSpeedTestService : ISpeedTestService
         catch
         {
             return 0;
+        }
+    }
+
+    private sealed class ProgressUploadContent : HttpContent
+    {
+        private readonly byte[] _data;
+        private readonly Action<double> _progressCallback;
+        private readonly int _chunkSize;
+
+        public ProgressUploadContent(byte[] data, Action<double> progressCallback, int chunkSize = 65536)
+        {
+            _data = data;
+            _progressCallback = progressCallback;
+            _chunkSize = chunkSize;
+        }
+
+        protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
+        {
+            return SerializeToStreamAsync(stream, context, CancellationToken.None);
+        }
+
+        protected override async Task SerializeToStreamAsync(Stream stream, TransportContext? context, CancellationToken cancellationToken)
+        {
+            var sw = Stopwatch.StartNew();
+            long totalSent = 0;
+            int offset = 0;
+
+            while (offset < _data.Length)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                int toSend = Math.Min(_chunkSize, _data.Length - offset);
+                await stream.WriteAsync(_data.AsMemory(offset, toSend), cancellationToken);
+                await stream.FlushAsync(cancellationToken);
+
+                offset += toSend;
+                totalSent += toSend;
+
+                if (sw.Elapsed.TotalSeconds > 0.08)
+                {
+                    double currentSpeedMbps = (totalSent * 8.0 / 1_000_000.0) / sw.Elapsed.TotalSeconds;
+                    _progressCallback(currentSpeedMbps);
+                }
+            }
+        }
+
+        protected override bool TryComputeLength(out long length)
+        {
+            length = _data.Length;
+            return true;
         }
     }
 }
