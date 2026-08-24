@@ -34,7 +34,34 @@ public class MonthSelectItem
 
 public class HistoricalSessionViewModel
 {
+    public long Id { get; init; }
     public string NetworkName { get; init; } = string.Empty;
+    public string InterfaceName { get; init; } = string.Empty;
+    public string ConnectionType { get; init; } = string.Empty;
+    public DateTime StartTime { get; init; }
+    public DateTime? EndTime { get; init; }
+    public long BytesDownloaded { get; init; }
+    public long BytesUploaded { get; init; }
+    public long TotalBytes => BytesDownloaded + BytesUploaded;
+    public string DownloadedText => ByteFormatter.FormatBytes(BytesDownloaded);
+    public string UploadedText => ByteFormatter.FormatBytes(BytesUploaded);
+    public string TotalText => ByteFormatter.FormatBytes(TotalBytes);
+    public string SubtitleText => !string.IsNullOrWhiteSpace(ConnectionType) ? ConnectionType : (!string.IsNullOrWhiteSpace(InterfaceName) ? InterfaceName : "Network Session");
+    public string DisplayName => !string.IsNullOrWhiteSpace(NetworkName) ? NetworkName : (!string.IsNullOrWhiteSpace(InterfaceName) ? InterfaceName : "Network Session");
+    public bool IsActive => !EndTime.HasValue;
+    public int DisplayIndex { get; set; }
+    public double DownloadRatio => TotalBytes > 0 ? (double)BytesDownloaded / TotalBytes * 100.0 : 0.0;
+    public double UploadRatio => TotalBytes > 0 ? (double)BytesUploaded / TotalBytes * 100.0 : 0.0;
+    public double RelativeUsagePercent { get; set; } = 100.0;
+    public string TimeRangeText => EndTime.HasValue
+        ? $"{StartTime:HH:mm} — {EndTime.Value:HH:mm}"
+        : $"{StartTime:HH:mm} — Live";
+}
+
+public class MonthlyNetworkSummaryViewModel
+{
+    public string NetworkName { get; init; } = string.Empty;
+    public string DisplayName => !string.IsNullOrWhiteSpace(NetworkName) ? NetworkName : (!string.IsNullOrWhiteSpace(InterfaceName) ? InterfaceName : "Network Session");
     public string InterfaceName { get; init; } = string.Empty;
     public string ConnectionType { get; init; } = string.Empty;
     public long BytesDownloaded { get; init; }
@@ -43,9 +70,8 @@ public class HistoricalSessionViewModel
     public string DownloadedText => ByteFormatter.FormatBytes(BytesDownloaded);
     public string UploadedText => ByteFormatter.FormatBytes(BytesUploaded);
     public string TotalText => ByteFormatter.FormatBytes(TotalBytes);
-    public string SubtitleText => !string.IsNullOrWhiteSpace(ConnectionType) ? ConnectionType : InterfaceName;
-    public string DisplayName => !string.IsNullOrWhiteSpace(NetworkName) ? NetworkName : (!string.IsNullOrWhiteSpace(InterfaceName) ? InterfaceName : "Network Session");
-    public bool IsActive { get; init; }
+    public double RelativeUsagePercent { get; set; } = 100.0;
+    public int DisplayIndex { get; set; }
 }
 
 public class HistoricalGraphSample
@@ -177,6 +203,10 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty] private string _applicationBreakdownSubtitle = "Application network usage for the last 7 days";
     [ObservableProperty] private string _usageExplorerSubtitle = "Application network usage for the last 7 days";
+    [ObservableProperty] private string _applicationCountText = "0 applications";
+    [ObservableProperty] private string _totalApplicationUsageText = "0 B";
+    [ObservableProperty] private string _totalApplicationDownloadText = "0 B";
+    [ObservableProperty] private string _totalApplicationUploadText = "0 B";
 
     // ── Chart #1 (Network Usage) State ─────────────────────────────────────────
 
@@ -225,7 +255,17 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _twelveMonthHoverUploadText = "";
     [ObservableProperty] private string _twelveMonthHoverTotalText = "";
 
-    // ── Panel Flags ────────────────────────────────────────────────────────────
+    // ── Panel Flags & Network Sessions State ───────────────────────────────────
+
+    public ObservableCollection<MonthlyNetworkSummaryViewModel> MonthlyNetworkSummaries { get; } = new();
+
+    [ObservableProperty] private HistoricalSessionViewModel? _currentLiveSession;
+    [ObservableProperty] private bool _hasLiveSession;
+    [ObservableProperty] private string _sessionNetworkCountText = "0 SESSIONS · 0 NETWORKS";
+    [ObservableProperty] private string _monthlySectionHeaderRightText = "AUGUST 2026";
+    [ObservableProperty] private string _monthlyTotalDownloadText = "0 B";
+    [ObservableProperty] private string _monthlyTotalUploadText = "0 B";
+    [ObservableProperty] private string _monthlyTotalUsageText = "0 B";
 
     [ObservableProperty] private bool _hasNetworkSessions;
     [ObservableProperty] private bool _hasApplications;
@@ -514,23 +554,89 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             catch { }
 
             // 7. Map Network Sessions
-            var mappedSessions = sessions
+            var rawSessionsList = sessions.OrderByDescending(s => !s.EndTime.HasValue).ThenByDescending(s => s.StartTime).ToList();
+            var liveRaw = rawSessionsList.FirstOrDefault(s => !s.EndTime.HasValue) ?? rawSessionsList.FirstOrDefault();
+
+            HistoricalSessionViewModel? liveVm = null;
+            if (liveRaw != null && (liveRaw.BytesDownloaded + liveRaw.BytesUploaded > 0 || !liveRaw.EndTime.HasValue))
+            {
+                liveVm = new HistoricalSessionViewModel
+                {
+                    Id = liveRaw.Id,
+                    NetworkName = liveRaw.NetworkName,
+                    InterfaceName = liveRaw.InterfaceName,
+                    ConnectionType = liveRaw.ConnectionType,
+                    StartTime = liveRaw.StartTime,
+                    EndTime = liveRaw.EndTime,
+                    BytesDownloaded = liveRaw.BytesDownloaded,
+                    BytesUploaded = liveRaw.BytesUploaded,
+                    DisplayIndex = 0
+                };
+            }
+
+            // Map Individual Sessions
+            var mappedIndividualSessions = new List<HistoricalSessionViewModel>();
+            long maxSessionTotal = rawSessionsList.Count > 0 ? rawSessionsList.Max(s => s.TotalBytes) : 0;
+            for (int i = 0; i < rawSessionsList.Count; i++)
+            {
+                var s = rawSessionsList[i];
+                mappedIndividualSessions.Add(new HistoricalSessionViewModel
+                {
+                    Id = s.Id,
+                    NetworkName = s.NetworkName,
+                    InterfaceName = s.InterfaceName,
+                    ConnectionType = s.ConnectionType,
+                    StartTime = s.StartTime,
+                    EndTime = s.EndTime,
+                    BytesDownloaded = s.BytesDownloaded,
+                    BytesUploaded = s.BytesUploaded,
+                    DisplayIndex = i,
+                    RelativeUsagePercent = maxSessionTotal > 0
+                        ? Math.Max((double)s.TotalBytes / maxSessionTotal * 100.0, s.TotalBytes > 0 ? 3.0 : 0.0)
+                        : 0.0
+                });
+            }
+
+            // Map Monthly Network Summaries (Aggregated strictly by actual network name)
+            var monthlyGrouped = sessions
                 .GroupBy(s => !string.IsNullOrWhiteSpace(s.NetworkName) ? s.NetworkName : (!string.IsNullOrWhiteSpace(s.InterfaceName) ? s.InterfaceName : "Network Session"))
                 .Select(g =>
                 {
                     var first = g.First();
-                    return new HistoricalSessionViewModel
+                    return new MonthlyNetworkSummaryViewModel
                     {
                         NetworkName = g.Key,
                         InterfaceName = first.InterfaceName,
                         ConnectionType = first.ConnectionType,
                         BytesDownloaded = g.Sum(x => x.BytesDownloaded),
-                        BytesUploaded = g.Sum(x => x.BytesUploaded),
-                        IsActive = g.Any(x => !x.EndTime.HasValue)
+                        BytesUploaded = g.Sum(x => x.BytesUploaded)
                     };
                 })
-                .OrderByDescending(s => s.TotalBytes)
+                .OrderByDescending(m => m.TotalBytes)
                 .ToList();
+
+            long maxMonthlyTotal = monthlyGrouped.Count > 0 ? monthlyGrouped.Max(m => m.TotalBytes) : 0;
+            for (int i = 0; i < monthlyGrouped.Count; i++)
+            {
+                monthlyGrouped[i].DisplayIndex = i;
+                monthlyGrouped[i].RelativeUsagePercent = maxMonthlyTotal > 0
+                    ? Math.Max((double)monthlyGrouped[i].TotalBytes / maxMonthlyTotal * 100.0, monthlyGrouped[i].TotalBytes > 0 ? 3.0 : 0.0)
+                    : 0.0;
+            }
+
+            long monthlyTotalDl = monthlyGrouped.Sum(m => m.BytesDownloaded);
+            long monthlyTotalUl = monthlyGrouped.Sum(m => m.BytesUploaded);
+            long monthlyTotalUsage = monthlyTotalDl + monthlyTotalUl;
+
+            int distinctNetworks = rawSessionsList.Select(s => !string.IsNullOrWhiteSpace(s.NetworkName) ? s.NetworkName : s.InterfaceName).Distinct().Count();
+            int totalSessionCount = rawSessionsList.Count;
+            string countText = totalSessionCount == 1
+                ? (distinctNetworks == 1 ? "1 SESSION · 1 NETWORK" : $"1 SESSION · {distinctNetworks} NETWORKS")
+                : (distinctNetworks == 1 ? $"{totalSessionCount} SESSIONS · 1 NETWORK" : $"{totalSessionCount} SESSIONS · {distinctNetworks} NETWORKS");
+
+            string monthRightText = SelectedMonth != null
+                ? SelectedMonth.DisplayName.ToUpperInvariant()
+                : DateTime.UtcNow.ToString("MMMM yyyy", CultureInfo.InvariantCulture).ToUpperInvariant();
 
             // 8. Map Application Profiles (Chart #3 & Explorer)
             long grandAppTotal = totalUsage > 0 ? totalUsage : topApps.Sum(a => a.BytesDownloaded + a.BytesUploaded);
@@ -604,9 +710,28 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 ApplicationBreakdownSubtitle = appSubtitle;
                 UsageExplorerSubtitle = appSubtitle;
 
+                long totalAppDl = mappedApps.Sum(a => a.DownloadBytes);
+                long totalAppUl = mappedApps.Sum(a => a.UploadBytes);
+                long totalAppUsage = totalAppDl + totalAppUl;
+                TotalApplicationUsageText = ByteFormatter.FormatBytes(totalAppUsage);
+                TotalApplicationDownloadText = ByteFormatter.FormatBytes(totalAppDl);
+                TotalApplicationUploadText = ByteFormatter.FormatBytes(totalAppUl);
+
+                CurrentLiveSession = liveVm;
+                HasLiveSession = liveVm != null;
+                SessionNetworkCountText = countText;
+                MonthlySectionHeaderRightText = monthRightText;
+                MonthlyTotalDownloadText = ByteFormatter.FormatBytes(monthlyTotalDl);
+                MonthlyTotalUploadText = ByteFormatter.FormatBytes(monthlyTotalUl);
+                MonthlyTotalUsageText = ByteFormatter.FormatBytes(monthlyTotalUsage);
+
                 NetworkSessions.Clear();
-                foreach (var s in mappedSessions)
+                foreach (var s in mappedIndividualSessions)
                     NetworkSessions.Add(s);
+
+                MonthlyNetworkSummaries.Clear();
+                foreach (var m in monthlyGrouped)
+                    MonthlyNetworkSummaries.Add(m);
 
                 Applications.Clear();
                 foreach (var a in mappedApps)
@@ -954,7 +1079,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         foreach (var s in sessionQuery)
             FilteredNetworkSessions.Add(s);
 
-        HasNetworkSessions = FilteredNetworkSessions.Count > 0;
+        HasNetworkSessions = FilteredNetworkSessions.Count > 0 || MonthlyNetworkSummaries.Count > 0 || CurrentLiveSession != null;
 
         // 2. Filter & Sort Applications
         FilteredApplications.Clear();
@@ -983,6 +1108,15 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         }
 
         HasApplications = FilteredApplications.Count > 0;
+
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            ApplicationCountText = $"Showing {FilteredApplications.Count} of {Applications.Count} applications";
+        }
+        else
+        {
+            ApplicationCountText = Applications.Count == 1 ? "1 application" : $"{Applications.Count} applications";
+        }
     }
 
     // ── IDisposable ────────────────────────────────────────────────────────────

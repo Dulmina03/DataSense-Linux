@@ -465,74 +465,125 @@
                 </StackPanel>
             </Border>
 
-            <!-- ── 6. CHART #3: APPLICATION USAGE BREAKDOWN (HORIZONTAL BAR CHART) ───────── -->
+            <!-- ── 6. APPLICATION USAGE BREAKDOWN ────────────────────────────────────────── -->
             <Border Classes="AnalyticsSurface" Padding="24">
                 <StackPanel Spacing="20">
-                    <!-- Header with Title and Subtitle -->
+                    <!-- Header with Title, Subtitle, and App Count Badge -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Application Usage Breakdown" Classes="PanelTitle"/>
+                            <TextBlock Text="APPLICATION USAGE BREAKDOWN" Classes="PanelTitle"/>
                             <TextBlock Text="{Binding ApplicationBreakdownSubtitle}" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="12" Padding="10,4" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding ApplicationCountText}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        </Border>
+                    </Grid>
+
+                    <!-- Search and Sort Controls Row -->
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                        <!-- Search Box -->
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding SearchText}"
+                                 Watermark="Search applications..."
+                                 Classes="SearchInput"
+                                 Width="280"
+                                 HorizontalAlignment="Left"
+                                 VerticalAlignment="Center"/>
+
+                        <!-- Sort Options -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="Sort by:" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
+                            <ComboBox ItemsSource="{Binding SortOptions}"
+                                      SelectedItem="{Binding SelectedSortOption}"
+                                      MinWidth="140"
+                                      Classes="Secondary"
+                                      VerticalAlignment="Center"/>
                         </StackPanel>
                     </Grid>
 
+                    <!-- Table Column Headers -->
+                    <Grid ColumnDefinitions="*,130,130,130,85" Margin="14,0,14,0" IsVisible="{Binding HasApplications}">
+                        <TextBlock Grid.Column="0" Text="PROCESS" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        <TextBlock Grid.Column="1" Text="DOWNLOAD" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        <TextBlock Grid.Column="2" Text="UPLOAD" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        <TextBlock Grid.Column="3" Text="TOTAL" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        <TextBlock Grid.Column="4" Text="SHARE" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                    </Grid>
+
                     <!-- Empty State -->
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" Margin="0,24" IsVisible="{Binding !HasApplications}">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" Margin="0,32" IsVisible="{Binding !HasApplications}">
                         <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource Brush.SurfaceElevated}" HorizontalAlignment="Center">
                             <TextBlock Text="🏛️" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock Text="No application activity recorded" Classes="Body" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                        <TextBlock Text="Usage data will appear here once DataSense records network activity." Classes="Caption" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextMuted}"/>
+                        <TextBlock Text="No application usage recorded" Classes="Body" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        <TextBlock Text="There is no application network activity for the selected period." Classes="Caption" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextMuted}"/>
                     </StackPanel>
 
-                    <!-- Large Horizontal Bars for Top Applications -->
-                    <ItemsControl ItemsSource="{Binding ApplicationBreakdownItems}" IsVisible="{Binding HasApplications}">
+                    <!-- Applications List (Merged Process Rows with Progress Visualization) -->
+                    <ItemsControl ItemsSource="{Binding FilteredApplications}" IsVisible="{Binding HasApplications}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="models:ApplicationHistoricalProfile">
-                                <Border Margin="0,0,0,16" Background="Transparent" ToolTip.Tip="{Binding TooltipSummary}">
-                                    <StackPanel Spacing="8">
-                                        <!-- Top Row: App Icon + Name on Left, Download/Upload/Total/Share on Right -->
-                                        <Grid ColumnDefinitions="Auto,*,Auto">
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                                <Border Width="30" Height="30" CornerRadius="6" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Border Classes="ProcessRow" Margin="0,0,0,10" Padding="14,12" CornerRadius="8" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" ToolTip.Tip="{Binding TooltipSummary}">
+                                    <StackPanel Spacing="10">
+                                        <!-- Top Row: Process Info and Metrics -->
+                                        <Grid ColumnDefinitions="*,130,130,130,85" VerticalAlignment="Center">
+                                            <!-- Process Column: Multi-Color Dot + Icon + Display Name + Subtle Process Name -->
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                <Ellipse Width="8" Height="8"
+                                                         Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
+                                                         VerticalAlignment="Center"/>
+
+                                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Image Source="{Binding ApplicationIcon}" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform"/>
                                                 </Border>
-                                                <StackPanel Spacing="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding EffectiveDisplayName}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}"/>
-                                                    <TextBlock Text="{Binding ProcessName}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}" IsVisible="{Binding ProcessName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+                                                <StackPanel Spacing="2" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding EffectiveDisplayName}"
+                                                               Classes="Body" FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                                    <TextBlock Text="{Binding ProcessName}"
+                                                               Classes="Caption"
+                                                               Foreground="{DynamicResource Brush.TextMuted}"
+                                                               IsVisible="{Binding ProcessName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                                 </StackPanel>
                                             </StackPanel>
 
-                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="18" VerticalAlignment="Center">
-                                                <!-- Download -->
-                                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                    <TextBlock Text="↓" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding FormattedDownloadText}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
-                                                </StackPanel>
-
-                                                <!-- Upload -->
-                                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                    <TextBlock Text="↑" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding FormattedUploadText}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
-                                                </StackPanel>
-
-                                                <!-- Total -->
-                                                <TextBlock Text="{Binding FormattedTotalText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
-
-                                                <!-- Share Pill -->
-                                                <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="6" Padding="8,2" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding PercentageOfTotal, StringFormat='{}{0:F1}%'}" Classes="Caption" FontWeight="Bold" Foreground="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}" VerticalAlignment="Center"/>
-                                                </Border>
+                                            <!-- Download Column -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                <TextBlock Text="↓" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding FormattedDownloadText}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
                                             </StackPanel>
+
+                                            <!-- Upload Column -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                <TextBlock Text="↑" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding FormattedUploadText}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+
+                                            <!-- Total Column -->
+                                            <TextBlock Grid.Column="3" Text="{Binding FormattedTotalText}"
+                                                       Classes="Body" FontWeight="Bold"
+                                                       Foreground="{DynamicResource Brush.TextPrimary}"
+                                                       HorizontalAlignment="Right"
+                                                       VerticalAlignment="Center"/>
+
+                                            <!-- Share Percentage Pill -->
+                                            <Border Grid.Column="4" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="6" Padding="8,3" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding PercentageOfTotal, StringFormat='{}{0:F1}%'}"
+                                                           Classes="Caption" FontWeight="Bold"
+                                                           Foreground="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
+                                                           VerticalAlignment="Center"/>
+                                            </Border>
                                         </Grid>
 
-                                        <!-- Bottom Row: Thick 12px Rounded Horizontal Bar -->
-                                        <Grid Height="12">
-                                            <Border Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="6" Height="12"/>
+                                        <!-- Bottom Row: Multi-Color Distribution Progress Bar -->
+                                        <Grid Height="6">
+                                            <Border Background="{DynamicResource Brush.Surface}" CornerRadius="3" Height="6"/>
                                             <ProgressBar Value="{Binding PercentageOfTotal}"
                                                          Minimum="0" Maximum="100"
-                                                         Height="12"
-                                                         CornerRadius="6"
+                                                         Height="6"
+                                                         CornerRadius="3"
                                                          Foreground="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
                                                          Background="Transparent"/>
                                         </Grid>
@@ -541,165 +592,257 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+
+                    <!-- Total Application Usage Footer -->
+                    <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="10" Padding="18,14" Margin="0,6,0,0" IsVisible="{Binding HasApplications}">
+                        <Grid ColumnDefinitions="Auto,*,Auto,24,Auto" VerticalAlignment="Center">
+                            <TextBlock Grid.Column="0" Text="TOTAL APPLICATION USAGE" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TotalApplicationDownloadText, StringFormat='{}↓ {0} Download'}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Download}"/>
+                                <TextBlock Text="{Binding TotalApplicationUploadText, StringFormat='{}↑ {0} Upload'}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="4" Text="{Binding TotalApplicationUsageText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </Border>
 
-            <!-- ── 7. LOWER SECTION: NETWORK SESSIONS + USAGE EXPLORER ─────────────────────── -->
-            <Grid ColumnDefinitions="*,16,*">
-
-                <!-- LEFT: NETWORK SESSIONS -->
-                <Border Grid.Column="0" Classes="AnalyticsSurface" Padding="20">
-                    <StackPanel Spacing="16">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Spacing="4">
-                                <TextBlock Text="NETWORK SESSIONS" Classes="PanelTitle"/>
-                                <TextBlock Text="Active &amp; recent network connections" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                            </StackPanel>
-                            <Border Grid.Column="1" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="12" Padding="8,4" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding NetworkSessions.Count, StringFormat='{}{0} Sessions'}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                            </Border>
-                        </Grid>
-
-                        <!-- Empty State -->
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" Margin="0,32" IsVisible="{Binding !HasNetworkSessions}">
-                            <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource Brush.SurfaceElevated}" HorizontalAlignment="Center">
-                                <TextBlock Text="📡" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <TextBlock Text="No active network sessions" Classes="Body" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                            <TextBlock Text="Sessions will appear when network interfaces connect." Classes="Caption" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextMuted}"/>
+            <!-- ── 7. NETWORK SESSIONS ─────────────────────────────────────────────────────── -->
+            <Border Classes="AnalyticsSurface" Padding="24">
+                <StackPanel Spacing="20">
+                    <!-- Header with Title, Subtitle, and Sessions · Networks Badge -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="NETWORK SESSIONS" Classes="PanelTitle"/>
+                            <TextBlock Text="Network connections &amp; data transfer" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}"/>
                         </StackPanel>
+                        <Border Grid.Column="1" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="12" Padding="12,4" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding SessionNetworkCountText}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        </Border>
+                    </Grid>
 
-                        <!-- Sessions List -->
-                        <ItemsControl ItemsSource="{Binding FilteredNetworkSessions}" IsVisible="{Binding HasNetworkSessions}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="vm:HistoricalSessionViewModel">
-                                    <Border Classes="SessionRow">
-                                        <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-                                            <Border Grid.Column="0" Width="32" Height="32" CornerRadius="8" Background="{DynamicResource Brush.SurfaceElevated}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,12,0">
-                                                <TextBlock Text="📶" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding DisplayName}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}"/>
-                                                <TextBlock Text="{Binding SubtitleText}" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="2" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding TotalText}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}" HorizontalAlignment="Right"/>
-                                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
-                                                    <TextBlock Text="{Binding DownloadedText, StringFormat='{}↓ {0}'}" Classes="Caption" Foreground="{DynamicResource Brush.Download}"/>
-                                                    <TextBlock Text="{Binding UploadedText, StringFormat='{}↑ {0}'}" Classes="Caption" Foreground="{DynamicResource Brush.Upload}"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                    <!-- Empty State -->
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" Margin="0,32" IsVisible="{Binding !HasNetworkSessions}">
+                        <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource Brush.SurfaceElevated}" HorizontalAlignment="Center">
+                            <TextBlock Text="📡" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="No active network sessions" Classes="Body" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        <TextBlock Text="Sessions will appear when network interfaces connect." Classes="Caption" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextMuted}"/>
                     </StackPanel>
-                </Border>
 
-                <!-- RIGHT: USAGE EXPLORER (APPLICATION ANALYTICS) -->
-                <Border Grid.Column="2" Classes="AnalyticsSurface" Padding="20">
-                    <StackPanel Spacing="16">
-                        <!-- Header with Sort Control -->
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Spacing="4">
-                                <TextBlock Text="USAGE EXPLORER" Classes="PanelTitle"/>
-                                <TextBlock Text="{Binding UsageExplorerSubtitle}" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                    <!-- Main Sessions Content (When Sessions Exist) -->
+                    <StackPanel Spacing="20" IsVisible="{Binding HasNetworkSessions}">
+
+                        <!-- Current / Live Network Session Card -->
+                        <Border IsVisible="{Binding HasLiveSession}"
+                                CornerRadius="12"
+                                BorderBrush="{DynamicResource Brush.Border}"
+                                BorderThickness="1"
+                                ClipToBounds="True"
+                                Padding="20">
+                            <!-- Background Layer with Subtle Dark Navy + Soft Cyan & Violet Ambient Glow -->
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                    <GradientStop Color="#2516162C" Offset="0"/>
+                                    <GradientStop Color="#1800D8F6" Offset="0.35"/>
+                                    <GradientStop Color="#14A855F7" Offset="0.85"/>
+                                    <GradientStop Color="#2516162C" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+
+                            <StackPanel Spacing="16" DataContext="{Binding CurrentLiveSession}">
+                                <!-- Top Row: Network Name + LIVE Badge -->
+                                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                                    <!-- Multi-color Dot + Real Network Name + Subtitle -->
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                        <Ellipse Width="10" Height="10"
+                                                 Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
+                                                 VerticalAlignment="Center"/>
+                                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayName}"
+                                                       Classes="Body"
+                                                       FontWeight="Bold"
+                                                       Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                            <TextBlock Text="Current session"
+                                                       Classes="Caption"
+                                                       Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Live Indicator -->
+                                    <Border Grid.Column="2"
+                                            Background="#1810B981"
+                                            BorderBrush="{DynamicResource Brush.Success}"
+                                            BorderThickness="1"
+                                            CornerRadius="10"
+                                            Padding="10,4"
+                                            VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="LIVE" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <!-- 3 Distinct Metric Areas: DOWNLOAD / UPLOAD / TOTAL -->
+                                <Grid ColumnDefinitions="*,16,*,16,*">
+                                    <!-- Download Metric -->
+                                    <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}" CornerRadius="10" Padding="14,12" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="1">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="DOWNLOAD" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}"/>
+                                            <TextBlock Text="{Binding DownloadedText}" Classes="SectionTitle" Foreground="{DynamicResource Brush.Download}"/>
+                                            <ProgressBar Value="{Binding DownloadRatio}" Minimum="0" Maximum="100" Height="4" CornerRadius="2" Foreground="{DynamicResource Brush.Download}" Background="{DynamicResource Brush.SurfaceElevated}"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Upload Metric -->
+                                    <Border Grid.Column="2" Background="{DynamicResource Brush.Surface}" CornerRadius="10" Padding="14,12" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="1">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="UPLOAD" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}"/>
+                                            <TextBlock Text="{Binding UploadedText}" Classes="SectionTitle" Foreground="{DynamicResource Brush.Upload}"/>
+                                            <ProgressBar Value="{Binding UploadRatio}" Minimum="0" Maximum="100" Height="4" CornerRadius="2" Foreground="{DynamicResource Brush.Upload}" Background="{DynamicResource Brush.SurfaceElevated}"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Total Metric -->
+                                    <Border Grid.Column="4" Background="{DynamicResource Brush.Surface}" CornerRadius="10" Padding="14,12" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="1">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="TOTAL" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                            <TextBlock Text="{Binding TotalText}" Classes="SectionTitle" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                            <ProgressBar Value="100" Minimum="0" Maximum="100" Height="4" CornerRadius="2" Foreground="{DynamicResource Brush.Accent}" Background="{DynamicResource Brush.SurfaceElevated}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
                             </StackPanel>
+                        </Border>
 
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                <TextBlock Text="Sort:" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
-                                <ComboBox ItemsSource="{Binding SortOptions}"
-                                          SelectedItem="{Binding SelectedSortOption}"
-                                          MinWidth="130"
-                                          Classes="Secondary"
-                                          VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Grid>
+                        <!-- Non-Month View: TODAY'S / RECENT SESSIONS (Individual session rows with timestamps) -->
+                        <StackPanel Spacing="12" IsVisible="{Binding !IsMonthActive}">
+                            <TextBlock Text="TODAY'S SESSIONS"
+                                       IsVisible="{Binding IsTodayActive}"
+                                       Classes="Caption"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource Brush.TextSecondary}"/>
+                            <TextBlock Text="RECENT SESSIONS"
+                                       IsVisible="{Binding Is7DaysActive}"
+                                       Classes="Caption"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource Brush.TextSecondary}"/>
 
-                        <!-- Table Column Headers -->
-                        <Grid ColumnDefinitions="*,110,110,110,65" Margin="12,0,12,0" IsVisible="{Binding HasApplications}">
-                            <TextBlock Grid.Column="0" Text="PROCESS" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                            <TextBlock Grid.Column="1" Text="DOWNLOAD" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                            <TextBlock Grid.Column="2" Text="UPLOAD" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                            <TextBlock Grid.Column="3" Text="TOTAL" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                            <TextBlock Grid.Column="4" Text="SHARE" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                        </Grid>
-
-                        <!-- Empty State -->
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" Margin="0,32" IsVisible="{Binding !HasApplications}">
-                            <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource Brush.SurfaceElevated}" HorizontalAlignment="Center">
-                                <TextBlock Text="🏛️" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <TextBlock Text="No application activity recorded" Classes="Body" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                            <TextBlock Text="Monitored processes will appear as network activity is detected." Classes="Caption" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextMuted}"/>
-                        </StackPanel>
-
-                        <!-- Applications List -->
-                        <ItemsControl ItemsSource="{Binding FilteredApplications}" IsVisible="{Binding HasApplications}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="models:ApplicationHistoricalProfile">
-                                    <Border Classes="ProcessRow" ToolTip.Tip="{Binding TooltipSummary}">
-                                        <StackPanel Spacing="6">
-                                            <Grid ColumnDefinitions="*,110,110,110,65" VerticalAlignment="Center">
-                                                <!-- Process Column: Multi-color Dot + [Icon] Application Name -->
+                            <ItemsControl ItemsSource="{Binding FilteredNetworkSessions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:HistoricalSessionViewModel">
+                                        <Border Classes="SessionRow" Margin="0,0,0,8" Padding="14,12" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="8" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                                                <!-- Network Identity -->
                                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                                                     <Ellipse Width="8" Height="8"
                                                              Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
                                                              VerticalAlignment="Center"/>
-
-                                                    <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <Image Source="{Binding ApplicationIcon}" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform"/>
-                                                    </Border>
-
-                                                    <TextBlock Text="{Binding EffectiveDisplayName}"
-                                                               Classes="Body" FontWeight="SemiBold"
-                                                               TextTrimming="CharacterEllipsis"
+                                                    <TextBlock Text="{Binding DisplayName}"
+                                                               Classes="Body"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource Brush.TextPrimary}"
                                                                VerticalAlignment="Center"/>
                                                 </StackPanel>
 
-                                                <!-- Download Column -->
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                    <TextBlock Text="↓" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding FormattedDownloadText}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
+                                                <!-- Session Timestamp Range -->
+                                                <Border Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,24,0" Background="{DynamicResource Brush.Surface}" CornerRadius="6" Padding="8,2" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding TimeRangeText}"
+                                                               Classes="Caption"
+                                                               Foreground="{DynamicResource Brush.TextMuted}"/>
+                                                </Border>
+
+                                                <!-- Download / Upload / Total Readouts -->
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding DownloadedText, StringFormat='{}↓ {0}'}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding UploadedText, StringFormat='{}↑ {0}'}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding TotalText, StringFormat='{}TOTAL {0}'}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
                                                 </StackPanel>
-
-                                                <!-- Upload Column -->
-                                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                    <TextBlock Text="↑" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding FormattedUploadText}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
-                                                </StackPanel>
-
-                                                <!-- Total Column -->
-                                                <TextBlock Grid.Column="3" Text="{Binding FormattedTotalText}"
-                                                           Classes="Body" FontWeight="Bold"
-                                                           Foreground="{DynamicResource Brush.TextPrimary}"
-                                                           HorizontalAlignment="Right"
-                                                           VerticalAlignment="Center"/>
-
-                                                <!-- Share Percentage Column -->
-                                                <TextBlock Grid.Column="4" Text="{Binding PercentageOfTotal, StringFormat='{}{0:F1}%'}"
-                                                           Classes="Body" FontWeight="Bold"
-                                                           HorizontalAlignment="Right"
-                                                           VerticalAlignment="Center"/>
                                             </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
 
-                                            <!-- Multi-Color Distribution Progress Bar -->
-                                            <ProgressBar Value="{Binding PercentageOfTotal}"
-                                                         Minimum="0" Maximum="100"
-                                                         Height="3"
-                                                         CornerRadius="2"
-                                                         Foreground="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
-                                                         Background="{DynamicResource Brush.Surface}"/>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <!-- Month View: MONTHLY SESSIONS (Aggregated strictly by network name, NO timestamps) -->
+                        <StackPanel Spacing="12" IsVisible="{Binding IsMonthActive}">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" Spacing="2">
+                                    <TextBlock Text="MONTHLY SESSIONS" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                    <TextBlock Text="Network usage summarized by network" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" Text="{Binding MonthlySectionHeaderRightText}" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <ItemsControl ItemsSource="{Binding MonthlyNetworkSummaries}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:MonthlyNetworkSummaryViewModel">
+                                        <Border Margin="0,0,0,10" Padding="14,12" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="8" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
+                                            <StackPanel Spacing="10">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                                                    <!-- Network Name with Dot -->
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                                        <Ellipse Width="8" Height="8"
+                                                                 Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
+                                                                 VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding DisplayName}"
+                                                                   Classes="Body"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource Brush.TextPrimary}"
+                                                                   VerticalAlignment="Center"/>
+                                                    </StackPanel>
+
+                                                    <!-- Download / Upload / Total Readouts -->
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding DownloadedText, StringFormat='{}↓ {0}'}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding UploadedText, StringFormat='{}↑ {0}'}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding TotalText, StringFormat='{}TOTAL {0}'}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <!-- Relative Total Usage Bar with Electric Cyan -> Electric Violet Gradient -->
+                                                <Grid Height="6">
+                                                    <Border Background="{DynamicResource Brush.Surface}" CornerRadius="3" Height="6"/>
+                                                    <ProgressBar Value="{Binding RelativeUsagePercent}"
+                                                                 Minimum="0" Maximum="100"
+                                                                 Height="6"
+                                                                 CornerRadius="3"
+                                                                 Foreground="{DynamicResource Brush.DownloadBarGradient}"
+                                                                 Background="Transparent"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Monthly Total Footer -->
+                            <Border Background="{DynamicResource Brush.HeroUsageGradient}"
+                                    BorderBrush="{DynamicResource Brush.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Padding="18,14"
+                                    Margin="0,8,0,0">
+                                <Grid ColumnDefinitions="Auto,*,Auto,24,Auto" VerticalAlignment="Center">
+                                    <TextBlock Grid.Column="0" Text="MONTHLY TOTAL" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
+
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding MonthlyTotalDownloadText, StringFormat='{}↓ {0} Download'}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Download}"/>
+                                        <TextBlock Text="{Binding MonthlyTotalUploadText, StringFormat='{}↑ {0} Upload'}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}"/>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="4" Text="{Binding MonthlyTotalUsageText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
                     </StackPanel>
-                </Border>
-
-            </Grid>
+                </StackPanel>
+            </Border>
 
         </StackPanel>
     </ScrollViewer>
