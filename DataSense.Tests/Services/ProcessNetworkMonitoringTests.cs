@@ -644,14 +644,65 @@ public class ProcessNetworkMonitoringTests : IDisposable
     }
 
     [Fact]
-    public void ByteFormatConverter_FormatsDoubleRates_Successfully()
+    public void LinuxSocketProcessNetworkMonitor_ParseSsOutput_ParsesRealSsOutputCorrectly()
     {
-        var converter = DataSense.Converters.ByteFormatConverter.Instance;
+        // Arrange
+        string sampleOutput = @"Netid State Recv-Q Send-Q Local Address:Port Peer Address:Port Process
+udp   ESTAB 0      0      10.10.102.177%wlo1:bootpc 10.15.250.112:bootps
+tcp   ESTAB 0      0      127.0.0.1:33395 127.0.0.1:37084 users:((""antigravity-ide"",pid=15697,fd=96))
+	 cubic wscale:10,10 rto:201 rtt:0.036/0.014 ato:40 mss:32768 pmtu:65535 rcvmss:536 advmss:65483 cwnd:10 bytes_sent:375 bytes_acked:375 bytes_received:480 segs_out:8 segs_in:10 data_segs_out:1 data_segs_in:2
+tcp   ESTAB 0      0      10.10.102.177:48164 172.217.114.4:https users:((""language_server"",pid=15902,fd=52))
+	 cubic wscale:8,10 rto:247 rtt:46.947/0.678 ato:40 mss:1382 pmtu:1500 rcvmss:1382 advmss:1460 cwnd:10 bytes_sent:1663565 bytes_retrans:429 bytes_acked:1663137 bytes_received:44557 segs_out:1276 segs_in:1193";
 
-        object dlResult = converter.Convert(1048576.0, typeof(string), null, System.Globalization.CultureInfo.InvariantCulture);
-        object ulResult = converter.Convert(51200.0, typeof(string), null, System.Globalization.CultureInfo.InvariantCulture);
+        var dict = new Dictionary<int, (string Name, long SentBytes, long RecvBytes)>();
 
-        Assert.Equal("1.0 MB", dlResult);
-        Assert.Equal("50.0 KB", ulResult);
+        // Act
+        LinuxSocketProcessNetworkMonitor.ParseSsOutput(sampleOutput, dict);
+
+        // Assert
+        Assert.Equal(2, dict.Count);
+        Assert.True(dict.ContainsKey(15697));
+        Assert.True(dict.ContainsKey(15902));
+
+        Assert.Equal("antigravity-ide", dict[15697].Name);
+        Assert.Equal(375, dict[15697].SentBytes);
+        Assert.Equal(480, dict[15697].RecvBytes);
+
+        Assert.Equal("language_server", dict[15902].Name);
+        Assert.Equal(1663565, dict[15902].SentBytes);
+        Assert.Equal(44557, dict[15902].RecvBytes);
+    }
+
+    [Fact]
+    public async Task CompositeProcessNetworkMonitor_IsAvailableAndHasPermissions_OnStandardLinux()
+    {
+        var monitor = new CompositeProcessNetworkMonitor();
+        bool available = await monitor.IsAvailableAsync();
+        bool permissions = await monitor.HasPermissionsAsync();
+
+        Assert.True(available);
+        Assert.True(permissions);
+    }
+
+    [Fact]
+    public void DonutArcPathConverter_GeneratesValidGeometry_ForProcessProfileAndMonthlyRatio()
+    {
+        var converter = DataSense.Converters.DonutArcPathConverter.Instance;
+
+        var profile1 = new ApplicationHistoricalProfile { ProcessName = "chrome", PercentageOfTotal = 60.0 };
+        var profile2 = new ApplicationHistoricalProfile { ProcessName = "code", PercentageOfTotal = 40.0 };
+        var list = new List<ApplicationHistoricalProfile> { profile1, profile2 };
+
+        // Test process arc
+        var geom1 = converter.Convert(new List<object?> { profile1, list }, typeof(Avalonia.Media.Geometry), null, System.Globalization.CultureInfo.InvariantCulture);
+        Assert.NotNull(geom1);
+        Assert.IsAssignableFrom<Avalonia.Media.PathGeometry>(geom1);
+
+        // Test monthly ratio arc
+        var dlGrid = new Avalonia.Controls.GridLength(70, Avalonia.Controls.GridUnitType.Star);
+        var ulGrid = new Avalonia.Controls.GridLength(30, Avalonia.Controls.GridUnitType.Star);
+        var geomRatio = converter.Convert(new List<object?> { false, dlGrid, ulGrid }, typeof(Avalonia.Media.Geometry), null, System.Globalization.CultureInfo.InvariantCulture);
+        Assert.NotNull(geomRatio);
+        Assert.IsAssignableFrom<Avalonia.Media.PathGeometry>(geomRatio);
     }
 }

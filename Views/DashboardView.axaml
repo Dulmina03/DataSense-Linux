@@ -293,7 +293,7 @@
                                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><Panel Width="150" Height="150"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="models:ApplicationHistoricalProfile">
-                                        <Path Fill="{Binding PercentageOfTotal, Converter={x:Static conv:ProcessIndexColorConverter.Instance}}">
+                                        <Path Fill="{Binding ProcessName, Converter={x:Static conv:ProcessIndexColorConverter.Instance}}">
                                             <Path.Data>
                                                 <MultiBinding Converter="{x:Static conv:DonutArcPathConverter.Instance}">
                                                     <Binding />
@@ -328,7 +328,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="models:ApplicationHistoricalProfile">
                                     <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,3">
-                                        <Ellipse Grid.Column="0" Width="7" Height="7" Fill="{Binding PercentageOfTotal, Converter={x:Static conv:ProcessIndexColorConverter.Instance}}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <Ellipse Grid.Column="0" Width="7" Height="7" Fill="{Binding ProcessName, Converter={x:Static conv:ProcessIndexColorConverter.Instance}}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <TextBlock Grid.Column="1" Text="{Binding ProcessName}" Classes="Body" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                         <TextBlock Grid.Column="2" Text="{Binding DataSource}" Classes="Caption" Margin="6,0" VerticalAlignment="Center"/>
                                         <TextBlock Grid.Column="3" Text="{Binding TotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="BodySecondary" Margin="6,0" VerticalAlignment="Center"/>

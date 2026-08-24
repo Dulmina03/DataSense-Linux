@@ -195,7 +195,7 @@ public class LinuxSocketProcessNetworkMonitor : IProcessNetworkMonitor
         return results;
     }
 
-    private static void ParseSsOutput(string output, Dictionary<int, (string Name, long SentBytes, long RecvBytes)> processSockets)
+    internal static void ParseSsOutput(string output, Dictionary<int, (string Name, long SentBytes, long RecvBytes)> processSockets)
     {
         var lines = output.Split('\n');
         List<(string Name, int Pid)> currentPids = new();
@@ -204,16 +204,19 @@ public class LinuxSocketProcessNetworkMonitor : IProcessNetworkMonitor
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
 
-            if (line.Contains("users:(("))
+            if (!char.IsWhiteSpace(line[0]))
             {
                 currentPids.Clear();
-                var matches = Regex.Matches(line, @"users:\(\(\""([^\""]+)\"",pid=(\d+)");
-                foreach (Match match in matches)
+                if (line.Contains("users:(("))
                 {
-                    if (match.Groups.Count >= 3 && int.TryParse(match.Groups[2].Value, out int pid))
+                    var matches = Regex.Matches(line, @"users:\(\(\""([^\""]+)\"",pid=(\d+)");
+                    foreach (Match match in matches)
                     {
-                        string pName = NormalizeProcessName(match.Groups[1].Value);
-                        currentPids.Add((pName, pid));
+                        if (match.Groups.Count >= 3 && int.TryParse(match.Groups[2].Value, out int pid))
+                        {
+                            string pName = NormalizeProcessName(match.Groups[1].Value);
+                            currentPids.Add((pName, pid));
+                        }
                     }
                 }
             }
