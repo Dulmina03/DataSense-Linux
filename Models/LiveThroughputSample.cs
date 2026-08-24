@@ -19,11 +19,33 @@ public sealed class LiveThroughputSample
     public double DownloadY { get; set; }
     public double UploadY { get; set; }
 
+    // Upload Bar Geometry for the hybrid bar + wave chart
+    public double BarWidth { get; set; } = 4.0;
+    public double BarHeight { get; set; } = 0.0;
+    public double BarLeftX { get; set; } = 0.0;
+    public double BarTopY { get; set; } = 170.0;
+
+    public bool IsPeriodUsage { get; set; } = false;
+
     public double CombinedBytesPerSecond => DownloadBytesPerSecond + UploadBytesPerSecond;
 
-    public string DownloadSpeedText => ByteFormatter.FormatSpeed(DownloadBytesPerSecond);
-    public string UploadSpeedText => ByteFormatter.FormatSpeed(UploadBytesPerSecond);
-    public string TotalSpeedText => ByteFormatter.FormatSpeed(CombinedBytesPerSecond);
+    public string DownloadSpeedText => IsPeriodUsage 
+        ? ByteFormatter.FormatBytes((long)DownloadBytesPerSecond) 
+        : ByteFormatter.FormatSpeed(DownloadBytesPerSecond);
+
+    public string UploadSpeedText => IsPeriodUsage 
+        ? ByteFormatter.FormatBytes((long)UploadBytesPerSecond) 
+        : ByteFormatter.FormatSpeed(UploadBytesPerSecond);
+
+    public string TotalSpeedText => IsPeriodUsage 
+        ? ByteFormatter.FormatBytes((long)CombinedBytesPerSecond) 
+        : ByteFormatter.FormatSpeed(CombinedBytesPerSecond);
+
+    public string FormattedTime => IsPeriodUsage 
+        ? (Timestamp.Hour == 0 && Timestamp.Minute == 0 ? Timestamp.ToString("MMM d") : Timestamp.ToString("HH:mm")) 
+        : Timestamp.ToString("HH:mm:ss");
+
+    public string ShortTime => IsPeriodUsage ? FormattedTime : Timestamp.ToString("HH:mm");
 
     public string TimeText => SecondsAgo == 0 
         ? $"NOW ({Timestamp:HH:mm:ss})" 

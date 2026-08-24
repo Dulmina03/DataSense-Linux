@@ -29,14 +29,14 @@ public class ApplicationChartColorProviderTests
     {
         var provider = new ApplicationChartColorProvider();
 
-        // Presets
+        // Presets matching reference visual identity
         Assert.Equal(0, provider.GetColorIndex("brave"));
         Assert.Equal(0, provider.GetColorIndex("chrome"));
-        Assert.Equal(1, provider.GetColorIndex("steam"));
-        Assert.Equal(2, provider.GetColorIndex("code"));
+        Assert.Equal(1, provider.GetColorIndex("spotify"));
+        Assert.Equal(2, provider.GetColorIndex("steam"));
         Assert.Equal(3, provider.GetColorIndex("discord"));
-        Assert.Equal(4, provider.GetColorIndex("spotify"));
-        Assert.Equal(5, provider.GetColorIndex("node"));
+        Assert.Equal(4, provider.GetColorIndex("code"));
+        Assert.Equal(5, provider.GetColorIndex("telegram"));
         Assert.Equal(6, provider.GetColorIndex("python"));
         Assert.Equal(7, provider.GetColorIndex("git"));
     }

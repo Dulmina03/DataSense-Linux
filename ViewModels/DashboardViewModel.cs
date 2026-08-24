@@ -144,6 +144,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     // ── Real-Time Network Traffic Chart ──────────────────────────────────────
 
     public ObservableCollection<LiveThroughputSample> LiveThroughputSamples { get; } = new();
+    private readonly List<LiveThroughputSample> _rollingLiveSamples = new();
     public ObservableCollection<RealtimeNetworkPoint> RealtimeTrafficPoints { get; } = new();
     public ObservableCollection<string> TimeAxisLabels { get; } = new();
 
@@ -151,6 +152,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private Geometry? _realtimeDownloadLineGeometry;
     [ObservableProperty] private Geometry? _realtimeUploadAreaGeometry;
     [ObservableProperty] private Geometry? _realtimeUploadLineGeometry;
+    [ObservableProperty] private Geometry? _realtimeUploadBarsGeometry;
 
     [ObservableProperty] private Geometry? _timelineTrendLineGeometry;
     [ObservableProperty] private Geometry? _timelineTrendGlowGeometry;
@@ -181,6 +183,23 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _yAxisMidText = "50.0 KB/s";
     [ObservableProperty] private string _yAxisMidLowText = "25.0 KB/s";
     [ObservableProperty] private string _yAxisMinText = "0 B/s";
+
+    [ObservableProperty] private string _yAxisUnitText = "Mbps";
+    [ObservableProperty] private string _yAxisLevel6Text = "30.0";
+    [ObservableProperty] private string _yAxisLevel5Text = "25.0";
+    [ObservableProperty] private string _yAxisLevel4Text = "20.0";
+    [ObservableProperty] private string _yAxisLevel3Text = "15.0";
+    [ObservableProperty] private string _yAxisLevel2Text = "10.0";
+    [ObservableProperty] private string _yAxisLevel1Text = "5.0";
+    [ObservableProperty] private string _yAxisLevel0Text = "0";
+
+    [ObservableProperty] private string _xAxisLabel0 = "08:00";
+    [ObservableProperty] private string _xAxisLabel1 = "09:00";
+    [ObservableProperty] private string _xAxisLabel2 = "12:00";
+    [ObservableProperty] private string _xAxisLabel3 = "14:00";
+    [ObservableProperty] private string _xAxisLabel4 = "16:00";
+    [ObservableProperty] private string _xAxisLabel5 = "18:00";
+    [ObservableProperty] private string _xAxisLabel6 = "20:00";
 
     [ObservableProperty] private LiveThroughputSample? _hoveredThroughputSample;
     [ObservableProperty] private RealtimeNetworkPoint? _hoveredRealtimePoint;
@@ -651,7 +670,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         {
             Timestamp = DateTime.UtcNow,
             DownloadBytesPerSecond = downloadSpeed,
-            UploadBytesPerSecond = uploadSpeed
+            UploadBytesPerSecond = uploadSpeed,
+            IsPeriodUsage = false
         };
 
         LiveThroughputSamples.Add(sample);
@@ -690,7 +710,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     public void RebuildRealtimeChartGeometry()
     {
         double canvasWidth = Math.Max(300.0, ChartWidth - 78.0);
-        double usableHeight = 160.0;
+        double usableHeight = 150.0;
         double yBase = 170.0;
 
         int count = LiveThroughputSamples.Count;
@@ -700,6 +720,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             RealtimeDownloadLineGeometry = null;
             RealtimeUploadAreaGeometry = null;
             RealtimeUploadLineGeometry = null;
+            RealtimeUploadBarsGeometry = null;
             HasRealtimeGraphData = false;
             return;
         }
@@ -707,6 +728,35 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         HasRealtimeGraphData = true;
         double maxObserved = Math.Max(PeakDownloadRateInWindow, PeakUploadRateInWindow);
         double yMax = Math.Max(102400.0, maxObserved * 1.20); // 100 KB/s minimum scale floor, 20% headroom
+
+        // Determine friendly unit and division scale
+        string unit;
+        double divisor;
+        if (yMax >= 1024 * 1024 * 1024)
+        {
+            unit = "GB/s";
+            divisor = 1024.0 * 1024.0 * 1024.0;
+        }
+        else if (yMax >= 1024 * 1024)
+        {
+            unit = "Mbps";
+            divisor = 1024.0 * 1024.0 / 8.0;
+        }
+        else
+        {
+            unit = "KB/s";
+            divisor = 1024.0;
+        }
+
+        YAxisUnitText = unit;
+        double scaledMax = yMax / divisor;
+        YAxisLevel6Text = (scaledMax * 1.0).ToString("0.0");
+        YAxisLevel5Text = (scaledMax * 5.0 / 6.0).ToString("0.0");
+        YAxisLevel4Text = (scaledMax * 4.0 / 6.0).ToString("0.0");
+        YAxisLevel3Text = (scaledMax * 3.0 / 6.0).ToString("0.0");
+        YAxisLevel2Text = (scaledMax * 2.0 / 6.0).ToString("0.0");
+        YAxisLevel1Text = (scaledMax * 1.0 / 6.0).ToString("0.0");
+        YAxisLevel0Text = "0";
 
         YAxisTopText = ByteFormatter.FormatSpeed(yMax);
         YAxisMidHighText = ByteFormatter.FormatSpeed(yMax * 0.75);
@@ -753,6 +803,16 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             LatestUploadX = uploadPoints.Last().X;
             LatestUploadY = uploadPoints.Last().Y;
         }
+
+        // Generate 7 X-Axis Timestamps (from start of window to NOW)
+        var now = DateTime.Now;
+        XAxisLabel0 = now.AddSeconds(-60).ToString("HH:mm:ss");
+        XAxisLabel1 = now.AddSeconds(-50).ToString("HH:mm:ss");
+        XAxisLabel2 = now.AddSeconds(-40).ToString("HH:mm:ss");
+        XAxisLabel3 = now.AddSeconds(-30).ToString("HH:mm:ss");
+        XAxisLabel4 = now.AddSeconds(-20).ToString("HH:mm:ss");
+        XAxisLabel5 = now.AddSeconds(-10).ToString("HH:mm:ss");
+        XAxisLabel6 = now.ToString("HH:mm:ss");
 
         TimeAxisLabels.Clear();
         TimeAxisLabels.Add("-60s");
@@ -1296,17 +1356,31 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         double canvasHeight = 170.0;
         double usableHeight = 150.0;
 
-        long maxTotal = daily.Max(d => d.TotalBytes);
-        double yMax = Math.Max(1048576.0, maxTotal * 1.25); // 1 MB scale floor
+        long maxDl = daily.Max(d => d.BytesDownloaded);
+        long maxUl = daily.Max(d => d.BytesUploaded);
+        long maxObserved = Math.Max(maxDl, maxUl);
+        double yMax = Math.Max(1048576.0, maxObserved * 1.25); // 1 MB scale floor
 
-        Dispatcher.UIThread.Post(() =>
+        // Format 7 Y-Axis tick levels & unit
+        string unit;
+        double divisor;
+        if (yMax >= 1024.0 * 1024.0 * 1024.0)
         {
-            YAxisTopText = ByteFormatter.FormatBytes((long)yMax);
-            YAxisMidHighText = ByteFormatter.FormatBytes((long)(yMax * 0.75));
-            YAxisMidText = ByteFormatter.FormatBytes((long)(yMax * 0.50));
-            YAxisMidLowText = ByteFormatter.FormatBytes((long)(yMax * 0.25));
-            YAxisMinText = "0 B";
-        });
+            unit = "GB";
+            divisor = 1024.0 * 1024.0 * 1024.0;
+        }
+        else if (yMax >= 1024.0 * 1024.0)
+        {
+            unit = "MB";
+            divisor = 1024.0 * 1024.0;
+        }
+        else
+        {
+            unit = "KB";
+            divisor = 1024.0;
+        }
+
+        double scaledMax = yMax / divisor;
 
         int count = daily.Count;
         double colWidth = canvasWidth / Math.Max(count, 1);
@@ -1314,23 +1388,46 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         double barWidth = Math.Max(colWidth - barGap, 3.0);
 
         var items = new List<DailyChartBarViewModel>(count);
-        var trendPoints = new List<Point>(count);
+        var downloadPoints = new List<Point>(count);
+        var uploadPoints = new List<Point>(count);
+        var uploadBarsGroup = new GeometryGroup();
+        var periodSamples = new List<LiveThroughputSample>(count);
 
         for (int i = 0; i < count; i++)
         {
             var d = daily[i];
-            double totalBarHeight = (double)d.TotalBytes / yMax * usableHeight;
+            double x = (i + 0.5) * colWidth;
 
-            double dlFrac = d.TotalBytes > 0 ? (double)d.BytesDownloaded / d.TotalBytes : 0.5;
-            double ulFrac = 1.0 - dlFrac;
+            double dlRatio = Math.Clamp((double)d.BytesDownloaded / yMax, 0.0, 1.0);
+            double ulRatio = Math.Clamp((double)d.BytesUploaded / yMax, 0.0, 1.0);
 
-            double dlBarHeight = totalBarHeight * dlFrac;
-            double ulBarHeight = totalBarHeight * ulFrac;
+            double dlY = canvasHeight - (dlRatio * usableHeight);
+            double ulBarHeight = d.BytesUploaded > 0 ? Math.Max(4.0, ulRatio * usableHeight) : 0.0;
+            double ulBarY = canvasHeight - ulBarHeight;
+            double barLeftX = x - (barWidth / 2.0);
 
-            double dlBarY = canvasHeight - dlBarHeight;
-            double ulBarY = dlBarY - ulBarHeight;
-            double barX = i * colWidth + (barGap / 2.0);
-            bool isLatest = (i == count - 1);
+            downloadPoints.Add(new Point(x, dlY));
+            uploadPoints.Add(new Point(x, ulBarY));
+
+            if (ulBarHeight > 0.5)
+            {
+                uploadBarsGroup.Children.Add(new RectangleGeometry(new Rect(barLeftX, ulBarY, barWidth, ulBarHeight), 2, 2));
+            }
+
+            var sample = new LiveThroughputSample
+            {
+                Timestamp = d.Day,
+                DownloadBytesPerSecond = d.BytesDownloaded,
+                UploadBytesPerSecond = d.BytesUploaded,
+                CanvasX = x,
+                DownloadY = dlY,
+                UploadY = ulBarY,
+                BarWidth = barWidth,
+                BarHeight = ulBarHeight,
+                BarLeftX = barLeftX,
+                BarTopY = ulBarY
+            };
+            periodSamples.Add(sample);
 
             var bar = new DailyChartBarViewModel
             {
@@ -1341,31 +1438,57 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 DownloadedText  = ByteFormatter.FormatBytes(d.BytesDownloaded),
                 UploadedText    = ByteFormatter.FormatBytes(d.BytesUploaded),
                 TotalText       = ByteFormatter.FormatBytes(d.TotalBytes),
-                BarX            = barX,
+                BarX            = barLeftX,
                 BarWidth        = barWidth,
-                DownloadBarHeight = Math.Max(dlBarHeight, 0),
-                UploadBarHeight   = Math.Max(ulBarHeight, 0),
-                DownloadBarY    = dlBarY,
+                DownloadBarHeight = dlRatio * usableHeight,
+                UploadBarHeight   = ulBarHeight,
+                DownloadBarY    = dlY,
                 UploadBarY      = ulBarY,
                 LabelY          = canvasHeight + 4,
-                IsLatest        = isLatest
+                IsLatest        = (i == count - 1)
             };
 
             items.Add(bar);
-            trendPoints.Add(new Point(bar.CenterX, bar.TopY));
         }
 
-        var (lineGeom, glowGeom) = BuildTrendCurveGeometry(trendPoints, canvasHeight, canvasWidth);
-        
+        var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
+        var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, canvasHeight, canvasWidth);
+        var (trendLine, trendGlow) = BuildTrendCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
+
         Dispatcher.UIThread.Post(() =>
         {
-            TimelineTrendLineGeometry = lineGeom;
-            TimelineTrendGlowGeometry = glowGeom;
+            YAxisUnitText = unit;
+            YAxisLevel6Text = (scaledMax * 1.0).ToString("0.0");
+            YAxisLevel5Text = (scaledMax * 5.0 / 6.0).ToString("0.0");
+            YAxisLevel4Text = (scaledMax * 4.0 / 6.0).ToString("0.0");
+            YAxisLevel3Text = (scaledMax * 3.0 / 6.0).ToString("0.0");
+            YAxisLevel2Text = (scaledMax * 2.0 / 6.0).ToString("0.0");
+            YAxisLevel1Text = (scaledMax * 1.0 / 6.0).ToString("0.0");
+            YAxisLevel0Text = "0";
 
-            if (items.Count > 0)
+            YAxisTopText = ByteFormatter.FormatBytes((long)yMax);
+            YAxisMidHighText = ByteFormatter.FormatBytes((long)(yMax * 0.75));
+            YAxisMidText = ByteFormatter.FormatBytes((long)(yMax * 0.50));
+            YAxisMidLowText = ByteFormatter.FormatBytes((long)(yMax * 0.25));
+            YAxisMinText = "0 B";
+
+            RealtimeDownloadLineGeometry = dlLine;
+            RealtimeDownloadAreaGeometry = dlArea;
+            RealtimeUploadLineGeometry = ulLine;
+            RealtimeUploadAreaGeometry = ulArea;
+            RealtimeUploadBarsGeometry = uploadBarsGroup;
+
+            TimelineTrendLineGeometry = trendLine;
+            TimelineTrendGlowGeometry = trendGlow;
+
+            if (downloadPoints.Count > 0)
             {
-                LatestPointX = items.Last().CenterX;
-                LatestPointY = items.Last().TopY;
+                LatestDownloadX = downloadPoints.Last().X;
+                LatestDownloadY = downloadPoints.Last().Y;
+                LatestUploadX = uploadPoints.Last().X;
+                LatestUploadY = uploadPoints.Last().Y;
+                LatestPointX = downloadPoints.Last().X;
+                LatestPointY = downloadPoints.Last().Y;
                 HasLatestPoint = true;
             }
             else
@@ -1373,23 +1496,31 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 HasLatestPoint = false;
             }
 
-            TimeAxisLabels.Clear();
+            LiveThroughputSamples.Clear();
+            foreach (var s in periodSamples) LiveThroughputSamples.Add(s);
+            HasRealtimeGraphData = periodSamples.Count > 0;
+
+            // Populate 7 X-Axis labels
             if (count <= 7)
             {
-                foreach (var it in items) TimeAxisLabels.Add(it.DayLabel);
+                XAxisLabel0 = count > 0 ? items[0].DayLabel : "";
+                XAxisLabel1 = count > 1 ? items[1].DayLabel : "";
+                XAxisLabel2 = count > 2 ? items[2].DayLabel : "";
+                XAxisLabel3 = count > 3 ? items[3].DayLabel : "";
+                XAxisLabel4 = count > 4 ? items[4].DayLabel : "";
+                XAxisLabel5 = count > 5 ? items[5].DayLabel : "";
+                XAxisLabel6 = count > 6 ? items[6].DayLabel : "";
             }
             else
             {
-                int step = Math.Max(1, (count - 1) / 4);
-                for (int i = 0; i < count; i += step)
-                {
-                    TimeAxisLabels.Add(items[i].DayLabel);
-                    if (TimeAxisLabels.Count == 5) break;
-                }
-                while (TimeAxisLabels.Count < 5 && count > 0)
-                {
-                    TimeAxisLabels.Add(items.Last().DayLabel);
-                }
+                int step = Math.Max(1, (count - 1) / 6);
+                XAxisLabel0 = items[0].DayLabel;
+                XAxisLabel1 = items[Math.Min(1 * step, count - 1)].DayLabel;
+                XAxisLabel2 = items[Math.Min(2 * step, count - 1)].DayLabel;
+                XAxisLabel3 = items[Math.Min(3 * step, count - 1)].DayLabel;
+                XAxisLabel4 = items[Math.Min(4 * step, count - 1)].DayLabel;
+                XAxisLabel5 = items[Math.Min(5 * step, count - 1)].DayLabel;
+                XAxisLabel6 = items[count - 1].DayLabel;
             }
         });
 
@@ -1407,24 +1538,40 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         int currentHour = DateTime.UtcNow.Hour;
         int count = 24; // 24 hours of today
 
-        long maxTotal = hourly.Count > 0 ? hourly.Max(h => h.TotalBytes) : 0;
-        double yMax = Math.Max(1048576.0, maxTotal * 1.25); // 1 MB minimum scale floor
+        long maxDl = hourly.Count > 0 ? hourly.Max(h => h.BytesDownloaded) : 0;
+        long maxUl = hourly.Count > 0 ? hourly.Max(h => h.BytesUploaded) : 0;
+        long maxObserved = Math.Max(maxDl, maxUl);
+        double yMax = Math.Max(1048576.0, maxObserved * 1.25); // 1 MB minimum scale floor
 
-        Dispatcher.UIThread.Post(() =>
+        string unit;
+        double divisor;
+        if (yMax >= 1024.0 * 1024.0 * 1024.0)
         {
-            YAxisTopText = ByteFormatter.FormatBytes((long)yMax);
-            YAxisMidHighText = ByteFormatter.FormatBytes((long)(yMax * 0.75));
-            YAxisMidText = ByteFormatter.FormatBytes((long)(yMax * 0.50));
-            YAxisMidLowText = ByteFormatter.FormatBytes((long)(yMax * 0.25));
-            YAxisMinText = "0 B";
-        });
+            unit = "GB";
+            divisor = 1024.0 * 1024.0 * 1024.0;
+        }
+        else if (yMax >= 1024.0 * 1024.0)
+        {
+            unit = "MB";
+            divisor = 1024.0 * 1024.0;
+        }
+        else
+        {
+            unit = "KB";
+            divisor = 1024.0;
+        }
+
+        double scaledMax = yMax / divisor;
 
         double colWidth = canvasWidth / count;
         double barGap = Math.Max(2.0, colWidth * 0.20);
-        double barWidth = Math.Max(colWidth - barGap, 2.0);
+        double barWidth = Math.Max(colWidth - barGap, 2.5);
 
         var items = new List<DailyChartBarViewModel>(count);
-        var trendPoints = new List<Point>(count);
+        var downloadPoints = new List<Point>(count);
+        var uploadPoints = new List<Point>(count);
+        var uploadBarsGroup = new GeometryGroup();
+        var periodSamples = new List<LiveThroughputSample>(count);
 
         for (int hour = 0; hour < count; hour++)
         {
@@ -1433,17 +1580,38 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             long ulBytes = h?.BytesUploaded ?? 0;
             long total = dlBytes + ulBytes;
 
-            double totalBarHeight = (double)total / yMax * usableHeight;
-            double dlFrac = total > 0 ? (double)dlBytes / total : 0.5;
-            double ulFrac = 1.0 - dlFrac;
+            double x = (hour + 0.5) * colWidth;
 
-            double dlBarHeight = totalBarHeight * dlFrac;
-            double ulBarHeight = totalBarHeight * ulFrac;
+            double dlRatio = Math.Clamp((double)dlBytes / yMax, 0.0, 1.0);
+            double ulRatio = Math.Clamp((double)ulBytes / yMax, 0.0, 1.0);
 
-            double dlBarY = canvasHeight - dlBarHeight;
-            double ulBarY = dlBarY - ulBarHeight;
-            double barX = hour * colWidth + (barGap / 2.0);
-            bool isLatest = (hour == currentHour);
+            double dlY = canvasHeight - (dlRatio * usableHeight);
+            double ulBarHeight = ulBytes > 0 ? Math.Max(4.0, ulRatio * usableHeight) : 0.0;
+            double ulBarY = canvasHeight - ulBarHeight;
+            double barLeftX = x - (barWidth / 2.0);
+
+            downloadPoints.Add(new Point(x, dlY));
+            uploadPoints.Add(new Point(x, ulBarY));
+
+            if (ulBarHeight > 0.5)
+            {
+                uploadBarsGroup.Children.Add(new RectangleGeometry(new Rect(barLeftX, ulBarY, barWidth, ulBarHeight), 2, 2));
+            }
+
+            var sample = new LiveThroughputSample
+            {
+                Timestamp = DateTime.Today.AddHours(hour),
+                DownloadBytesPerSecond = dlBytes,
+                UploadBytesPerSecond = ulBytes,
+                CanvasX = x,
+                DownloadY = dlY,
+                UploadY = ulBarY,
+                BarWidth = barWidth,
+                BarHeight = ulBarHeight,
+                BarLeftX = barLeftX,
+                BarTopY = ulBarY
+            };
+            periodSamples.Add(sample);
 
             var bar = new DailyChartBarViewModel
             {
@@ -1454,43 +1622,72 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 DownloadedText  = ByteFormatter.FormatBytes(dlBytes),
                 UploadedText    = ByteFormatter.FormatBytes(ulBytes),
                 TotalText       = ByteFormatter.FormatBytes(total),
-                BarX            = barX,
+                BarX            = barLeftX,
                 BarWidth        = barWidth,
-                DownloadBarHeight = Math.Max(dlBarHeight, 0),
-                UploadBarHeight   = Math.Max(ulBarHeight, 0),
-                DownloadBarY    = dlBarY,
+                DownloadBarHeight = dlRatio * usableHeight,
+                UploadBarHeight   = ulBarHeight,
+                DownloadBarY    = dlY,
                 UploadBarY      = ulBarY,
                 LabelY          = canvasHeight + 4,
-                IsLatest        = isLatest
+                IsLatest        = (hour == currentHour)
             };
 
             items.Add(bar);
-            trendPoints.Add(new Point(bar.CenterX, bar.TopY));
         }
 
-        var (lineGeom, glowGeom) = BuildTrendCurveGeometry(trendPoints, canvasHeight, canvasWidth);
+        var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
+        var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, canvasHeight, canvasWidth);
+        var (trendLine, trendGlow) = BuildTrendCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
 
         Dispatcher.UIThread.Post(() =>
         {
-            TimelineTrendLineGeometry = lineGeom;
-            TimelineTrendGlowGeometry = glowGeom;
+            YAxisUnitText = unit;
+            YAxisLevel6Text = (scaledMax * 1.0).ToString("0.0");
+            YAxisLevel5Text = (scaledMax * 5.0 / 6.0).ToString("0.0");
+            YAxisLevel4Text = (scaledMax * 4.0 / 6.0).ToString("0.0");
+            YAxisLevel3Text = (scaledMax * 3.0 / 6.0).ToString("0.0");
+            YAxisLevel2Text = (scaledMax * 2.0 / 6.0).ToString("0.0");
+            YAxisLevel1Text = (scaledMax * 1.0 / 6.0).ToString("0.0");
+            YAxisLevel0Text = "0";
 
-            if (items.Count > 0)
+            YAxisTopText = ByteFormatter.FormatBytes((long)yMax);
+            YAxisMidHighText = ByteFormatter.FormatBytes((long)(yMax * 0.75));
+            YAxisMidText = ByteFormatter.FormatBytes((long)(yMax * 0.50));
+            YAxisMidLowText = ByteFormatter.FormatBytes((long)(yMax * 0.25));
+            YAxisMinText = "0 B";
+
+            RealtimeDownloadLineGeometry = dlLine;
+            RealtimeDownloadAreaGeometry = dlArea;
+            RealtimeUploadLineGeometry = ulLine;
+            RealtimeUploadAreaGeometry = ulArea;
+            RealtimeUploadBarsGeometry = uploadBarsGroup;
+
+            TimelineTrendLineGeometry = trendLine;
+            TimelineTrendGlowGeometry = trendGlow;
+
+            if (downloadPoints.Count > 0)
             {
-                var activeBar = items.FirstOrDefault(b => b.IsLatest) ?? items.Last();
-                LatestPointX = activeBar.CenterX;
-                LatestPointY = activeBar.TopY;
+                var activeIdx = Math.Clamp(currentHour, 0, count - 1);
+                LatestDownloadX = downloadPoints[activeIdx].X;
+                LatestDownloadY = downloadPoints[activeIdx].Y;
+                LatestUploadX = uploadPoints[activeIdx].X;
+                LatestUploadY = uploadPoints[activeIdx].Y;
+                LatestPointX = downloadPoints[activeIdx].X;
+                LatestPointY = downloadPoints[activeIdx].Y;
                 HasLatestPoint = true;
             }
 
-            TimeAxisLabels.Clear();
-            TimeAxisLabels.Add("00:00");
-            TimeAxisLabels.Add("04:00");
-            TimeAxisLabels.Add("08:00");
-            TimeAxisLabels.Add("12:00");
-            TimeAxisLabels.Add("16:00");
-            TimeAxisLabels.Add("20:00");
-            TimeAxisLabels.Add("23:00");
+            LiveThroughputSamples.Clear();
+            foreach (var s in periodSamples) LiveThroughputSamples.Add(s);
+            HasRealtimeGraphData = periodSamples.Count > 0;
+
+            XAxisLabel0 = "00:00";
+            XAxisLabel1 = "04:00";
+            XAxisLabel2 = "08:00";
+            XAxisLabel3 = "12:00";
+            XAxisLabel4 = "16:00";
+            XAxisLabel5 = "20:00";
+            XAxisLabel6 = "23:00";
         });
 
         return items;

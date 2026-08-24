@@ -20,7 +20,7 @@
     <Style Selector="Button.SidebarItem">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
-        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="Padding" Value="14,10" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
@@ -36,9 +36,9 @@
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
     <Style Selector="Button.SidebarItem.active /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Brush.AccentSurface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource Brush.ActiveNavGradient}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Download}" />
+        <Setter Property="BorderThickness" Value="1,0,0,0" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
     <Style Selector="Button.SidebarItem.active">

@@ -18,14 +18,14 @@ public class ApplicationChartColorProvider : IApplicationChartColorProvider
 
     private static readonly string[] PaletteHex = new[]
     {
-        "#38BDF8", // 0: Electric Cyan
-        "#A855F7", // 1: Sophisticated Violet
-        "#6366F1", // 2: Indigo
-        "#14B8A6", // 3: Teal
-        "#F59E0B", // 4: Muted Amber
-        "#3B82F6", // 5: Blue
-        "#C084FC", // 6: Muted Purple
-        "#10B981"  // 7: Emerald
+        "#00D8F6", // 0: Electric Cyan (Chrome/Brave)
+        "#34D399", // 1: Mint / Emerald (Spotify)
+        "#FBBF24", // 2: Amber / Yellow (Steam)
+        "#FB7185", // 3: Coral / Rose (Discord)
+        "#A855F7", // 4: Violet (Other / VS Code)
+        "#60A5FA", // 5: Sky Blue
+        "#818CF8", // 6: Indigo
+        "#14B8A6"  // 7: Teal
     };
 
     private static readonly string[] PaletteTokens = new[]
@@ -42,14 +42,14 @@ public class ApplicationChartColorProvider : IApplicationChartColorProvider
 
     private static readonly IBrush[] StaticPaletteBrushes = new IBrush[]
     {
-        new SolidColorBrush(Color.Parse("#38BDF8")),
+        new SolidColorBrush(Color.Parse("#00D8F6")),
+        new SolidColorBrush(Color.Parse("#34D399")),
+        new SolidColorBrush(Color.Parse("#FBBF24")),
+        new SolidColorBrush(Color.Parse("#FB7185")),
         new SolidColorBrush(Color.Parse("#A855F7")),
-        new SolidColorBrush(Color.Parse("#6366F1")),
-        new SolidColorBrush(Color.Parse("#14B8A6")),
-        new SolidColorBrush(Color.Parse("#F59E0B")),
-        new SolidColorBrush(Color.Parse("#3B82F6")),
-        new SolidColorBrush(Color.Parse("#C084FC")),
-        new SolidColorBrush(Color.Parse("#10B981"))
+        new SolidColorBrush(Color.Parse("#60A5FA")),
+        new SolidColorBrush(Color.Parse("#818CF8")),
+        new SolidColorBrush(Color.Parse("#14B8A6"))
     };
 
     private static readonly IBrush OtherBrush = new SolidColorBrush(Color.Parse("#64748B"));
@@ -64,27 +64,27 @@ public class ApplicationChartColorProvider : IApplicationChartColorProvider
         { "chromium", 0 },
         { "firefox", 0 },
 
-        { "steam", 1 },
-        { "steamwebhelper", 1 },
+        { "spotify", 1 },
 
-        { "code", 2 },
-        { "vscode", 2 },
-        { "cursor", 2 },
-        { "antigravity", 2 },
-        { "antigravity-ide", 2 },
+        { "steam", 2 },
+        { "steamwebhelper", 2 },
 
         { "discord", 3 },
-        { "telegram", 3 },
-        { "telegram-desktop", 3 },
-        { "slack", 3 },
 
-        { "spotify", 4 },
+        { "code", 4 },
+        { "vscode", 4 },
+        { "cursor", 4 },
+        { "antigravity", 4 },
+        { "antigravity-ide", 4 },
         { "vlc", 4 },
         { "obs", 4 },
+        { "node", 4 },
+        { "dotnet", 4 },
+        { "datasense", 4 },
 
-        { "node", 5 },
-        { "dotnet", 5 },
-        { "datasense", 5 },
+        { "telegram", 5 },
+        { "telegram-desktop", 5 },
+        { "slack", 5 },
 
         { "python", 6 },
         { "python3", 6 },
