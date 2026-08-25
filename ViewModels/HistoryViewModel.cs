@@ -524,7 +524,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             var sessions = (await _repository.GetSessionsAsync(start, end, ifaceFilter)).ToList();
 
             // 3. Fetch Top Applications for the selected period (Chart #3 & Explorer)
-            var topApps = (await _repository.GetTopProcessesAsync(start, end, 30)).ToList();
+            var topApps = (await _repository.GetTopProcessesAsync(start, end, 1000)).ToList();
 
             // 4. Fetch 12 Calendar Months for Chart #2 (January to December of active year)
             int activeYear = SelectedMonth != null ? SelectedMonth.Year : DateTime.UtcNow.Year;
@@ -661,7 +661,6 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             };
 
             // 8. Map Application Profiles (Chart #3 & Explorer)
-            long grandAppTotal = totalUsage > 0 ? totalUsage : topApps.Sum(a => a.BytesDownloaded + a.BytesUploaded);
             var mappedApps = topApps
                 .GroupBy(a => a.ProcessName.Trim().ToLowerInvariant())
                 .Select(g =>
@@ -669,8 +668,6 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                     var first = g.First();
                     long appDl = g.Sum(x => x.BytesDownloaded);
                     long appUl = g.Sum(x => x.BytesUploaded);
-                    long appTotal = appDl + appUl;
-                    double appShare = grandAppTotal > 0 ? (double)appTotal / grandAppTotal * 100.0 : 0.0;
 
                     return new ApplicationHistoricalProfile
                     {
@@ -681,8 +678,6 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                         DataSource = first.DataSource,
                         DownloadBytes = appDl,
                         UploadBytes = appUl,
-                        PercentageOfTotal = appShare,
-                        RelativeUsagePercent = appShare,
                         ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessName, first.ExecutablePath),
                         ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessName, first.ExecutablePath)
                     };
@@ -690,9 +685,19 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 .OrderByDescending(a => a.TotalBytes)
                 .ToList();
 
+            long totalAppDl = mappedApps.Sum(a => a.DownloadBytes);
+            long totalAppUl = mappedApps.Sum(a => a.UploadBytes);
+            long totalAppUsage = totalAppDl + totalAppUl;
+
+            long maxAppTotal = mappedApps.Count > 0 ? mappedApps.Max(a => a.TotalBytes) : 0;
             for (int i = 0; i < mappedApps.Count; i++)
             {
-                mappedApps[i].DisplayIndex = i;
+                var app = mappedApps[i];
+                app.DisplayIndex = i;
+                app.PercentageOfTotal = totalAppUsage > 0 ? (double)app.TotalBytes / totalAppUsage * 100.0 : 0.0;
+                app.RelativeUsagePercent = maxAppTotal > 0
+                    ? Math.Max((double)app.TotalBytes / maxAppTotal * 100.0, app.TotalBytes > 0 ? 3.0 : 0.0)
+                    : 0.0;
             }
 
             // Dynamic Subtitles based on selected period
@@ -1155,6 +1160,13 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         }
 
         HasApplications = FilteredApplications.Count > 0;
+
+        long totalAppDl = (string.IsNullOrWhiteSpace(SearchText) ? Applications : FilteredApplications).Sum(a => a.DownloadBytes);
+        long totalAppUl = (string.IsNullOrWhiteSpace(SearchText) ? Applications : FilteredApplications).Sum(a => a.UploadBytes);
+        long totalAppUsage = totalAppDl + totalAppUl;
+        TotalApplicationUsageText = ByteFormatter.FormatBytes(totalAppUsage);
+        TotalApplicationDownloadText = ByteFormatter.FormatBytes(totalAppDl);
+        TotalApplicationUploadText = ByteFormatter.FormatBytes(totalAppUl);
 
         if (!string.IsNullOrWhiteSpace(SearchText))
         {

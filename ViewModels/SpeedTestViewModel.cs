@@ -114,7 +114,7 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private SpeedTestStage _currentStage = SpeedTestStage.Idle;
     [ObservableProperty] private bool _isTesting;
     [ObservableProperty] private string _statusText = "Ready to test connection";
-    [ObservableProperty] private string _actionButtonText = "RUN SPEED TEST";
+    [ObservableProperty] private string _actionButtonText = "TEST SPEED";
     [ObservableProperty] private double _progressValue;
     [ObservableProperty] private bool _isIndeterminateProgress;
 
@@ -673,7 +673,7 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
             IsUploadActive = true;
 
             // Smooth visual pause so user clearly sees the meter drop to 0 and switch to Purple
-            await Task.Delay(350, token);
+            await Task.Delay(550, token);
 
             // ── 3. Upload Phase (Starts from 0 and increases in Purple) ─────────
             StatusText = "Measuring upload throughput...";
@@ -718,14 +718,14 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
             // ── 5. Completion ─────────────────────────────────────────────────
             CurrentStage = SpeedTestStage.Completed;
             StatusText = "Diagnostic test complete";
-            ActionButtonText = "RUN AGAIN";
+            ActionButtonText = "TEST SPEED";
             DisplayPhaseText = "COMPLETED";
-            DisplayPhaseIcon = "☁️↓";
-            ActivePhaseSemanticColor = "Download";
-            DisplaySpeedValue = $"{finalDownloadMBps:F1}";
+            DisplayPhaseIcon = "✓";
+            ActivePhaseSemanticColor = "Success";
+            DisplaySpeedValue = "0.0";
+            CurrentSpeedValue = 0.0;
             DisplayUnitText = "MB/s";
-            ActiveMeterBrushKey = "Brush.Accent";
-            UpdateActiveArc(finalDownloadMBps);
+            UpdateActiveArc(0.0);
 
             AssessConnectionQuality(finalDownloadMbps, finalUploadMbps, ping);
 
@@ -751,7 +751,7 @@ public partial class SpeedTestViewModel : ViewModelBase, IDisposable
         {
             CurrentStage = SpeedTestStage.Cancelled;
             StatusText = "Speed test was cancelled";
-            ActionButtonText = "RUN SPEED TEST";
+            ActionButtonText = "TEST SPEED";
             DisplayPhaseText = "CANCELLED";
             DisplayPhaseIcon = "⚡";
             ActivePhaseSemanticColor = "Muted";

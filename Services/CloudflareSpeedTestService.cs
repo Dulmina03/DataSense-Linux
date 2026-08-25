@@ -11,11 +11,12 @@ namespace DataSense.Services;
 public class CloudflareSpeedTestService : ISpeedTestService
 {
     private readonly HttpClient _httpClient;
+    private const double TargetPhaseDurationSeconds = 8.5; // ~8.5 seconds sustained high-resolution measurement
 
     public CloudflareSpeedTestService()
     {
         _httpClient = new HttpClient();
-        _httpClient.Timeout = TimeSpan.FromSeconds(35);
+        _httpClient.Timeout = TimeSpan.FromSeconds(60);
     }
 
     public async Task<double> TestPingAsync(CancellationToken cancellationToken)
@@ -39,32 +40,42 @@ public class CloudflareSpeedTestService : ISpeedTestService
     {
         try
         {
-            // Download a 25MB payload
-            var url = "https://speed.cloudflare.com/__down?bytes=25000000";
-            
             var sw = Stopwatch.StartNew();
-            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            var buffer = new byte[81920];
             long totalBytesRead = 0;
-            int bytesRead;
-            
-            while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+            var buffer = new byte[65536];
+
+            // Sustained multi-second streaming download
+            while (sw.Elapsed.TotalSeconds < TargetPhaseDurationSeconds && !cancellationToken.IsCancellationRequested)
             {
-                totalBytesRead += bytesRead;
-                
-                // Report intermediate speed (Mbps)
-                if (sw.Elapsed.TotalSeconds > 0.08)
+                var url = "https://speed.cloudflare.com/__down?bytes=25000000";
+                using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                int bytesRead;
+
+                while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
                 {
-                    double currentSpeedMbps = (totalBytesRead * 8.0 / 1_000_000.0) / sw.Elapsed.TotalSeconds;
-                    progressCallback(currentSpeedMbps);
+                    totalBytesRead += bytesRead;
+
+                    if (sw.Elapsed.TotalSeconds > 0.08)
+                    {
+                        double currentSpeedMbps = (totalBytesRead * 8.0 / 1_000_000.0) / sw.Elapsed.TotalSeconds;
+                        progressCallback(currentSpeedMbps);
+                    }
+
+                    if (sw.Elapsed.TotalSeconds >= TargetPhaseDurationSeconds)
+                    {
+                        break;
+                    }
                 }
             }
+
             sw.Stop();
-            
-            return (totalBytesRead * 8.0 / 1_000_000.0) / sw.Elapsed.TotalSeconds;
+            double finalSpeedMbps = (totalBytesRead * 8.0 / 1_000_000.0) / Math.Max(0.1, sw.Elapsed.TotalSeconds);
+            progressCallback(finalSpeedMbps);
+
+            return finalSpeedMbps;
         }
         catch
         {
@@ -76,21 +87,39 @@ public class CloudflareSpeedTestService : ISpeedTestService
     {
         try
         {
-            // Upload a 12MB payload with streaming chunk progress
-            var url = "https://speed.cloudflare.com/__up";
-            int payloadSize = 12000000;
-            var payload = new byte[payloadSize];
-            new Random().NextBytes(payload);
-            
-            var content = new ProgressUploadContent(payload, progressCallback, chunkSize: 65536);
-            
             var sw = Stopwatch.StartNew();
-            using var response = await _httpClient.PostAsync(url, content, cancellationToken);
+            long totalBytesSent = 0;
+            int sliceSize = 8_000_000;
+            var payload = new byte[sliceSize];
+            new Random().NextBytes(payload);
+
+            // Sustained multi-second streaming upload
+            while (sw.Elapsed.TotalSeconds < TargetPhaseDurationSeconds && !cancellationToken.IsCancellationRequested)
+            {
+                long baseSent = totalBytesSent;
+                var content = new ProgressUploadContent(payload, currentSliceBytes =>
+                {
+                    long overallSent = baseSent + currentSliceBytes;
+                    if (sw.Elapsed.TotalSeconds > 0.08)
+                    {
+                        double currentSpeedMbps = (overallSent * 8.0 / 1_000_000.0) / sw.Elapsed.TotalSeconds;
+                        progressCallback(currentSpeedMbps);
+                    }
+                }, chunkSize: 32768);
+
+                using var response = await _httpClient.PostAsync("https://speed.cloudflare.com/__up", content, cancellationToken);
+                totalBytesSent += sliceSize;
+
+                if (sw.Elapsed.TotalSeconds >= TargetPhaseDurationSeconds)
+                {
+                    break;
+                }
+            }
+
             sw.Stop();
-            
-            double finalSpeedMbps = (payloadSize * 8.0 / 1_000_000.0) / sw.Elapsed.TotalSeconds;
+            double finalSpeedMbps = (totalBytesSent * 8.0 / 1_000_000.0) / Math.Max(0.1, sw.Elapsed.TotalSeconds);
             progressCallback(finalSpeedMbps);
-            
+
             return finalSpeedMbps;
         }
         catch
@@ -102,13 +131,13 @@ public class CloudflareSpeedTestService : ISpeedTestService
     private sealed class ProgressUploadContent : HttpContent
     {
         private readonly byte[] _data;
-        private readonly Action<double> _progressCallback;
+        private readonly Action<long> _sliceProgressCallback;
         private readonly int _chunkSize;
 
-        public ProgressUploadContent(byte[] data, Action<double> progressCallback, int chunkSize = 65536)
+        public ProgressUploadContent(byte[] data, Action<long> sliceProgressCallback, int chunkSize = 32768)
         {
             _data = data;
-            _progressCallback = progressCallback;
+            _sliceProgressCallback = sliceProgressCallback;
             _chunkSize = chunkSize;
         }
 
@@ -119,8 +148,7 @@ public class CloudflareSpeedTestService : ISpeedTestService
 
         protected override async Task SerializeToStreamAsync(Stream stream, TransportContext? context, CancellationToken cancellationToken)
         {
-            var sw = Stopwatch.StartNew();
-            long totalSent = 0;
+            long sentInThisSlice = 0;
             int offset = 0;
 
             while (offset < _data.Length)
@@ -131,13 +159,9 @@ public class CloudflareSpeedTestService : ISpeedTestService
                 await stream.FlushAsync(cancellationToken);
 
                 offset += toSend;
-                totalSent += toSend;
+                sentInThisSlice += toSend;
 
-                if (sw.Elapsed.TotalSeconds > 0.08)
-                {
-                    double currentSpeedMbps = (totalSent * 8.0 / 1_000_000.0) / sw.Elapsed.TotalSeconds;
-                    _progressCallback(currentSpeedMbps);
-                }
+                _sliceProgressCallback(sentInThisSlice);
             }
         }
 

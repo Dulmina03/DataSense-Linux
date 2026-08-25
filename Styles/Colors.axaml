@@ -156,6 +156,11 @@
         <GradientStop Color="#FF007F" Offset="1"/>
     </LinearGradientBrush>
 
+    <LinearGradientBrush x:Key="Brush.GradientAccent" StartPoint="0%,0%" EndPoint="100%,0%">
+        <GradientStop Color="#A100FF" Offset="0"/>
+        <GradientStop Color="#00E5FF" Offset="1"/>
+    </LinearGradientBrush>
+
     <!-- FluentTheme System Overrides -->
     <SolidColorBrush x:Key="SystemRegionBrush" Color="#0B0B16"/>
     <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="#0B0B16"/>

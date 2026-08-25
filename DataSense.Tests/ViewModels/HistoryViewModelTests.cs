@@ -696,4 +696,219 @@ public class HistoryViewModelTests : IDisposable
         Assert.NotEmpty(vm.MonthlyTotalUploadText);
         Assert.NotEmpty(vm.MonthlyTotalUsageText);
     }
+
+    [Fact]
+    public async Task ApplicationUsageBreakdown_MultiProcessAggregation_SumsDlUlAndCalculatesExactShare()
+    {
+        var now = DateTime.UtcNow;
+        var today = now.Date;
+
+        // Multiple slices of the same app across the day
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "chrome",
+                BytesDownloaded = 1_000_000,
+                BytesUploaded = 200_000,
+                Timestamp = today.AddHours(2)
+            },
+            new ProcessUsageRecord
+            {
+                ProcessName = "chrome",
+                BytesDownloaded = 2_000_000,
+                BytesUploaded = 300_000,
+                Timestamp = today.AddHours(4)
+            },
+            new ProcessUsageRecord
+            {
+                ProcessName = "firefox",
+                BytesDownloaded = 1_000_000,
+                BytesUploaded = 500_000,
+                Timestamp = today.AddHours(3)
+            }
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.True(vm.HasApplications);
+        Assert.Equal(2, vm.Applications.Count);
+
+        // Chrome: 3M dl + 500k ul = 3.5M total
+        var chrome = vm.Applications.FirstOrDefault(a => a.ProcessName == "chrome");
+        Assert.NotNull(chrome);
+        Assert.Equal(3_000_000, chrome.DownloadBytes);
+        Assert.Equal(500_000, chrome.UploadBytes);
+        Assert.Equal(3_500_000, chrome.TotalBytes);
+
+        // Firefox: 1M dl + 500k ul = 1.5M total
+        var firefox = vm.Applications.FirstOrDefault(a => a.ProcessName == "firefox");
+        Assert.NotNull(firefox);
+        Assert.Equal(1_000_000, firefox.DownloadBytes);
+        Assert.Equal(500_000, firefox.UploadBytes);
+        Assert.Equal(1_500_000, firefox.TotalBytes);
+
+        // Grand app total = 3.5M + 1.5M = 5.0M
+        // Chrome share: 3.5M / 5.0M = 70.0%
+        // Firefox share: 1.5M / 5.0M = 30.0%
+        Assert.Equal(70.0, chrome.PercentageOfTotal, 1);
+        Assert.Equal(30.0, firefox.PercentageOfTotal, 1);
+        Assert.Equal(100.0, chrome.PercentageOfTotal + firefox.PercentageOfTotal, 1);
+    }
+
+    [Fact]
+    public async Task ApplicationUsageBreakdown_MonthSwitching_ReloadsCorrectMonthTelemetry()
+    {
+        var now = DateTime.UtcNow;
+        var augStart = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc);
+        var julStart = new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        // August record: steam (5 GB)
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "steam",
+                BytesDownloaded = 5_000_000_000,
+                BytesUploaded = 100_000_000,
+                Timestamp = augStart.AddDays(5)
+            }
+        });
+
+        // July record: discord (2 GB)
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "discord",
+                BytesDownloaded = 1_800_000_000,
+                BytesUploaded = 200_000_000,
+                Timestamp = julStart.AddDays(10)
+            }
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        vm.SelectMonth();
+
+        // 1. Select August 2026
+        vm.SelectedMonth = new MonthSelectItem { Year = 2026, Month = 8, DisplayName = "August 2026" };
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.True(vm.HasApplications);
+        Assert.Single(vm.Applications);
+        Assert.Equal("steam", vm.Applications[0].ProcessName);
+        Assert.Equal(5_100_000_000, vm.Applications[0].TotalBytes);
+
+        // 2. Switch to July 2026
+        vm.SelectedMonth = new MonthSelectItem { Year = 2026, Month = 7, DisplayName = "July 2026" };
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.True(vm.HasApplications);
+        Assert.Single(vm.Applications);
+        Assert.Equal("discord", vm.Applications[0].ProcessName);
+        Assert.Equal(2_000_000_000, vm.Applications[0].TotalBytes);
+    }
+
+    [Fact]
+    public async Task ApplicationUsageBreakdown_EmptyState_DisplaysNoFabricatedApps()
+    {
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.False(vm.HasApplications);
+        Assert.Empty(vm.Applications);
+        Assert.Empty(vm.FilteredApplications);
+        Assert.Equal("0 B", vm.TotalApplicationUsageText);
+    }
+
+    [Fact]
+    public async Task ApplicationUsageBreakdown_SearchAndSorting_FunctionsAccurately()
+    {
+        var now = DateTime.UtcNow;
+        var today = now.Date;
+
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "chrome",
+                BytesDownloaded = 5_000_000,
+                BytesUploaded = 100_000,
+                Timestamp = today.AddHours(1)
+            },
+            new ProcessUsageRecord
+            {
+                ProcessName = "vscode",
+                BytesDownloaded = 1_000_000,
+                BytesUploaded = 8_000_000,
+                Timestamp = today.AddHours(2)
+            },
+            new ProcessUsageRecord
+            {
+                ProcessName = "spotify",
+                BytesDownloaded = 2_000_000,
+                BytesUploaded = 50_000,
+                Timestamp = today.AddHours(3)
+            }
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.Equal(3, vm.Applications.Count);
+
+        // Sort by Total (Desc): vscode (9M) > chrome (5.1M) > spotify (2.05M)
+        vm.SelectedSortOption = "Total (Desc)";
+        Assert.Equal("vscode", vm.FilteredApplications[0].ProcessName);
+
+        // Sort by Download (Desc): chrome (5M) > spotify (2M) > vscode (1M)
+        vm.SelectedSortOption = "Download (Desc)";
+        Assert.Equal("chrome", vm.FilteredApplications[0].ProcessName);
+
+        // Sort by Upload (Desc): vscode (8M) > chrome (100k) > spotify (50k)
+        vm.SelectedSortOption = "Upload (Desc)";
+        Assert.Equal("vscode", vm.FilteredApplications[0].ProcessName);
+
+        // Search filtering: "spo"
+        vm.SearchText = "spo";
+        Assert.Single(vm.FilteredApplications);
+        Assert.Equal("spotify", vm.FilteredApplications[0].ProcessName);
+
+        // Search non-existent: "xyz999"
+        vm.SearchText = "xyz999";
+        Assert.Empty(vm.FilteredApplications);
+        Assert.False(vm.HasApplications);
+    }
 }

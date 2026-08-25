@@ -60,7 +60,7 @@ public class SpeedTestViewModelTests : IDisposable
 
         Assert.Equal("Speed Test", vm.Title);
         Assert.Equal("READY", vm.DisplayPhaseText);
-        Assert.Equal("RUN SPEED TEST", vm.ActionButtonText);
+        Assert.Equal("TEST SPEED", vm.ActionButtonText);
         Assert.False(vm.IsTesting);
         Assert.NotNull(vm.MeterBackgroundArc);
         Assert.NotNull(vm.MeterOuterRing);
@@ -105,6 +105,8 @@ public class SpeedTestViewModelTests : IDisposable
         Assert.Equal("18", vm.PingValueText);
         Assert.Equal("Good", vm.OverallQuality);
         Assert.Equal("MB/s", vm.DisplayUnitText);
+        Assert.Equal("0.0", vm.DisplaySpeedValue);
+        Assert.Equal("TEST SPEED", vm.ActionButtonText);
         Assert.True(vm.HasRealtimeGraphData);
 
         // Verify record persisted in database

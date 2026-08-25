@@ -647,6 +647,7 @@ public class ThemeService : IThemeService
             res["Brush.GradientUpload"] = CreateLinearGradient(def.GradientUpload.Start, def.GradientUpload.End, isVertical: false);
             res["Brush.GradientVioletPink"] = CreateLinearGradient(def.GradientVioletPink.Start, def.GradientVioletPink.End, isVertical: false);
             res["Brush.GradientCyanPink"] = CreateLinearGradient(def.GradientCyanPink.Start, def.GradientCyanPink.End, isVertical: false);
+            res["Brush.GradientAccent"] = CreateLinearGradient(def.AccentPrimary, def.AccentSecondary, isVertical: false);
 
             // 11. FluentTheme System Overrides
             res["SystemRegionBrush"] = new SolidColorBrush(Color.Parse(def.AppBackground));

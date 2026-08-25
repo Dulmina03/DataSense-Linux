@@ -22,6 +22,30 @@
         <Setter Property="Opacity" Value="0.5" />
     </Style>
 
+    <!-- Gradient Action Button -->
+    <Style Selector="Button.Gradient">
+        <Setter Property="Background" Value="{DynamicResource Brush.GradientAccent}" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="Padding" Value="20,10" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.Gradient:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Opacity" Value="0.88" />
+    </Style>
+    <Style Selector="Button.Gradient:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Opacity" Value="0.75" />
+    </Style>
+    <Style Selector="Button.Gradient:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Opacity" Value="0.45" />
+    </Style>
+
     <!-- Secondary Button -->
     <Style Selector="Button.Secondary">
         <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
