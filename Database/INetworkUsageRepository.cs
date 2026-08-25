@@ -62,6 +62,12 @@ public interface INetworkUsageRepository
     
     /// <summary>Returns one DailyUsageRecord per calendar day for a single process.</summary>
     Task<IEnumerable<DailyUsageRecord>> GetProcessDailyUsageAsync(string processName, DateTime start, DateTime end);
+
+    /// <summary>Returns one HourlyUsageRecord per clock-hour (UTC) aggregated across all processes.</summary>
+    Task<IEnumerable<HourlyUsageRecord>> GetAllProcessesHourlyUsageAsync(DateTime day);
+
+    /// <summary>Returns one DailyUsageRecord per calendar day aggregated across all processes.</summary>
+    Task<IEnumerable<DailyUsageRecord>> GetAllProcessesDailyUsageAsync(DateTime start, DateTime end);
     
     /// <summary>Returns top N processes by usage within the given time range.</summary>
     Task<IEnumerable<ProcessUsageRecord>> GetTopProcessesAsync(DateTime start, DateTime end, int limit);

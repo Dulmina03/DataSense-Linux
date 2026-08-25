@@ -35,7 +35,17 @@ public class HistoricalAnalyticsService : IHistoricalAnalyticsService
             var start       = new DateTime(targetMonth.Year, targetMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             var end         = start.AddMonths(1).AddTicks(-1);
 
-            var daily = (await _repository.GetDailyUsageAsync(start, end)).ToList();
+            var procDaily = (await _repository.GetAllProcessesDailyUsageAsync(start, end)).ToList();
+            List<DailyUsageRecord> daily;
+            if (procDaily.Count > 0)
+            {
+                daily = procDaily;
+            }
+            else
+            {
+                daily = (await _repository.GetDailyUsageAsync(start, end)).ToList();
+            }
+
             if (!daily.Any())
             {
                 result.Add(new MonthlyUsageSummary
@@ -72,6 +82,16 @@ public class HistoricalAnalyticsService : IHistoricalAnalyticsService
     {
         var start = new DateTime(year, month, 1,  0, 0, 0, DateTimeKind.Utc);
         var end   = start.AddMonths(1).AddTicks(-1);
+
+        if (string.IsNullOrEmpty(interfaceName) || interfaceName == "All")
+        {
+            var procRows = (await _repository.GetAllProcessesDailyUsageAsync(start, end)).ToList();
+            if (procRows.Count > 0)
+            {
+                return procRows.OrderBy(d => d.Day).ToList();
+            }
+        }
+
         var rows  = await _repository.GetDailyUsageAsync(start, end, interfaceName);
         return rows.OrderBy(d => d.Day).ToList();
     }
@@ -83,6 +103,15 @@ public class HistoricalAnalyticsService : IHistoricalAnalyticsService
     public async Task<IList<HourlyUsageRecord>> GetHourlyBreakdownAsync(
         DateTime day, string? interfaceName = null)
     {
+        if (string.IsNullOrEmpty(interfaceName) || interfaceName == "All")
+        {
+            var procRows = (await _repository.GetAllProcessesHourlyUsageAsync(day.Date)).ToList();
+            if (procRows.Count > 0)
+            {
+                return procRows.OrderBy(h => h.Hour).ToList();
+            }
+        }
+
         var rows = await _repository.GetHourlyUsageAsync(day.Date, interfaceName);
         return rows.OrderBy(h => h.Hour).ToList();
     }
@@ -170,22 +199,41 @@ public class HistoricalAnalyticsService : IHistoricalAnalyticsService
         var prevEnd      = start.AddTicks(-1);
         var prevStart    = prevEnd - duration;
 
-        var currentTask  = _repository.GetDailyUsageAsync(start, end);
-        var previousTask = _repository.GetDailyUsageAsync(prevStart, prevEnd);
+        var currentProcTask  = _repository.GetAllProcessesDailyUsageAsync(start, end);
+        var previousProcTask = _repository.GetAllProcessesDailyUsageAsync(prevStart, prevEnd);
 
-        await Task.WhenAll(currentTask, previousTask);
+        await Task.WhenAll(currentProcTask, previousProcTask);
 
-        var current  = currentTask.Result.ToList();
-        var previous = previousTask.Result.ToList();
+        var currentProc  = currentProcTask.Result.ToList();
+        var previousProc = previousProcTask.Result.ToList();
+
+        long curDl = currentProc.Sum(d => d.BytesDownloaded);
+        long curUl = currentProc.Sum(d => d.BytesUploaded);
+        long prevDl = previousProc.Sum(d => d.BytesDownloaded);
+        long prevUl = previousProc.Sum(d => d.BytesUploaded);
+
+        if (curDl == 0 && curUl == 0)
+        {
+            var curDaily = (await _repository.GetDailyUsageAsync(start, end)).ToList();
+            curDl = curDaily.Sum(d => d.BytesDownloaded);
+            curUl = curDaily.Sum(d => d.BytesUploaded);
+        }
+
+        if (prevDl == 0 && prevUl == 0)
+        {
+            var prevDaily = (await _repository.GetDailyUsageAsync(prevStart, prevEnd)).ToList();
+            prevDl = prevDaily.Sum(d => d.BytesDownloaded);
+            prevUl = prevDaily.Sum(d => d.BytesUploaded);
+        }
 
         return new PeriodComparisonResult
         {
             PeriodALabel      = FormatPeriodLabel(start, end),
             PeriodBLabel      = FormatPeriodLabel(prevStart, prevEnd),
-            PeriodADownloaded = current.Sum(d  => d.BytesDownloaded),
-            PeriodAUploaded   = current.Sum(d  => d.BytesUploaded),
-            PeriodBDownloaded = previous.Sum(d => d.BytesDownloaded),
-            PeriodBUploaded   = previous.Sum(d => d.BytesUploaded)
+            PeriodADownloaded = curDl,
+            PeriodAUploaded   = curUl,
+            PeriodBDownloaded = prevDl,
+            PeriodBUploaded   = prevUl
         };
     }
 

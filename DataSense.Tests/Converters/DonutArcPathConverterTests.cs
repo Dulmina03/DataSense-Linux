@@ -122,4 +122,28 @@ public class DonutArcPathConverterTests
         var ulArc = Assert.IsAssignableFrom<ArcSegment>(ulPath.Figures![0].Segments![0]);
         Assert.False(ulArc.IsLargeArc);
     }
+
+    [Fact]
+    public void DonutArcPathConverter_DuplicateProcessNamesWithDisplayIndex_GeneratesDistinctOffsets()
+    {
+        var converter = DonutArcPathConverter.Instance;
+        var p1 = new ApplicationHistoricalProfile { ProcessName = "chrome", DisplayIndex = 0, PercentageOfTotal = 50.0 };
+        var p2 = new ApplicationHistoricalProfile { ProcessName = "chrome", DisplayIndex = 1, PercentageOfTotal = 50.0 };
+        var list = new List<ApplicationHistoricalProfile> { p1, p2 };
+
+        var res1 = converter.Convert(new List<object?> { p1, list }, typeof(Geometry), null, CultureInfo.InvariantCulture);
+        var res2 = converter.Convert(new List<object?> { p2, list }, typeof(Geometry), null, CultureInfo.InvariantCulture);
+
+        Assert.NotNull(res1);
+        Assert.NotNull(res2);
+
+        var path1 = Assert.IsAssignableFrom<PathGeometry>(res1);
+        var path2 = Assert.IsAssignableFrom<PathGeometry>(res2);
+
+        Assert.NotEmpty(path1.Figures!);
+        Assert.NotEmpty(path2.Figures!);
+
+        // Start points must differ because one is at 0 degrees and the other is at 180 degrees
+        Assert.NotEqual(path1.Figures![0].StartPoint, path2.Figures![0].StartPoint);
+    }
 }

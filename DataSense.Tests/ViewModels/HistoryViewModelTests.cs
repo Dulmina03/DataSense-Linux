@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using DataSense.Helpers;
 using DataSense.Models;
 using DataSense.Services;
 using DataSense.Tests.Helpers;
@@ -910,5 +912,345 @@ public class HistoryViewModelTests : IDisposable
         vm.SearchText = "xyz999";
         Assert.Empty(vm.FilteredApplications);
         Assert.False(vm.HasApplications);
+    }
+
+    [Fact]
+    public async Task PeriodTransitions_Today_SevenDays_Month_CorrectlyFiltersApplications()
+    {
+        var now = DateTime.UtcNow;
+        var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+        int diffToMonday = ((int)today.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+        var monday = today.AddDays(-diffToMonday);
+
+        // Record 1: Today -> "app_today"
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "app_today",
+                BytesDownloaded = 100_000,
+                BytesUploaded = 10_000,
+                Timestamp = today.AddHours(1)
+            }
+        });
+
+        // Record 2: Yesterday (if different from today, within current week) or Monday
+        var weekDay = monday == today ? today : monday.AddHours(2);
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "app_week",
+                BytesDownloaded = 500_000,
+                BytesUploaded = 50_000,
+                Timestamp = weekDay
+            }
+        });
+
+        // Record 3: Past month (e.g. 60 days ago)
+        var pastMonthDate = today.AddDays(-60);
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "app_past_month",
+                BytesDownloaded = 900_000,
+                BytesUploaded = 90_000,
+                Timestamp = pastMonthDate
+            }
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        // 1. TODAY -> Should ONLY contain app_today (or app_week if monday == today)
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+        Assert.Contains(vm.Applications, a => a.ProcessName == "app_today");
+        Assert.DoesNotContain(vm.Applications, a => a.ProcessName == "app_past_month");
+
+        // 2. 7 DAYS -> Should contain weekly apps, not past month
+        vm.SelectLast7Days();
+        await vm.LoadAsync(showLoading: false);
+        Assert.Contains(vm.Applications, a => a.ProcessName == "app_today");
+        Assert.DoesNotContain(vm.Applications, a => a.ProcessName == "app_past_month");
+
+        // 3. Switch to past month item
+        vm.SelectMonth();
+        vm.SelectedMonth = new MonthSelectItem
+        {
+            Year = pastMonthDate.Year,
+            Month = pastMonthDate.Month,
+            DisplayName = pastMonthDate.ToString("MMMM yyyy", CultureInfo.InvariantCulture)
+        };
+        await vm.LoadAsync(showLoading: false);
+        Assert.Contains(vm.Applications, a => a.ProcessName == "app_past_month");
+        Assert.DoesNotContain(vm.Applications, a => a.ProcessName == "app_today");
+    }
+
+    [Fact]
+    public async Task RapidPeriodSwitching_ConcurrencyGuard_EnsuresLatestSelectionWins()
+    {
+        var now = DateTime.UtcNow;
+        var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+        var pastMonth = today.AddMonths(-2);
+
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "app_today_only",
+                BytesDownloaded = 1_000_000,
+                BytesUploaded = 100_000,
+                Timestamp = today.AddHours(2)
+            },
+            new ProcessUsageRecord
+            {
+                ProcessName = "app_past_only",
+                BytesDownloaded = 2_000_000,
+                BytesUploaded = 200_000,
+                Timestamp = pastMonth.AddDays(5)
+            }
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        // Rapidly switch periods
+        vm.SelectMonth();
+        vm.SelectedMonth = new MonthSelectItem
+        {
+            Year = pastMonth.Year,
+            Month = pastMonth.Month,
+            DisplayName = pastMonth.ToString("MMMM yyyy", CultureInfo.InvariantCulture)
+        };
+        var task1 = vm.LoadAsync(showLoading: true);
+
+        vm.SelectToday();
+        var task2 = vm.LoadAsync(showLoading: true);
+
+        await Task.WhenAll(task1, task2);
+
+        // The final displayed applications MUST match TODAY
+        Assert.True(vm.HasApplications);
+        Assert.Contains(vm.Applications, a => a.ProcessName == "app_today_only");
+        Assert.DoesNotContain(vm.Applications, a => a.ProcessName == "app_past_only");
+    }
+
+    [Fact]
+    public async Task OverviewAndCharts_MatchApplicationBreakdownTotals_Daily7DayMonthly()
+    {
+        var now = DateTime.UtcNow;
+        var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+
+        // Add distinct process usage records across today
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "chrome",
+                BytesDownloaded = 4_000_000,
+                BytesUploaded = 1_000_000,
+                Timestamp = today.AddHours(2)
+            },
+            new ProcessUsageRecord
+            {
+                ProcessName = "firefox",
+                BytesDownloaded = 2_000_000,
+                BytesUploaded = 500_000,
+                Timestamp = today.AddHours(4)
+            }
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        // 1. TODAY
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        // Total app usage: 6M dl + 1.5M ul = 7.5M
+        Assert.Equal(vm.TotalUsageText, vm.TotalApplicationUsageText);
+        Assert.Equal(vm.TotalDownloadedText, vm.TotalApplicationDownloadText);
+        Assert.Equal(vm.TotalUploadedText, vm.TotalApplicationUploadText);
+
+        // Network usage must match total usage
+        Assert.True(vm.HasNetworkUsage);
+        Assert.Equal(6_000_000, vm.NetworkUsageItems.Sum(n => n.BytesDownloaded));
+        Assert.Equal(1_500_000, vm.NetworkUsageItems.Sum(n => n.BytesUploaded));
+        Assert.Equal(7_500_000, vm.NetworkUsageItems.Sum(n => n.TotalBytes));
+
+        // Chart #1 sum must match
+        long chart1TotalDl = vm.HistoricalChartPoints.Sum(p => p.DownloadBytes);
+        long chart1TotalUl = vm.HistoricalChartPoints.Sum(p => p.UploadBytes);
+        Assert.Equal(6_000_000, chart1TotalDl);
+        Assert.Equal(1_500_000, chart1TotalUl);
+
+        // 2. 7 DAYS
+        vm.SelectLast7Days();
+        await vm.LoadAsync(showLoading: false);
+        Assert.Equal(vm.TotalUsageText, vm.TotalApplicationUsageText);
+        Assert.Equal(vm.TotalDownloadedText, vm.TotalApplicationDownloadText);
+        Assert.Equal(vm.TotalUploadedText, vm.TotalApplicationUploadText);
+        Assert.True(vm.HasNetworkUsage);
+        Assert.Equal(7_500_000, vm.NetworkUsageItems.Sum(n => n.TotalBytes));
+
+        // 3. MONTH
+        vm.SelectMonth();
+        await vm.LoadAsync(showLoading: false);
+        Assert.Equal(vm.TotalUsageText, vm.TotalApplicationUsageText);
+        Assert.Equal(vm.TotalDownloadedText, vm.TotalApplicationDownloadText);
+        Assert.Equal(vm.TotalUploadedText, vm.TotalApplicationUploadText);
+        Assert.True(vm.HasNetworkUsage);
+        Assert.Equal(7_500_000, vm.NetworkUsageItems.Sum(n => n.TotalBytes));
+        Assert.Equal(vm.TotalUsageText, vm.MonthlyTotalUsageText);
+        Assert.Equal(vm.TotalDownloadedText, vm.MonthlyTotalDownloadText);
+        Assert.Equal(vm.TotalUploadedText, vm.MonthlyTotalUploadText);
+    }
+
+    [Fact]
+    public async Task NetworkUsage_WithMultipleRecordedSessions_ProportionallyHarmonizesToMatchPeriodTotal()
+    {
+        var now = DateTime.UtcNow;
+        var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+
+        // Seed Process Usage
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "chrome",
+                BytesDownloaded = 8_000_000,
+                BytesUploaded = 2_000_000,
+                Timestamp = today.AddHours(2)
+            }
+        });
+
+        // Seed two network sessions (e.g. 75% Wi-Fi, 25% Mobile)
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "SLT Fiber",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(1),
+            EndTime = today.AddHours(3),
+            BytesDownloaded = 750_000,
+            BytesUploaded = 750_000
+        });
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Dialog 4G",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(3),
+            EndTime = today.AddHours(5),
+            BytesDownloaded = 250_000,
+            BytesUploaded = 250_000
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.True(vm.HasNetworkUsage);
+        Assert.Equal(2, vm.NetworkUsageItems.Count);
+
+        // Sum of network usage MUST equal total period usage (10,000,000)
+        long totalNetDl = vm.NetworkUsageItems.Sum(n => n.BytesDownloaded);
+        long totalNetUl = vm.NetworkUsageItems.Sum(n => n.BytesUploaded);
+        Assert.Equal(8_000_000, totalNetDl);
+        Assert.Equal(2_000_000, totalNetUl);
+        Assert.Equal(10_000_000, totalNetDl + totalNetUl);
+
+        var slt = vm.NetworkUsageItems.FirstOrDefault(n => n.NetworkName == "SLT Fiber");
+        var dialog = vm.NetworkUsageItems.FirstOrDefault(n => n.NetworkName == "Dialog 4G");
+        Assert.NotNull(slt);
+        Assert.NotNull(dialog);
+
+        // SLT Fiber had 75% share -> 6.0M dl + 1.5M ul = 7.5M
+        Assert.Equal(7_500_000, slt.TotalBytes);
+        // Dialog 4G had 25% share -> 2.0M dl + 0.5M ul = 2.5M
+        Assert.Equal(2_500_000, dialog.TotalBytes);
+    }
+
+    [Fact]
+    public async Task DashboardAndHistory_DataUsage_ExactMatch_TodayAndMonth()
+    {
+        var now = DateTime.UtcNow;
+        var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+
+        // Seed Process Usage
+        await _dbContext.Repository.SaveProcessUsageBatchAsync(new List<ProcessUsageRecord>
+        {
+            new ProcessUsageRecord
+            {
+                ProcessName = "chrome",
+                BytesDownloaded = 15_000_000,
+                BytesUploaded = 5_000_000,
+                Timestamp = today.AddHours(2)
+            },
+            new ProcessUsageRecord
+            {
+                ProcessName = "slack",
+                BytesDownloaded = 10_000_000,
+                BytesUploaded = 2_000_000,
+                Timestamp = today.AddHours(4)
+            }
+        });
+
+        // 1. History ViewModel Today
+        var historyVm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        historyVm.SelectToday();
+        await historyVm.LoadAsync(showLoading: false);
+
+        // 2. Query Repository Summaries & AnalyticsService (used by Dashboard)
+        var (dashTodayDl, dashTodayUl) = await _dbContext.Repository.GetTodaySummaryAsync();
+        var (dashMonthDl, dashMonthUl) = await _dbContext.Repository.GetMonthSummaryAsync();
+        var analyticsService = new AnalyticsService(_dbContext.Repository);
+        var analyticsSummaryToday = await analyticsService.GetSummaryAsync(AnalyticsPeriod.Today);
+
+        // Verify Dashboard Today summary matches History Today Overview exactly
+        Assert.Equal(historyVm.TotalDownloadedText, ByteFormatter.FormatBytes(dashTodayDl));
+        Assert.Equal(historyVm.TotalUploadedText, ByteFormatter.FormatBytes(dashTodayUl));
+        Assert.Equal(historyVm.TotalUsageText, ByteFormatter.FormatBytes(dashTodayDl + dashTodayUl));
+        Assert.Equal(historyVm.TotalUsageText, ByteFormatter.FormatBytes(analyticsSummaryToday.TotalUsage));
+
+        // 3. History ViewModel Month
+        historyVm.SelectMonth();
+        await historyVm.LoadAsync(showLoading: false);
+
+        // Verify Dashboard Month summary matches History Month Overview exactly
+        Assert.Equal(historyVm.TotalDownloadedText, ByteFormatter.FormatBytes(dashMonthDl));
+        Assert.Equal(historyVm.TotalUploadedText, ByteFormatter.FormatBytes(dashMonthUl));
+        Assert.Equal(historyVm.TotalUsageText, ByteFormatter.FormatBytes(dashMonthDl + dashMonthUl));
     }
 }

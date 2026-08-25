@@ -39,14 +39,25 @@ public class AnalyticsService : IAnalyticsService
     public async Task<AnalyticsSummary> GetSummaryAsync(AnalyticsPeriod period)
     {
         var (start, end) = GetRange(period);
-        var daily = (await _repository.GetDailyUsageAsync(start, end)).ToList();
+        var procDaily = (await _repository.GetAllProcessesDailyUsageAsync(start, end)).ToList();
+        List<DailyUsageRecord> daily;
+        if (procDaily.Count > 0)
+        {
+            daily = procDaily;
+        }
+        else
+        {
+            daily = (await _repository.GetDailyUsageAsync(start, end)).ToList();
+        }
+
         long totalDl = daily.Sum(d => d.BytesDownloaded);
         long totalUl = daily.Sum(d => d.BytesUploaded);
+
         var activeDays = daily.Where(d => d.TotalBytes > 0).ToList();
         long avgDaily = activeDays.Count > 0 ? (long)activeDays.Average(d => d.TotalBytes) : 0;
         var peakDay = activeDays.Count > 0 ? activeDays.MaxBy(d => d.TotalBytes) : null;
-        var todayHourly = await GetTodayHourlyAsync();
-        var peakHour = todayHourly.Count > 0 ? todayHourly.MaxBy(h => h.TotalBytes) : null;
+        var hourly = await GetTodayHourlyAsync();
+        var peakHour = hourly.Count > 0 ? hourly.MaxBy(h => h.TotalBytes) : null;
         return new AnalyticsSummary
         {
             TotalDownloaded = totalDl,
@@ -59,6 +70,11 @@ public class AnalyticsService : IAnalyticsService
 
     public async Task<IList<HourlyUsageRecord>> GetTodayHourlyAsync()
     {
+        var procHourly = (await _repository.GetAllProcessesHourlyUsageAsync(DateTime.UtcNow.Date)).ToList();
+        if (procHourly.Count > 0)
+        {
+            return procHourly;
+        }
         var hourly = await _repository.GetHourlyUsageAsync(DateTime.UtcNow.Date);
         return hourly.ToList();
     }
@@ -66,7 +82,16 @@ public class AnalyticsService : IAnalyticsService
     public async Task<IList<DailyUsageRecord>> GetDailySeriesAsync(AnalyticsPeriod period)
     {
         var (start, end) = GetRange(period);
-        var raw = (await _repository.GetDailyUsageAsync(start, end)).ToList();
+        var procDaily = (await _repository.GetAllProcessesDailyUsageAsync(start, end)).ToList();
+        List<DailyUsageRecord> raw;
+        if (procDaily.Count > 0)
+        {
+            raw = procDaily;
+        }
+        else
+        {
+            raw = (await _repository.GetDailyUsageAsync(start, end)).ToList();
+        }
         raw.Reverse(); // chronological order for UI
         return raw;
     }

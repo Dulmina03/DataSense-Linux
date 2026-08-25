@@ -60,11 +60,11 @@ public class HistoricalSessionViewModel
 
 public class NetworkUsageItemViewModel
 {
-    public string NetworkName { get; init; } = string.Empty;
-    public string InterfaceName { get; init; } = string.Empty;
-    public string ConnectionType { get; init; } = string.Empty;
-    public long BytesDownloaded { get; init; }
-    public long BytesUploaded { get; init; }
+    public string NetworkName { get; set; } = string.Empty;
+    public string InterfaceName { get; set; } = string.Empty;
+    public string ConnectionType { get; set; } = string.Empty;
+    public long BytesDownloaded { get; set; }
+    public long BytesUploaded { get; set; }
     public long TotalBytes => BytesDownloaded + BytesUploaded;
     public string DownloadedText => ByteFormatter.FormatBytes(BytesDownloaded);
     public string UploadedText => ByteFormatter.FormatBytes(BytesUploaded);
@@ -171,6 +171,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     }
 
     private readonly System.Threading.SemaphoreSlim _loadLock = new(1, 1);
+    private int _loadVersion = 0;
 
     private static void RunOnUI(Action action)
     {
@@ -318,19 +319,40 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     public void SelectToday()
     {
-        SelectedPeriod = HistoryPeriodType.Today;
+        if (SelectedPeriod == HistoryPeriodType.Today)
+        {
+            _ = LoadAsync(showLoading: true);
+        }
+        else
+        {
+            SelectedPeriod = HistoryPeriodType.Today;
+        }
     }
 
     [RelayCommand]
     public void SelectLast7Days()
     {
-        SelectedPeriod = HistoryPeriodType.Last7Days;
+        if (SelectedPeriod == HistoryPeriodType.Last7Days)
+        {
+            _ = LoadAsync(showLoading: true);
+        }
+        else
+        {
+            SelectedPeriod = HistoryPeriodType.Last7Days;
+        }
     }
 
     [RelayCommand]
     public void SelectMonth()
     {
-        SelectedPeriod = HistoryPeriodType.Month;
+        if (SelectedPeriod == HistoryPeriodType.Month)
+        {
+            _ = LoadAsync(showLoading: true);
+        }
+        else
+        {
+            SelectedPeriod = HistoryPeriodType.Month;
+        }
     }
 
     [RelayCommand]
@@ -455,39 +477,99 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     public (DateTime start, DateTime end) ComputeDateRange()
     {
         var utcNow = DateTime.UtcNow;
+        var todayStart = DateTime.SpecifyKind(utcNow.Date, DateTimeKind.Utc);
+        var todayEnd = todayStart.AddDays(1).AddTicks(-1);
+
         return SelectedPeriod switch
         {
-            HistoryPeriodType.Today => (utcNow.Date, utcNow.Date.AddDays(1).AddTicks(-1)),
-            HistoryPeriodType.Last7Days => GetMondayToSundayRange(utcNow.Date),
+            HistoryPeriodType.Today => (todayStart, todayEnd),
+            HistoryPeriodType.Last7Days => GetMondayToSundayRange(todayStart),
             HistoryPeriodType.Month =>
                 SelectedMonth != null
                     ? (new DateTime(SelectedMonth.Year, SelectedMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc),
-                       new DateTime(SelectedMonth.Year, SelectedMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(1).AddTicks(-1))
-                    : (new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc),
-                       new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(1).AddTicks(-1)),
-            _ => GetMondayToSundayRange(utcNow.Date)
+                       (SelectedMonth.Year == utcNow.Year && SelectedMonth.Month == utcNow.Month)
+                           ? todayEnd
+                           : new DateTime(SelectedMonth.Year, SelectedMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(1).AddTicks(-1))
+                    : (new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc), todayEnd),
+            _ => GetMondayToSundayRange(todayStart)
         };
     }
 
     private static (DateTime start, DateTime end) GetMondayToSundayRange(DateTime date)
     {
         int diffToMonday = ((int)date.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
-        var monday = date.AddDays(-diffToMonday);
+        var monday = DateTime.SpecifyKind(date.AddDays(-diffToMonday), DateTimeKind.Utc);
         var sunday = monday.AddDays(6);
         return (monday, sunday.AddDays(1).AddTicks(-1));
     }
 
+    /// <summary>
+    /// Single authoritative method for querying and aggregating period-aware application telemetry from SQLite.
+    /// </summary>
+    public async Task<List<ApplicationHistoricalProfile>> LoadApplicationUsageAsync(DateTime start, DateTime end)
+    {
+        var topApps = (await _repository.GetTopProcessesAsync(start, end, 1000)).ToList();
+
+        var mappedApps = topApps
+            .GroupBy(a => a.ProcessName.Trim().ToLowerInvariant())
+            .Select(g =>
+            {
+                var first = g.First();
+                long appDl = g.Sum(x => x.BytesDownloaded);
+                long appUl = g.Sum(x => x.BytesUploaded);
+
+                return new ApplicationHistoricalProfile
+                {
+                    ProcessName = first.ProcessName,
+                    Pid = first.Pid,
+                    ExecutablePath = first.ExecutablePath,
+                    UserName = first.UserName,
+                    DataSource = first.DataSource,
+                    DownloadBytes = appDl,
+                    UploadBytes = appUl,
+                    ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessName, first.ExecutablePath),
+                    ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessName, first.ExecutablePath)
+                };
+            })
+            .OrderByDescending(a => a.TotalBytes)
+            .ToList();
+
+        long totalAppDl = mappedApps.Sum(a => a.DownloadBytes);
+        long totalAppUl = mappedApps.Sum(a => a.UploadBytes);
+        long totalAppUsage = totalAppDl + totalAppUl;
+
+        long maxAppTotal = mappedApps.Count > 0 ? mappedApps.Max(a => a.TotalBytes) : 0;
+        for (int i = 0; i < mappedApps.Count; i++)
+        {
+            var app = mappedApps[i];
+            app.DisplayIndex = i;
+            app.PercentageOfTotal = totalAppUsage > 0 ? (double)app.TotalBytes / totalAppUsage * 100.0 : 0.0;
+            app.RelativeUsagePercent = maxAppTotal > 0
+                ? Math.Max((double)app.TotalBytes / maxAppTotal * 100.0, app.TotalBytes > 0 ? 3.0 : 0.0)
+                : 0.0;
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[History] Period: {SelectedPeriod}, Start: {start:o}, End: {end:o}, Applications: {mappedApps.Count}, Total: {totalAppUsage}");
+        return mappedApps;
+    }
+
     public async Task LoadAsync(bool showLoading = true)
     {
+        int version = Interlocked.Increment(ref _loadVersion);
         await _loadLock.WaitAsync();
         try
         {
+            if (version != _loadVersion) return;
+
             if (showLoading)
             {
                 RunOnUI(() =>
                 {
                     IsLoading = true;
                     HasHistoricalGraphData = false;
+                    Applications.Clear();
+                    FilteredApplications.Clear();
+                    HasApplications = false;
                 });
             }
             ErrorMessage = null;
@@ -507,24 +589,43 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             var (start, end) = ComputeDateRange();
             string? ifaceFilter = SelectedInterface == "All" ? null : SelectedInterface;
 
-            // 1. Fetch Daily or Hourly Usage for Chart #1 & Overview
+            // 1. Fetch Applications for the selected period (Chart #3 & Explorer)
+            var mappedApps = await LoadApplicationUsageAsync(start, end);
+            long totalAppDl = mappedApps.Sum(a => a.DownloadBytes);
+            long totalAppUl = mappedApps.Sum(a => a.UploadBytes);
+            long totalAppUsage = totalAppDl + totalAppUl;
+
+            // 2. Fetch Daily or Hourly Usage for Chart #1 & Overview
             List<DailyUsageRecord> dailyList = new();
             List<HourlyUsageRecord> hourlyList = new();
 
             if (SelectedPeriod == HistoryPeriodType.Today)
             {
-                hourlyList = (await _repository.GetHourlyUsageAsync(start.Date, ifaceFilter)).ToList();
+                var procHourly = (await _repository.GetAllProcessesHourlyUsageAsync(start.Date)).ToList();
+                if (procHourly.Count > 0 || totalAppUsage > 0)
+                {
+                    hourlyList = procHourly;
+                }
+                else
+                {
+                    hourlyList = (await _repository.GetHourlyUsageAsync(start.Date, ifaceFilter)).ToList();
+                }
             }
             else
             {
-                dailyList = (await _repository.GetDailyUsageAsync(start, end, ifaceFilter)).ToList();
+                var procDaily = (await _repository.GetAllProcessesDailyUsageAsync(start, end)).ToList();
+                if (procDaily.Count > 0 || totalAppUsage > 0)
+                {
+                    dailyList = procDaily;
+                }
+                else
+                {
+                    dailyList = (await _repository.GetDailyUsageAsync(start, end, ifaceFilter)).ToList();
+                }
             }
 
-            // 2. Fetch Sessions
+            // 3. Fetch Sessions
             var sessions = (await _repository.GetSessionsAsync(start, end, ifaceFilter)).ToList();
-
-            // 3. Fetch Top Applications for the selected period (Chart #3 & Explorer)
-            var topApps = (await _repository.GetTopProcessesAsync(start, end, 1000)).ToList();
 
             // 4. Fetch 12 Calendar Months for Chart #2 (January to December of active year)
             int activeYear = SelectedMonth != null ? SelectedMonth.Year : DateTime.UtcNow.Year;
@@ -533,9 +634,20 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             {
                 var mStart = new DateTime(activeYear, m, 1, 0, 0, 0, DateTimeKind.Utc);
                 var mEnd = mStart.AddMonths(1).AddTicks(-1);
-                var mDaily = (await _repository.GetDailyUsageAsync(mStart, mEnd, ifaceFilter)).ToList();
-                long mDl = mDaily.Sum(d => d.BytesDownloaded);
-                long mUl = mDaily.Sum(d => d.BytesUploaded);
+                var mProcDaily = (await _repository.GetAllProcessesDailyUsageAsync(mStart, mEnd)).ToList();
+                long mDl = 0;
+                long mUl = 0;
+                if (mProcDaily.Count > 0)
+                {
+                    mDl = mProcDaily.Sum(d => d.BytesDownloaded);
+                    mUl = mProcDaily.Sum(d => d.BytesUploaded);
+                }
+                else
+                {
+                    var mDaily = (await _repository.GetDailyUsageAsync(mStart, mEnd, ifaceFilter)).ToList();
+                    mDl = mDaily.Sum(d => d.BytesDownloaded);
+                    mUl = mDaily.Sum(d => d.BytesUploaded);
+                }
 
                 twelveMonthSamples.Add(new HistoricalGraphSample
                 {
@@ -547,14 +659,20 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 });
             }
 
-            // 5. Compute Totals & Averages
-            long totalDl = SelectedPeriod == HistoryPeriodType.Today
-                ? hourlyList.Sum(h => h.BytesDownloaded)
-                : dailyList.Sum(d => d.BytesDownloaded);
+            if (version != _loadVersion) return;
 
-            long totalUl = SelectedPeriod == HistoryPeriodType.Today
-                ? hourlyList.Sum(h => h.BytesUploaded)
-                : dailyList.Sum(d => d.BytesUploaded);
+            // 5. Compute Totals & Averages
+            long totalDl = totalAppUsage > 0
+                ? totalAppDl
+                : (SelectedPeriod == HistoryPeriodType.Today
+                    ? hourlyList.Sum(h => h.BytesDownloaded)
+                    : dailyList.Sum(d => d.BytesDownloaded));
+
+            long totalUl = totalAppUsage > 0
+                ? totalAppUl
+                : (SelectedPeriod == HistoryPeriodType.Today
+                    ? hourlyList.Sum(h => h.BytesUploaded)
+                    : dailyList.Sum(d => d.BytesUploaded));
 
             long totalUsage = totalDl + totalUl;
 
@@ -629,6 +747,72 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 .OrderByDescending(m => m.TotalBytes)
                 .ToList();
 
+            // If no sessions exist in the database for this period, but traffic exists, create the active network item
+            if (networkGrouped.Count == 0 && totalUsage > 0)
+            {
+                string activeIface = (!string.IsNullOrWhiteSpace(SelectedInterface) && SelectedInterface != "All"
+                    ? SelectedInterface
+                    : _networkMonitorWorker.ActiveInterface) ?? "wlo1";
+                string activeNetworkName = _identityService.NormalizeNetworkName(null, activeIface);
+                string activeConnType = (activeIface.StartsWith("wl", StringComparison.OrdinalIgnoreCase) || activeIface.StartsWith("wlan", StringComparison.OrdinalIgnoreCase))
+                    ? "Wi-Fi"
+                    : "Ethernet";
+
+                try
+                {
+                    var id = _identityService.GetCurrentIdentityAsync(activeIface).GetAwaiter().GetResult();
+                    if (id != null && (_identityService.IsValidNetworkName(id.DisplayName) || id.DisplayName == "Ethernet"))
+                        activeNetworkName = id.DisplayName;
+                    if (id != null)
+                        activeConnType = id.Type.ToString();
+                }
+                catch { }
+
+                networkGrouped.Add(new NetworkUsageItemViewModel
+                {
+                    NetworkName = activeNetworkName,
+                    InterfaceName = activeIface,
+                    ConnectionType = activeConnType,
+                    BytesDownloaded = totalDl,
+                    BytesUploaded = totalUl
+                });
+            }
+            else if (networkGrouped.Count == 1 && totalUsage > 0)
+            {
+                // Single network session: ensure exact match with period total
+                networkGrouped[0].BytesDownloaded = totalDl;
+                networkGrouped[0].BytesUploaded = totalUl;
+            }
+            else if (networkGrouped.Count > 1 && totalUsage > 0)
+            {
+                // Multiple network sessions: apportion proportionally so sum equals totalUsage
+                long rawSessionTotal = networkGrouped.Sum(m => m.TotalBytes);
+                if (rawSessionTotal > 0)
+                {
+                    long dlRunning = 0;
+                    long ulRunning = 0;
+                    for (int i = 0; i < networkGrouped.Count; i++)
+                    {
+                        var item = networkGrouped[i];
+                        if (i == networkGrouped.Count - 1)
+                        {
+                            item.BytesDownloaded = Math.Max(0, totalDl - dlRunning);
+                            item.BytesUploaded = Math.Max(0, totalUl - ulRunning);
+                        }
+                        else
+                        {
+                            double ratio = (double)item.TotalBytes / rawSessionTotal;
+                            long itemDl = (long)Math.Round(ratio * totalDl);
+                            long itemUl = (long)Math.Round(ratio * totalUl);
+                            item.BytesDownloaded = itemDl;
+                            item.BytesUploaded = itemUl;
+                            dlRunning += itemDl;
+                            ulRunning += itemUl;
+                        }
+                    }
+                }
+            }
+
             long maxNetworkTotal = networkGrouped.Count > 0 ? networkGrouped.Max(m => m.TotalBytes) : 0;
             for (int i = 0; i < networkGrouped.Count; i++)
             {
@@ -660,46 +844,6 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 _ => ""
             };
 
-            // 8. Map Application Profiles (Chart #3 & Explorer)
-            var mappedApps = topApps
-                .GroupBy(a => a.ProcessName.Trim().ToLowerInvariant())
-                .Select(g =>
-                {
-                    var first = g.First();
-                    long appDl = g.Sum(x => x.BytesDownloaded);
-                    long appUl = g.Sum(x => x.BytesUploaded);
-
-                    return new ApplicationHistoricalProfile
-                    {
-                        ProcessName = first.ProcessName,
-                        Pid = first.Pid,
-                        ExecutablePath = first.ExecutablePath,
-                        UserName = first.UserName,
-                        DataSource = first.DataSource,
-                        DownloadBytes = appDl,
-                        UploadBytes = appUl,
-                        ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessName, first.ExecutablePath),
-                        ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessName, first.ExecutablePath)
-                    };
-                })
-                .OrderByDescending(a => a.TotalBytes)
-                .ToList();
-
-            long totalAppDl = mappedApps.Sum(a => a.DownloadBytes);
-            long totalAppUl = mappedApps.Sum(a => a.UploadBytes);
-            long totalAppUsage = totalAppDl + totalAppUl;
-
-            long maxAppTotal = mappedApps.Count > 0 ? mappedApps.Max(a => a.TotalBytes) : 0;
-            for (int i = 0; i < mappedApps.Count; i++)
-            {
-                var app = mappedApps[i];
-                app.DisplayIndex = i;
-                app.PercentageOfTotal = totalAppUsage > 0 ? (double)app.TotalBytes / totalAppUsage * 100.0 : 0.0;
-                app.RelativeUsagePercent = maxAppTotal > 0
-                    ? Math.Max((double)app.TotalBytes / maxAppTotal * 100.0, app.TotalBytes > 0 ? 3.0 : 0.0)
-                    : 0.0;
-            }
-
             // Dynamic Subtitles based on selected period
             string appSubtitle = SelectedPeriod switch
             {
@@ -711,15 +855,16 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 _ => "Application network usage for the selected period"
             };
 
-            // 9. Build Chart #1 Samples (6 buckets for Today, 7 for 7-Days, 28-31 for Month)
+            // 8. Build Chart #1 Samples (6 buckets for Today, 7 for 7-Days, 28-31 for Month)
             var chartPoints = BuildHistoricalGraphSamples(dailyList, hourlyList, start, end);
 
-            // 10. Scale Bar Heights for Chart #1 & Chart #2
+            // 9. Scale Bar Heights for Chart #1 & Chart #2
             ScaleBarHeights(chartPoints, twelveMonthSamples);
 
             // Post all results to UI
             RunOnUI(() =>
             {
+                if (version != _loadVersion) return;
                 TotalUsageText = ByteFormatter.FormatBytes(totalUsage);
                 TotalUsageTrendText = trendUsageText;
                 TotalUsageTrendColor = trendUsageColor;

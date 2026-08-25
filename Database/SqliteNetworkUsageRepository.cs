@@ -484,15 +484,31 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
     }
 
     /// <summary>
-    /// Returns today's downloaded and uploaded bytes (UTC calendar day) by
-    /// delegating to GetDailyUsageAsync with today's date range.
-    /// Reuses MAX–MIN clamping already in that method.
+    /// Returns today's downloaded and uploaded bytes (UTC calendar day).
+    /// Prioritizes ProcessUsageRecords aggregation if available, falling back to GetDailyUsageAsync.
     /// </summary>
     public async Task<(long BytesDownloaded, long BytesUploaded)> GetTodaySummaryAsync(string? interfaceName = null)
     {
         var utcNow = DateTime.UtcNow;
-        var start  = utcNow.Date;
-        var end    = utcNow.Date.AddDays(1).AddTicks(-1);
+        var start  = DateTime.SpecifyKind(utcNow.Date, DateTimeKind.Utc);
+        var end    = start.AddDays(1).AddTicks(-1);
+
+        if (string.IsNullOrEmpty(interfaceName) || interfaceName == "All")
+        {
+            var procHourly = await GetAllProcessesHourlyUsageAsync(start);
+            long pDl = 0;
+            long pUl = 0;
+            foreach (var h in procHourly)
+            {
+                pDl += h.BytesDownloaded;
+                pUl += h.BytesUploaded;
+            }
+
+            if (pDl > 0 || pUl > 0)
+            {
+                return (pDl, pUl);
+            }
+        }
 
         var daily = await GetDailyUsageAsync(start, end, interfaceName);
         var row   = daily.FirstOrDefault();
@@ -501,14 +517,31 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
     }
 
     /// <summary>
-    /// Returns the current UTC calendar month's downloaded and uploaded bytes by
-    /// summing each day's already-clamped delta returned by GetDailyUsageAsync.
+    /// Returns the current UTC calendar month's downloaded and uploaded bytes.
+    /// Prioritizes ProcessUsageRecords aggregation if available, falling back to GetDailyUsageAsync.
     /// </summary>
     public async Task<(long BytesDownloaded, long BytesUploaded)> GetMonthSummaryAsync(string? interfaceName = null)
     {
         var utcNow     = DateTime.UtcNow;
         var monthStart = new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var monthEnd   = monthStart.AddMonths(1).AddTicks(-1);
+
+        if (string.IsNullOrEmpty(interfaceName) || interfaceName == "All")
+        {
+            var procDaily = await GetAllProcessesDailyUsageAsync(monthStart, monthEnd);
+            long pDl = 0;
+            long pUl = 0;
+            foreach (var d in procDaily)
+            {
+                pDl += d.BytesDownloaded;
+                pUl += d.BytesUploaded;
+            }
+
+            if (pDl > 0 || pUl > 0)
+            {
+                return (pDl, pUl);
+            }
+        }
 
         var daily  = await GetDailyUsageAsync(monthStart, monthEnd, interfaceName);
         long dl    = 0;
@@ -927,6 +960,76 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             results.Add(new DailyUsageRecord
             {
                 Day = DateTime.Parse(reader.GetString(0)),
+                BytesDownloaded = reader.GetInt64(1),
+                BytesUploaded = reader.GetInt64(2)
+            });
+        }
+        return results;
+    }
+
+    public async Task<IEnumerable<HourlyUsageRecord>> GetAllProcessesHourlyUsageAsync(DateTime day)
+    {
+        var results = new List<HourlyUsageRecord>();
+        var dayStart = DateTime.SpecifyKind(day.Date, DateTimeKind.Utc);
+        var dayEnd = dayStart.AddDays(1).AddTicks(-1);
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT
+                CAST(strftime('%H', Timestamp) AS INTEGER) AS Hour,
+                SUM(BytesDownloaded) AS TotalDl,
+                SUM(BytesUploaded)   AS TotalUl
+            FROM ProcessUsageRecords
+            WHERE Timestamp >= @Start AND Timestamp <= @End
+            GROUP BY Hour ORDER BY Hour ASC;";
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Start", dayStart.ToString("o"));
+        cmd.Parameters.AddWithValue("@End", dayEnd.ToString("o"));
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new HourlyUsageRecord
+            {
+                Hour = reader.GetInt32(0),
+                BytesDownloaded = reader.GetInt64(1),
+                BytesUploaded = reader.GetInt64(2)
+            });
+        }
+        return results;
+    }
+
+    public async Task<IEnumerable<DailyUsageRecord>> GetAllProcessesDailyUsageAsync(DateTime start, DateTime end)
+    {
+        var results = new List<DailyUsageRecord>();
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT
+                date(Timestamp) AS Day,
+                SUM(BytesDownloaded) AS TotalDl,
+                SUM(BytesUploaded)   AS TotalUl
+            FROM ProcessUsageRecords
+            WHERE Timestamp >= @Start AND Timestamp <= @End
+            GROUP BY date(Timestamp) ORDER BY Day DESC;";
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
+        cmd.Parameters.AddWithValue("@End", end.ToString("o"));
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            results.Add(new DailyUsageRecord
+            {
+                Day = DateTime.SpecifyKind(DateTime.Parse(reader.GetString(0)), DateTimeKind.Utc),
                 BytesDownloaded = reader.GetInt64(1),
                 BytesUploaded = reader.GetInt64(2)
             });

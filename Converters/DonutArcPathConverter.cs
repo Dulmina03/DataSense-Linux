@@ -86,22 +86,57 @@ public class DonutArcPathConverter : IMultiValueConverter
             if (totalPctSum <= 0)
                 return new PathGeometry();
 
-            double cumulativePct = 0;
-            bool found = false;
-            foreach (var item in itemList)
+            int targetIndex = -1;
+            for (int i = 0; i < itemList.Count; i++)
             {
-                if (item == targetItem || (item.ProcessName == targetItem.ProcessName && item.Pid == targetItem.Pid))
+                if (ReferenceEquals(itemList[i], targetItem) || itemList[i] == targetItem)
                 {
-                    startFraction = cumulativePct / totalPctSum;
-                    sweepFraction = Math.Max(0, item.PercentageOfTotal) / totalPctSum;
-                    found = true;
+                    targetIndex = i;
                     break;
                 }
-                if (item.PercentageOfTotal > 0)
-                    cumulativePct += item.PercentageOfTotal;
             }
 
-            if (!found || sweepFraction <= 0.0001)
+            if (targetIndex < 0)
+            {
+                for (int i = 0; i < itemList.Count; i++)
+                {
+                    if (itemList[i].DisplayIndex == targetItem.DisplayIndex &&
+                        string.Equals(itemList[i].ProcessName, targetItem.ProcessName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        targetIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (targetIndex < 0)
+            {
+                for (int i = 0; i < itemList.Count; i++)
+                {
+                    if (string.Equals(itemList[i].ProcessName, targetItem.ProcessName, StringComparison.OrdinalIgnoreCase) &&
+                        itemList[i].Pid == targetItem.Pid)
+                    {
+                        targetIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (targetIndex < 0)
+                return new PathGeometry();
+
+            double cumulativePct = 0;
+            for (int i = 0; i < targetIndex; i++)
+            {
+                if (itemList[i].PercentageOfTotal > 0)
+                    cumulativePct += itemList[i].PercentageOfTotal;
+            }
+
+            var currentItem = itemList[targetIndex];
+            startFraction = cumulativePct / totalPctSum;
+            sweepFraction = Math.Max(0, currentItem.PercentageOfTotal) / totalPctSum;
+
+            if (sweepFraction <= 0.0001)
                 return new PathGeometry();
         }
         // Case 2: Monthly ratio (isUploadFlag, downloadGridLength, uploadGridLength)
