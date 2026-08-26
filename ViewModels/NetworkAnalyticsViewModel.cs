@@ -43,6 +43,19 @@ public partial class NetworkAnalyticsViewModel : ViewModelBase
     // ── Period Selection ─────────────────────────────────────────────────────
     [ObservableProperty] private AnalyticsPeriod _selectedPeriod = AnalyticsPeriod.Last7Days;
 
+    public bool IsTodaySelected => SelectedPeriod == AnalyticsPeriod.Today;
+    public bool Is7DSelected => SelectedPeriod == AnalyticsPeriod.Last7Days;
+    public bool Is30DSelected => SelectedPeriod == AnalyticsPeriod.Last30Days;
+    public bool IsMonthSelected => SelectedPeriod == AnalyticsPeriod.ThisMonth;
+
+    partial void OnSelectedPeriodChanged(AnalyticsPeriod value)
+    {
+        OnPropertyChanged(nameof(IsTodaySelected));
+        OnPropertyChanged(nameof(Is7DSelected));
+        OnPropertyChanged(nameof(Is30DSelected));
+        OnPropertyChanged(nameof(IsMonthSelected));
+    }
+
     // ── Connection Status ─────────────────────────────────────────────────────
     [ObservableProperty] private bool _isCurrentlyConnected = false;
     [ObservableProperty] private string _currentConnectionType = "—";

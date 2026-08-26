@@ -54,6 +54,17 @@ public partial class LiveMonitoringViewModel : ViewModelBase, IDisposable
     public ObservableCollection<LiveProcessRankItem> RankedProcesses { get; } = new();
     [ObservableProperty] private LiveProcessRankItem? _selectedProcess;
 
+    public bool IsSortTotalActive => SelectedSortMode == ProcessSortMode.HighestTotal;
+    public bool IsSortDownloadActive => SelectedSortMode == ProcessSortMode.HighestDownload;
+    public bool IsSortUploadActive => SelectedSortMode == ProcessSortMode.HighestUpload;
+
+    partial void OnSelectedSortModeChanged(ProcessSortMode value)
+    {
+        OnPropertyChanged(nameof(IsSortTotalActive));
+        OnPropertyChanged(nameof(IsSortDownloadActive));
+        OnPropertyChanged(nameof(IsSortUploadActive));
+    }
+
     // ── Process Detail Card ──────────────────────────────────────────────────
     [ObservableProperty] private string _detailProcessName = "Select a process";
     [ObservableProperty] private string _detailPidText = "—";

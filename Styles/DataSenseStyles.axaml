@@ -13,5 +13,6 @@
     <StyleInclude Source="avares://DataSense/Styles/Typography.axaml" />
     <StyleInclude Source="avares://DataSense/Styles/Buttons.axaml" />
     <StyleInclude Source="avares://DataSense/Styles/Cards.axaml" />
+    <StyleInclude Source="avares://DataSense/Styles/LiquidGlass.axaml" />
     <StyleInclude Source="avares://DataSense/Styles/States.axaml" />
 </Styles>

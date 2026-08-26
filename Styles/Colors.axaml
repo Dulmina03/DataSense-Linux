@@ -19,6 +19,21 @@
     <SolidColorBrush x:Key="Brush.GlassHighlight" Color="#14FFFFFF"/>
     <SolidColorBrush x:Key="Brush.GlassShadow" Color="#20000000"/>
 
+    <!-- Liquid Glass Interaction System Semantic Brushes -->
+    <SolidColorBrush x:Key="Brush.LiquidGlass.Surface" Color="#12FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.SurfaceHover" Color="#22FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.SurfacePressed" Color="#16FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.SurfaceSelected" Color="#28A100FF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.SurfaceSelectedHover" Color="#38A100FF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.Border" Color="#20FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.BorderHover" Color="#45FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.BorderSelected" Color="#70A100FF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.InnerHighlight" Color="#30FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.Glow" Color="#18A100FF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.PillBackground" Color="#18061224"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.PillBorder" Color="#28284568"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.ActiveIndicator" Color="#A100FF"/>
+
     <!-- Application Background Diagonal Atmospheric Gradient (Black ↘ Deep Blue Atmosphere) -->
     <LinearGradientBrush x:Key="Brush.AppBackgroundGradient" StartPoint="0%,0%" EndPoint="100%,100%">
         <GradientStop Color="#000000" Offset="0.0"/>

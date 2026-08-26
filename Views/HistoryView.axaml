@@ -49,7 +49,7 @@
             </Grid>
 
             <!-- ── 2. GLOBAL PERIOD CONTROL ([TODAY] [7 DAYS] [MONTH ▾]) ─────────────────── -->
-            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="12" Padding="8,6">
+            <Border Classes="SegmentContainer" Padding="6,6">
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <!-- Segmented Period Buttons -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">

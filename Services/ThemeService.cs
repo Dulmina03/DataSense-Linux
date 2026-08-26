@@ -639,6 +639,21 @@ public class ThemeService : IThemeService
             res["Brush.GlassHighlight"] = new SolidColorBrush(def.IsLight ? Color.Parse("#40FFFFFF") : Color.Parse("#14FFFFFF"));
             res["Brush.GlassShadow"] = new SolidColorBrush(def.IsLight ? Color.Parse("#10000000") : Color.Parse("#20000000"));
 
+            // 1.5. Liquid Glass Interaction System Semantic Brushes
+            res["Brush.LiquidGlass.Surface"] = new SolidColorBrush(def.IsLight ? Color.Parse("#35FFFFFF") : Color.Parse("#10FFFFFF"));
+            res["Brush.LiquidGlass.SurfaceHover"] = new SolidColorBrush(def.IsLight ? Color.Parse("#50FFFFFF") : Color.Parse("#1EFFFFFF"));
+            res["Brush.LiquidGlass.SurfacePressed"] = new SolidColorBrush(def.IsLight ? Color.Parse("#3AFFFFFF") : Color.Parse("#14FFFFFF"));
+            res["Brush.LiquidGlass.SurfaceSelected"] = new SolidColorBrush(Color.Parse(WithAlpha(def.AccentPrimary, def.IsLight ? "35" : "28")));
+            res["Brush.LiquidGlass.SurfaceSelectedHover"] = new SolidColorBrush(Color.Parse(WithAlpha(def.AccentPrimary, def.IsLight ? "48" : "38")));
+            res["Brush.LiquidGlass.Border"] = new SolidColorBrush(def.IsLight ? Color.Parse("#25000000") : Color.Parse("#20FFFFFF"));
+            res["Brush.LiquidGlass.BorderHover"] = new SolidColorBrush(def.IsLight ? Color.Parse("#40000000") : Color.Parse("#45FFFFFF"));
+            res["Brush.LiquidGlass.BorderSelected"] = new SolidColorBrush(Color.Parse(WithAlpha(def.AccentPrimary, def.IsLight ? "80" : "70")));
+            res["Brush.LiquidGlass.InnerHighlight"] = new SolidColorBrush(def.IsLight ? Color.Parse("#80FFFFFF") : Color.Parse("#30FFFFFF"));
+            res["Brush.LiquidGlass.Glow"] = new SolidColorBrush(Color.Parse(WithAlpha(def.AccentPrimary, "20")));
+            res["Brush.LiquidGlass.ActiveIndicator"] = new SolidColorBrush(Color.Parse(def.AccentPrimary));
+            res["Brush.LiquidGlass.PillBackground"] = new SolidColorBrush(def.IsLight ? Color.Parse("#25E1EDF8") : Color.Parse("#1E061224"));
+            res["Brush.LiquidGlass.PillBorder"] = new SolidColorBrush(def.IsLight ? Color.Parse("#30CBD5E1") : Color.Parse("#28284568"));
+
             // 2. Borders & Dividers
             res["Brush.Border"] = new SolidColorBrush(Color.Parse(def.Border));
             res["Brush.BorderSubtle"] = new SolidColorBrush(Color.Parse(def.BorderSubtle));
@@ -763,5 +778,13 @@ public class ThemeService : IThemeService
                 new(Color.Parse(endHex), 1)
             }
         };
+    }
+
+    private static string WithAlpha(string hexColor, string alphaHex)
+    {
+        var hex = hexColor.TrimStart('#');
+        if (hex.Length == 8) hex = hex.Substring(2);
+        if (hex.Length == 6) return $"#{alphaHex}{hex}";
+        return $"#{alphaHex}FFFFFF";
     }
 }

@@ -82,11 +82,13 @@
                         <Grid RowDefinitions="Auto,Auto,*">
                             <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="20,16">
                                 <TextBlock Grid.Column="0" Text="TOP PROCESS CONSUMERS" Classes="PanelTitle" VerticalAlignment="Center"/>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                                    <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestTotal" Classes="Ghost" Content="Total" />
-                                    <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestDownload" Classes="Ghost" Content="↓ DL" />
-                                    <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestUpload" Classes="Ghost" Content="↑ UL" />
-                                </StackPanel>
+                                <Border Grid.Column="1" Classes="SegmentContainer">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestTotal"   Classes="Segment" Classes.active="{Binding IsSortTotalActive}" Content="Total" />
+                                        <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestDownload" Classes="Segment" Classes.active="{Binding IsSortDownloadActive}" Content="↓ DL" />
+                                        <Button Command="{Binding SelectSortModeCommand}" CommandParameter="HighestUpload"   Classes="Segment" Classes.active="{Binding IsSortUploadActive}" Content="↑ UL" />
+                                    </StackPanel>
+                                </Border>
                             </Grid>
 
                             <Border Grid.Row="1" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,1" Background="{DynamicResource Brush.SurfaceHover}" Padding="16,12">

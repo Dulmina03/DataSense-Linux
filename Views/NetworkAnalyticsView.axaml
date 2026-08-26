@@ -103,12 +103,12 @@
                             <!-- Section Header -->
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Grid.Column="0" Text="USAGE TIMELINE" Classes="PanelTitle" VerticalAlignment="Center"/>
-                                <Border Grid.Column="1" Classes="StatusPill" Padding="4">
+                                <Border Grid.Column="1" Classes="SegmentContainer">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <Button Content="Today" Command="{Binding SelectPeriodCommand}" CommandParameter="Today" Classes="Ghost" />
-                                        <Button Content="7D" Command="{Binding SelectPeriodCommand}" CommandParameter="Last7Days" Classes="Ghost" />
-                                        <Button Content="30D" Command="{Binding SelectPeriodCommand}" CommandParameter="Last30Days" Classes="Ghost" />
-                                        <Button Content="Month" Command="{Binding SelectPeriodCommand}" CommandParameter="ThisMonth" Classes="Ghost" />
+                                        <Button Content="Today" Command="{Binding SelectPeriodCommand}" CommandParameter="Today" Classes="Segment" Classes.active="{Binding IsTodaySelected}" />
+                                        <Button Content="7D" Command="{Binding SelectPeriodCommand}" CommandParameter="Last7Days" Classes="Segment" Classes.active="{Binding Is7DSelected}" />
+                                        <Button Content="30D" Command="{Binding SelectPeriodCommand}" CommandParameter="Last30Days" Classes="Segment" Classes.active="{Binding Is30DSelected}" />
+                                        <Button Content="Month" Command="{Binding SelectPeriodCommand}" CommandParameter="ThisMonth" Classes="Segment" Classes.active="{Binding IsMonthSelected}" />
                                     </StackPanel>
                                 </Border>
                             </Grid>

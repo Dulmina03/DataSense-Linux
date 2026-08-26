@@ -18,37 +18,7 @@
         <Setter Property="BoxShadow" Value="0 4 20 0 #25000000" />
     </Style>
 
-    <!-- Sidebar Button (Navigation Rail Item) -->
-    <Style Selector="Button.SidebarItem">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="2,0,0,0" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
-        <Setter Property="Padding" Value="14,10" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="HorizontalContentAlignment" Value="Left" />
-        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.1" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.1" />
-                <BrushTransition Property="BorderBrush" Duration="0:0:0.1" />
-            </Transitions>
-        </Setter>
-    </Style>
-    <Style Selector="Button.SidebarItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-    </Style>
-    <Style Selector="Button.SidebarItem.active /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Brush.ActiveNavGradient}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
-        <Setter Property="BorderThickness" Value="2,0,0,0" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-    </Style>
-    <Style Selector="Button.SidebarItem.active">
-        <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
+    <!-- Sidebar Button & Navigation Items are styled with Liquid Glass in LiquidGlass.axaml -->
 
     <!-- ComboBox Base & Secondary Styling -->
     <Style Selector="ComboBox">

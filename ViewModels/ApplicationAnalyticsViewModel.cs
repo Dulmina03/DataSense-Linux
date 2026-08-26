@@ -135,6 +135,21 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
     // Period Selection
     [ObservableProperty] private AppAnalyticsPeriod _selectedPeriod = AppAnalyticsPeriod.Last7Days;
 
+    public bool IsTodaySelected => SelectedPeriod == AppAnalyticsPeriod.Today;
+    public bool Is7DSelected => SelectedPeriod == AppAnalyticsPeriod.Last7Days;
+    public bool Is30DSelected => SelectedPeriod == AppAnalyticsPeriod.Last30Days;
+    public bool IsMonthSelected => SelectedPeriod == AppAnalyticsPeriod.ThisMonth;
+    public bool IsAllSelected => SelectedPeriod == AppAnalyticsPeriod.AllTime;
+
+    partial void OnSelectedPeriodChanged(AppAnalyticsPeriod value)
+    {
+        OnPropertyChanged(nameof(IsTodaySelected));
+        OnPropertyChanged(nameof(Is7DSelected));
+        OnPropertyChanged(nameof(Is30DSelected));
+        OnPropertyChanged(nameof(IsMonthSelected));
+        OnPropertyChanged(nameof(IsAllSelected));
+    }
+
     // Summary Cards
     [ObservableProperty] private string _periodTotalDownloadedText = "—";
     [ObservableProperty] private string _periodTotalUploadedText   = "—";

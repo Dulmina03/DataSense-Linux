@@ -115,32 +115,5 @@
         <Setter Property="BorderThickness" Value="2" />
     </Style>
 
-    <!-- Segment / Period Pill Button -->
-    <Style Selector="Button.Segment">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
-        <Setter Property="Padding" Value="12,5" />
-        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.1" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.1" />
-                <BrushTransition Property="BorderBrush" Duration="0:0:0.1" />
-            </Transitions>
-        </Setter>
-    </Style>
-    <Style Selector="Button.Segment:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-    </Style>
-    <Style Selector="Button.Segment.active /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-    </Style>
+    <!-- Segment / Period Pill Buttons are styled with Liquid Glass in LiquidGlass.axaml -->
 </Styles>
