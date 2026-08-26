@@ -19,6 +19,16 @@ public interface IApplicationChartColorProvider
     IBrush GetColorBrushByIndex(int index);
 
     /// <summary>
+    /// Returns the session-stable Avalonia linear gradient brush assigned to the specified process/application.
+    /// </summary>
+    IBrush GetGradientBrush(string? processIdentifier);
+
+    /// <summary>
+    /// Returns the palette linear gradient brush directly by index (0..11).
+    /// </summary>
+    IBrush GetGradientBrushByIndex(int index);
+
+    /// <summary>
     /// Returns the deterministic 0-based palette index (0..11) assigned to the process.
     /// </summary>
     int GetColorIndex(string? processIdentifier);

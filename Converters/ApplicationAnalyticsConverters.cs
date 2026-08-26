@@ -113,3 +113,37 @@ public class ProcessIndexColorConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+public class ProcessIndexGradientBrushConverter : IValueConverter
+{
+    public static readonly ProcessIndexGradientBrushConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is ApplicationHistoricalProfile profile)
+        {
+            if (profile.DisplayIndex >= 0)
+                return ApplicationChartColorProvider.Instance.GetGradientBrushByIndex(profile.DisplayIndex);
+            return ApplicationChartColorProvider.Instance.GetGradientBrush(profile.ProcessName);
+        }
+        if (value is int idx)
+        {
+            return ApplicationChartColorProvider.Instance.GetGradientBrushByIndex(idx);
+        }
+        if (value is string str)
+        {
+            if (int.TryParse(str, out int parsedIdx))
+                return ApplicationChartColorProvider.Instance.GetGradientBrushByIndex(parsedIdx);
+            return ApplicationChartColorProvider.Instance.GetGradientBrush(str);
+        }
+        if (parameter != null && int.TryParse(parameter.ToString(), out int pIdx))
+        {
+            return ApplicationChartColorProvider.Instance.GetGradientBrushByIndex(pIdx);
+        }
+
+        return ApplicationChartColorProvider.Instance.GetGradientBrush(value?.ToString());
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

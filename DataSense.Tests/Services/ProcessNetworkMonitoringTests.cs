@@ -705,4 +705,23 @@ tcp   ESTAB 0      0      10.10.102.177:48164 172.217.114.4:https users:((""lang
         Assert.NotNull(geomRatio);
         Assert.IsAssignableFrom<Avalonia.Media.PathGeometry>(geomRatio);
     }
+
+    [Fact]
+    public void ProcessNetworkUsage_DataFormatting_ShowsTotalDownloadedAndUploaded()
+    {
+        var usage = new ProcessNetworkUsage
+        {
+            ProcessIdentifier = "chrome",
+            DownloadBytes = 150 * 1024 * 1024, // 150 MB
+            UploadBytes = 50 * 1024 * 1024,    // 50 MB
+            DownloadRateBytesPerSec = 5 * 1024 * 1024,
+            UploadRateBytesPerSec = 1 * 1024 * 1024
+        };
+
+        Assert.Equal(200 * 1024 * 1024, usage.TotalBytes);
+        Assert.Contains("200", usage.TotalDataText);
+        Assert.Contains("150", usage.FormattedDownloadDataText);
+        Assert.Contains("50", usage.FormattedUploadDataText);
+        Assert.Contains("Total Data:", usage.TooltipSummary);
+    }
 }

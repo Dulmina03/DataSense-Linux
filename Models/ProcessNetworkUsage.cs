@@ -78,6 +78,21 @@ public class ProcessNetworkUsage
         : ByteFormatter.FormatBytes(TotalBytes);
 
     /// <summary>
+    /// Formatted total transferred data bytes (downloaded + uploaded, e.g. "24.5 MB").
+    /// </summary>
+    public string TotalDataText => ByteFormatter.FormatBytes(TotalBytes);
+
+    /// <summary>
+    /// Formatted downloaded data bytes (e.g. "18.2 MB").
+    /// </summary>
+    public string FormattedDownloadDataText => ByteFormatter.FormatBytes(DownloadBytes);
+
+    /// <summary>
+    /// Formatted uploaded data bytes (e.g. "6.3 MB").
+    /// </summary>
+    public string FormattedUploadDataText => ByteFormatter.FormatBytes(UploadBytes);
+
+    /// <summary>
     /// Whether the process is actively communicating on the network in the current tick.
     /// </summary>
     public bool IsCurrentlyActive => IsActive && (DownloadRateBytesPerSec > 0 || UploadRateBytesPerSec > 0);
@@ -98,8 +113,10 @@ public class ProcessNetworkUsage
     public string TooltipSummary =>
         $"{EffectiveDisplayName}\n\n" +
         $"Process: {ProcessIdentifier}\n" +
-        $"Download: {DownloadRateText}\n" +
-        $"Upload: {UploadRateText}\n" +
-        $"Total: {TotalRateText}\n" +
+        $"Download Speed: {DownloadRateText}\n" +
+        $"Upload Speed: {UploadRateText}\n" +
+        $"Downloaded: {FormattedDownloadDataText}\n" +
+        $"Uploaded: {FormattedUploadDataText}\n" +
+        $"Total Data: {TotalDataText}\n" +
         $"Status: {ActivityText}";
 }

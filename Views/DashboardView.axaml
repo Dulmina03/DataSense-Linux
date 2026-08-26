@@ -358,7 +358,7 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="models:ApplicationHistoricalProfile">
-                                        <Path Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
+                                        <Path Fill="{Binding Converter={x:Static conv:ProcessIndexGradientBrushConverter.Instance}}"
                                               Stroke="{DynamicResource Brush.Surface}"
                                               StrokeThickness="1"
                                               ToolTip.Tip="{Binding TooltipSummary}">
@@ -388,7 +388,7 @@
                                 <DataTemplate DataType="models:ApplicationHistoricalProfile">
                                     <Border Padding="6,4" CornerRadius="6" Background="Transparent" ToolTip.Tip="{Binding TooltipSummary}">
                                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
-                                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Converter={x:Static conv:ProcessIndexGradientBrushConverter.Instance}}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                             <TextBlock Grid.Column="1" Text="{Binding EffectiveDisplayName}" Classes="Body" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="2" Text="{Binding TotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="BodySecondary" Margin="10,0" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="3" Text="{Binding PercentageOfTotal, StringFormat='{}{0:F1}%'}" Classes="Body" FontWeight="SemiBold" VerticalAlignment="Center" Width="44" TextAlignment="Right"/>
@@ -424,7 +424,7 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="models:ApplicationHistoricalProfile">
-                                        <Path Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}"
+                                        <Path Fill="{Binding Converter={x:Static conv:ProcessIndexGradientBrushConverter.Instance}}"
                                               Stroke="{DynamicResource Brush.Surface}"
                                               StrokeThickness="1"
                                               ToolTip.Tip="{Binding TooltipSummary}">
@@ -454,7 +454,7 @@
                                 <DataTemplate DataType="models:ApplicationHistoricalProfile">
                                     <Border Padding="6,4" CornerRadius="6" Background="Transparent" ToolTip.Tip="{Binding TooltipSummary}">
                                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
-                                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Converter={x:Static conv:ProcessIndexColorConverter.Instance}}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Converter={x:Static conv:ProcessIndexGradientBrushConverter.Instance}}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                             <TextBlock Grid.Column="1" Text="{Binding EffectiveDisplayName}" Classes="Body" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="2" Text="{Binding TotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="BodySecondary" Margin="10,0" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="3" Text="{Binding PercentageOfTotal, StringFormat='{}{0:F1}%'}" Classes="Body" FontWeight="SemiBold" VerticalAlignment="Center" Width="44" TextAlignment="Right"/>
@@ -492,7 +492,7 @@
                         <TextBlock Grid.Column="0" Text="PROCESS" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
                         <TextBlock Grid.Column="1" Text="DOWNLOAD" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
                         <TextBlock Grid.Column="2" Text="UPLOAD" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                        <TextBlock Grid.Column="3" Text="TOTAL" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        <TextBlock Grid.Column="3" Text="TOTAL DATA" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
                         <TextBlock Grid.Column="4" Text="ACTIVITY" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
                     </Grid>
                     <Border Height="1" Background="{DynamicResource Brush.Border}" Opacity="0.5"/>
@@ -538,8 +538,8 @@
                                             <TextBlock Text="{Binding UploadRateText}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
                                         </StackPanel>
 
-                                        <!-- 4. TOTAL: strong primary typography -->
-                                        <TextBlock Grid.Column="3" Text="{Binding TotalRateText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        <!-- 4. TOTAL DATA: formatted total data uploaded + downloaded -->
+                                        <TextBlock Grid.Column="3" Text="{Binding TotalDataText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
 
                                         <!-- 5. ACTIVITY: calm status badge -->
                                         <Border Grid.Column="4" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="10" Padding="8,3" HorizontalAlignment="Right" VerticalAlignment="Center" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
@@ -553,6 +553,20 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+
+                    <!-- Total Live Process Traffic Summary Footer -->
+                    <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="10" Padding="18,14" Margin="0,6,0,0" IsVisible="{Binding HasLiveProcessTraffic}">
+                        <Grid ColumnDefinitions="Auto,*,Auto,24,Auto" VerticalAlignment="Center">
+                            <TextBlock Grid.Column="0" Text="TOTAL LIVE PROCESS DATA" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding LiveTotalDownloadedText, StringFormat='{}↓ {0} Downloaded'}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Download}"/>
+                                <TextBlock Text="{Binding LiveTotalUploadedText, StringFormat='{}↑ {0} Uploaded'}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="4" Text="{Binding LiveTotalUsageText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </Border>
 

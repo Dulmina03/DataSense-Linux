@@ -77,4 +77,29 @@ public class ApplicationChartColorProviderTests
         string hex = provider.GetColorHex(otherIdentifier);
         Assert.Equal("#6E6E9B", hex);
     }
+
+    [Fact]
+    public void GetGradientBrush_ReturnsValidLinearGradientBrushWithMatchingStops()
+    {
+        var provider = new ApplicationChartColorProvider();
+
+        var g0 = provider.GetGradientBrush("chrome");
+        var g1 = provider.GetGradientBrush("spotify");
+        var gOther = provider.GetGradientBrush("other");
+
+        Assert.NotNull(g0);
+        Assert.NotNull(g1);
+        Assert.NotNull(gOther);
+
+        var lgb0 = Assert.IsAssignableFrom<Avalonia.Media.LinearGradientBrush>(g0);
+        var lgb1 = Assert.IsAssignableFrom<Avalonia.Media.LinearGradientBrush>(g1);
+        var lgbOther = Assert.IsAssignableFrom<Avalonia.Media.LinearGradientBrush>(gOther);
+
+        Assert.Equal(2, lgb0.GradientStops.Count);
+        Assert.Equal(2, lgb1.GradientStops.Count);
+        Assert.Equal(2, lgbOther.GradientStops.Count);
+
+        // Different colors have different start stops
+        Assert.NotEqual(lgb0.GradientStops[0].Color, lgb1.GradientStops[0].Color);
+    }
 }

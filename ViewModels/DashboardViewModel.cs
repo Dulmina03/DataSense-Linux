@@ -261,6 +261,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     public ObservableCollection<ApplicationHistoricalProfile> TopMonthProcesses { get; } = new();
 
     [ObservableProperty] private bool _hasLiveProcessTraffic = false;
+    [ObservableProperty] private string _liveTotalDownloadedText = "0 B";
+    [ObservableProperty] private string _liveTotalUploadedText = "0 B";
+    [ObservableProperty] private string _liveTotalUsageText = "0 B";
     [ObservableProperty] private string _downloadHeavyProcessText = "—";
     [ObservableProperty] private string _uploadHeavyProcessText = "—";
     [ObservableProperty] private string _topProcessesBaselineText = "Collecting process usage baseline...";
@@ -540,14 +543,47 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     // Live monitoring
     // ────────────────────────────────────────────────────────────────────────
 
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (long DownloadBytes, long UploadBytes, DateTime LastSeen)> _liveProcessCumulativeBytes = new(StringComparer.OrdinalIgnoreCase);
+    private DateTime _lastLiveTrafficSample = DateTime.UtcNow;
+
     private void OnLiveTrafficUpdated(IEnumerable<ProcessNetworkUsage> currentBatch)
     {
+        var now = DateTime.UtcNow;
+        double elapsedSec = Math.Max(0.5, Math.Min(5.0, (now - _lastLiveTrafficSample).TotalSeconds));
+        _lastLiveTrafficSample = now;
+
         // Aggregate socket/PID-level measurements into process-level entries
-        var active = currentBatch
+        var processGroups = currentBatch
             .GroupBy(p => p.ProcessIdentifier.Trim().ToLowerInvariant())
+            .ToList();
+
+        foreach (var g in processGroups)
+        {
+            string key = g.Key;
+            double dlRate = g.Sum(x => x.DownloadRateBytesPerSec);
+            double ulRate = g.Sum(x => x.UploadRateBytesPerSec);
+            long rawDl = g.Sum(x => x.DownloadBytes);
+            long rawUl = g.Sum(x => x.UploadBytes);
+
+            long dlDelta = rawDl > 0 ? rawDl : (long)(dlRate * elapsedSec);
+            long ulDelta = rawUl > 0 ? rawUl : (long)(ulRate * elapsedSec);
+
+            _liveProcessCumulativeBytes.AddOrUpdate(
+                key,
+                _ => (Math.Max(rawDl, dlDelta), Math.Max(rawUl, ulDelta), now),
+                (_, prev) => (prev.DownloadBytes + dlDelta, prev.UploadBytes + ulDelta, now));
+        }
+
+        var active = processGroups
             .Select(g =>
             {
                 var first = g.First();
+                string key = g.Key;
+                _liveProcessCumulativeBytes.TryGetValue(key, out var cumulative);
+
+                long dlBytes = Math.Max(g.Sum(x => x.DownloadBytes), cumulative.DownloadBytes);
+                long ulBytes = Math.Max(g.Sum(x => x.UploadBytes), cumulative.UploadBytes);
+
                 return new ProcessNetworkUsage
                 {
                     ProcessIdentifier = first.ProcessIdentifier,
@@ -556,8 +592,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                     User = first.User,
                     DownloadRateBytesPerSec = g.Sum(x => x.DownloadRateBytesPerSec),
                     UploadRateBytesPerSec = g.Sum(x => x.UploadRateBytesPerSec),
-                    DownloadBytes = g.Sum(x => x.DownloadBytes),
-                    UploadBytes = g.Sum(x => x.UploadBytes),
+                    DownloadBytes = dlBytes,
+                    UploadBytes = ulBytes,
                     Timestamp = g.Max(x => x.Timestamp),
                     DataSource = first.DataSource,
                     ProcessIdentityKey = first.ProcessIdentityKey,
@@ -566,20 +602,25 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 };
             })
             .Where(p => p.DownloadRateBytesPerSec > 0 || p.UploadRateBytesPerSec > 0 || p.DownloadBytes > 0 || p.UploadBytes > 0)
-            .OrderByDescending(p => (p.DownloadRateBytesPerSec + p.UploadRateBytesPerSec) > 0 
-                ? (p.DownloadRateBytesPerSec + p.UploadRateBytesPerSec) 
-                : (double)(p.DownloadBytes + p.UploadBytes))
+            .OrderByDescending(p => p.TotalBytes > 0 ? p.TotalBytes : (long)(p.TotalRateBytesPerSec * 10))
             .Take(10)
             .ToList();
 
         Dispatcher.UIThread.Post(() =>
         {
             LiveProcessTraffic.Clear();
+            long totalDl = 0;
+            long totalUl = 0;
             foreach (var process in active)
             {
                 LiveProcessTraffic.Add(process);
+                totalDl += process.DownloadBytes;
+                totalUl += process.UploadBytes;
             }
             HasLiveProcessTraffic = LiveProcessTraffic.Count > 0;
+            LiveTotalDownloadedText = ByteFormatter.FormatBytes(totalDl);
+            LiveTotalUploadedText = ByteFormatter.FormatBytes(totalUl);
+            LiveTotalUsageText = ByteFormatter.FormatBytes(totalDl + totalUl);
 
             if (LiveProcessTraffic.Count > 0 && (!HasTopProcesses || TopProcesses.Count == 0 || TopProcesses.All(p => p.DataSource == "Live Telemetry")))
             {

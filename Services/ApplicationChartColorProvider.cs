@@ -64,7 +64,55 @@ public class ApplicationChartColorProvider : IApplicationChartColorProvider
         new SolidColorBrush(Color.Parse("#00E5FF"))
     };
 
+    private static readonly (string Start, string End)[] GradientPairs = new[]
+    {
+        ("#22F6FF", "#0088CC"), // 0: Electric Cyan
+        ("#4ADE80", "#059669"), // 1: Emerald
+        ("#FCD34D", "#D97706"), // 2: Amber
+        ("#FF3399", "#BE123C"), // 3: Hot Pink
+        ("#C084FC", "#6D28D9"), // 4: Violet
+        ("#60A5FA", "#1D4ED8"), // 5: Sky Blue
+        ("#A5B4FC", "#4338CA"), // 6: Indigo
+        ("#2DD4BF", "#0F766E"), // 7: Teal
+        ("#E879F9", "#9333EA"), // 8: Magenta
+        ("#A78BFA", "#5B21B6"), // 9: Purple
+        ("#FDA4AF", "#BE123C"), // 10: Rose
+        ("#38BDF8", "#0284C7")  // 11: Turquoise
+    };
+
+    private static readonly IBrush[] StaticPaletteGradients = CreatePaletteGradients();
+
+    private static IBrush[] CreatePaletteGradients()
+    {
+        var list = new IBrush[GradientPairs.Length];
+        for (int i = 0; i < GradientPairs.Length; i++)
+        {
+            list[i] = new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                GradientStops = new GradientStops
+                {
+                    new GradientStop(Color.Parse(GradientPairs[i].Start), 0.0),
+                    new GradientStop(Color.Parse(GradientPairs[i].End), 1.0)
+                }
+            };
+        }
+        return list;
+    }
+
     private static readonly IBrush OtherBrush = new SolidColorBrush(Color.Parse("#6E6E9B"));
+
+    private static readonly IBrush OtherGradient = new LinearGradientBrush
+    {
+        StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+        EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+        GradientStops = new GradientStops
+        {
+            new GradientStop(Color.Parse("#8E8EB8"), 0.0),
+            new GradientStop(Color.Parse("#4E4E78"), 1.0)
+        }
+    };
 
     // Signature presets for known common applications to guarantee beautiful initial layouts
     private static readonly Dictionary<string, int> KnownPresets = new(StringComparer.OrdinalIgnoreCase)
@@ -164,6 +212,22 @@ public class ApplicationChartColorProvider : IApplicationChartColorProvider
         }
 
         return StaticPaletteBrushes[index % StaticPaletteBrushes.Length];
+    }
+
+    public IBrush GetGradientBrush(string? processIdentifier)
+    {
+        int index = GetColorIndex(processIdentifier);
+        return GetGradientBrushByIndex(index);
+    }
+
+    public IBrush GetGradientBrushByIndex(int index)
+    {
+        if (index < 0)
+        {
+            return OtherGradient;
+        }
+
+        return StaticPaletteGradients[index % StaticPaletteGradients.Length];
     }
 
     public string GetColorHex(string? processIdentifier)
