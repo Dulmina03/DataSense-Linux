@@ -98,7 +98,7 @@
                 <StackPanel Spacing="{DynamicResource Spacing.XXL}">
 
                     <!-- PERIOD & CHART SECTION -->
-                    <Border Classes="AnalyticsSurface">
+                    <Border Classes="AnalyticsSurface LiquidWaterCard">
                         <StackPanel Spacing="{DynamicResource Spacing.LG}">
                             <!-- Section Header -->
                             <Grid ColumnDefinitions="*,Auto">

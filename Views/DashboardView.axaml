@@ -165,7 +165,7 @@
             </Border>
 
             <!-- ── 4. PREMIUM LIVE NETWORK THROUGHPUT GRAPH (60-SECOND ROLLING WINDOW) ─────── -->
-            <Border Classes="AnalyticsSurface" Padding="20" IsVisible="{Binding ShowLiveThroughputGraph}">
+            <Border Classes="AnalyticsSurface LiquidWaterCard" Padding="20" IsVisible="{Binding ShowLiveThroughputGraph}">
                 <StackPanel Spacing="16">
                     <!-- Header with Title, Subtitle, and Live Speed Readouts -->
                     <Grid ColumnDefinitions="*,Auto">
@@ -335,7 +335,7 @@
             <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding ShowTopConsumers}">
 
                 <!-- LEFT: Today's Process Network Traffic Donut Panel -->
-                <Border Grid.Column="0" Classes="AnalyticsSurface" Padding="20">
+                <Border Grid.Column="0" Classes="AnalyticsSurface LiquidWaterCard" Padding="20">
                     <StackPanel Spacing="16">
                         <TextBlock Text="Today's Process Network Traffic" Classes="PanelTitle"/>
 
@@ -401,7 +401,7 @@
                 </Border>
 
                 <!-- RIGHT: This Month's Process Network Traffic Donut Ring Panel -->
-                <Border Grid.Column="2" Classes="AnalyticsSurface" Padding="20">
+                <Border Grid.Column="2" Classes="AnalyticsSurface LiquidWaterCard" Padding="20">
                     <StackPanel Spacing="16">
                         <TextBlock Text="This Month's Process Network Traffic" Classes="PanelTitle"/>
 
@@ -469,7 +469,7 @@
             </Grid>
 
             <!-- ── 6. PREMIUM LIVE PROCESS TRAFFIC TABLE ─────────────────────────────────── -->
-            <Border Classes="AnalyticsSurface" Padding="20" IsVisible="{Binding ShowLiveProcessTraffic}">
+            <Border Classes="AnalyticsSurface LiquidWaterCard" Padding="20" IsVisible="{Binding ShowLiveProcessTraffic}">
                 <StackPanel Spacing="16">
                     <!-- Header with Title, Subtitle, and Live Badge -->
                     <Grid ColumnDefinitions="*,Auto">

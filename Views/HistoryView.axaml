@@ -168,7 +168,7 @@
             </StackPanel>
 
             <!-- ── 4. CHART #1: SELECTED PERIOD NETWORK USAGE (LARGE GROUPED BAR CHART) ──── -->
-            <Border Classes="AnalyticsSurface" Padding="24">
+            <Border Classes="AnalyticsSurface LiquidWaterCard" Padding="24">
                 <StackPanel Spacing="20">
                     <!-- Header with Title, Subtitle, and Legend Badges -->
                     <Grid ColumnDefinitions="*,Auto">
@@ -326,7 +326,7 @@
             </Border>
 
             <!-- ── 5. CHART #2: MONTHLY USAGE BREAKDOWN (12 CALENDAR MONTHS) ─────────────── -->
-            <Border Classes="AnalyticsSurface" Padding="24">
+            <Border Classes="AnalyticsSurface LiquidWaterCard" Padding="24">
                 <StackPanel Spacing="20">
                     <!-- Header with Title, Subtitle, and Legend Badges -->
                     <Grid ColumnDefinitions="*,Auto">
@@ -466,7 +466,7 @@
             </Border>
 
             <!-- ── 6. APPLICATION USAGE BREAKDOWN ────────────────────────────────────────── -->
-            <Border Classes="AnalyticsSurface" Padding="24">
+            <Border Classes="AnalyticsSurface LiquidWaterCard" Padding="24">
                 <StackPanel Spacing="20">
                     <!-- Header with Title, Subtitle, and App Count Badge -->
                     <Grid ColumnDefinitions="*,Auto">
@@ -610,7 +610,7 @@
             </Border>
 
             <!-- ── 7. NETWORK USAGE ────────────────────────────────────────────────────────── -->
-            <Border Classes="AnalyticsSurface" Padding="24">
+            <Border Classes="AnalyticsSurface LiquidWaterCard" Padding="24">
                 <StackPanel Spacing="20">
                     <!-- Header with Title, Subtitle, and Period Badge -->
                     <Grid ColumnDefinitions="*,Auto">

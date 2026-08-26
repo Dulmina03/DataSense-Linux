@@ -35,6 +35,8 @@
     <SolidColorBrush x:Key="Brush.LiquidGlass.CardSurfaceElevated" Color="#18FFFFFF"/>
     <SolidColorBrush x:Key="Brush.LiquidGlass.CardSurfaceSecondary" Color="#0AFFFFFF"/>
     <SolidColorBrush x:Key="Brush.LiquidGlass.CardSurfaceSection" Color="#04FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.CardSurfaceWater" Color="#20FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.LiquidGlass.CardBorderWater" Color="#32FFFFFF"/>
     <SolidColorBrush x:Key="Brush.LiquidGlass.CardBorder" Color="#10FFFFFF"/>
     <SolidColorBrush x:Key="Brush.LiquidGlass.CardBorderHover" Color="#22FFFFFF"/>
     <SolidColorBrush x:Key="Brush.LiquidGlass.PillBackground" Color="#18061224"/>

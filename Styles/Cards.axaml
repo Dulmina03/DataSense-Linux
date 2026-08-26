@@ -8,7 +8,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 2 1 7 0 #22FFFFFF, inset -1 -2 5 0 #16000000, 0 8 24 0 #26000000" />
+        <Setter Property="BoxShadow" Value="inset 2 1 6 0 #22FFFFFF, inset -2 -3 8 0 #3A000000, 0 2 4 0 #50000000, 0 8 16 0 #38000000, 0 16 34 0 #30000000" />
     </Style>
 
     <!-- Elevated Panel -->
@@ -18,7 +18,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 3 1 9 0 #2CFFFFFF, inset -2 -3 7 0 #1C000000, 0 10 28 0 #2C000000" />
+        <Setter Property="BoxShadow" Value="inset 3 1 8 0 #2AFFFFFF, inset -3 -4 9 0 #46000000, 0 2 5 0 #5A000000, 0 9 18 0 #42000000, 0 18 38 0 #38000000" />
     </Style>
 
     <!-- Hero Panel (Large central focal point) -->
@@ -28,17 +28,17 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Hero}" />
-        <Setter Property="BoxShadow" Value="inset 3 1 10 0 #30FFFFFF, inset -2 -3 8 0 #1E000000, 0 12 32 0 #30000000" />
+        <Setter Property="BoxShadow" Value="inset 3 1 9 0 #30FFFFFF, inset -4 -5 10 0 #4C000000, 0 2 6 0 #60000000, 0 10 20 0 #48000000, 0 20 42 0 #40000000" />
     </Style>
 
     <!-- Interactive Panel (Liquid Glass hover treatment) -->
     <Style Selector="Border.CardInteractive">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurface}" />
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 9 0 #14FFFFFF, 0 7 22 0 #1A000000" />
+        <Setter Property="BoxShadow" Value="inset 2 1 6 0 #1CFFFFFF, inset -2 -3 7 0 #30000000, 0 2 4 0 #40000000, 0 8 24 0 #2C000000" />
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.22" />
@@ -49,8 +49,8 @@
     </Style>
     <Style Selector="Border.CardInteractive:pointerover">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurfaceElevated}" />
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="BoxShadow" Value="inset 0 1 12 0 #20FFFFFF, 0 9 26 0 #20000000" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorderHover}" />
+        <Setter Property="BoxShadow" Value="inset 3 1 7 0 #28FFFFFF, inset -2 -3 8 0 #3C000000, 0 2 5 0 #50000000, 0 10 28 0 #38000000" />
     </Style>
 
     <!-- Status Cards -->
@@ -60,7 +60,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 7 0 #10FFFFFF, 0 5 16 0 #14000000" />
+        <Setter Property="BoxShadow" Value="inset 1 1 5 0 #12FFFFFF, inset -1 -2 5 0 #26000000, 0 2 4 0 #32000000, 0 7 20 0 #24000000" />
     </Style>
 
     <Style Selector="Border.CardWarning">
@@ -69,7 +69,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 7 0 #10FFFFFF, 0 5 16 0 #14000000" />
+        <Setter Property="BoxShadow" Value="inset 1 1 5 0 #12FFFFFF, inset -1 -2 5 0 #26000000, 0 2 4 0 #32000000, 0 7 20 0 #24000000" />
     </Style>
 
     <Style Selector="Border.CardDanger">
@@ -78,7 +78,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 7 0 #10FFFFFF, 0 5 16 0 #14000000" />
+        <Setter Property="BoxShadow" Value="inset 1 1 5 0 #12FFFFFF, inset -1 -2 5 0 #26000000, 0 2 4 0 #32000000, 0 7 20 0 #24000000" />
     </Style>
 
     <!-- NEW: Modern Analytics Surfaces -->
@@ -97,7 +97,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
-        <Setter Property="BoxShadow" Value="inset 1 1 5 0 #14FFFFFF, 0 5 16 0 #18000000" />
+        <Setter Property="BoxShadow" Value="inset 2 1 6 0 #24FFFFFF, inset -1 -2 5 0 #1C000000, 0 2 4 0 #28000000, 0 7 20 0 #22000000" />
     </Style>
 
     <Style Selector="Border.AnalyticsSurface">
@@ -106,7 +106,20 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Large}" />
-        <Setter Property="BoxShadow" Value="inset 1 1 6 0 #16FFFFFF, 0 6 20 0 #18000000" />
+        <Setter Property="BoxShadow" Value="inset 2 1 7 0 #20FFFFFF, inset -1 -2 5 0 #18000000, 0 2 4 0 #24000000, 0 8 24 0 #20000000" />
+    </Style>
+
+    <!-- Large chart/data panel with deeper rounded water-drop depth. -->
+    <Style Selector="Border.LiquidWaterCard">
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurfaceWater}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorderWater}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
+        <Setter Property="BoxShadow" Value="inset 3 1 8 0 #28FFFFFF, inset -3 -4 9 0 #42000000, 0 2 6 0 #50000000, 0 10 22 0 #38000000, 0 20 38 0 #28000000" />
+    </Style>
+    <Style Selector="Border.LiquidWaterCard:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorderHover}" />
+        <Setter Property="BoxShadow" Value="inset 4 1 10 0 #32FFFFFF, inset -3 -4 10 0 #48000000, 0 2 7 0 #58000000, 0 12 26 0 #40000000, 0 22 42 0 #30000000" />
     </Style>
 
     <!-- Status Pills and Indicators -->
@@ -147,7 +160,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
         <Setter Property="Padding" Value="12,8" />
-        <Setter Property="BoxShadow" Value="inset 1 1 5 0 #14FFFFFF, inset -1 -2 4 0 #10000000, 0 4 14 0 #18000000" />
+        <Setter Property="BoxShadow" Value="inset 1 1 5 0 #18FFFFFF, inset -1 -2 4 0 #24000000, 0 2 4 0 #38000000, 0 6 18 0 #28000000" />
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.18" />
@@ -169,7 +182,7 @@
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
         <Setter Property="Padding" Value="12,10" />
         <Setter Property="Margin" Value="0,0,0,8" />
-        <Setter Property="BoxShadow" Value="inset 1 1 6 0 #16FFFFFF, inset -1 -2 4 0 #10000000, 0 5 16 0 #18000000" />
+        <Setter Property="BoxShadow" Value="inset 1 1 6 0 #1CFFFFFF, inset -2 -3 6 0 #30000000, 0 2 5 0 #40000000, 0 8 22 0 #30000000" />
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.18" />

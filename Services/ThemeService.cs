@@ -655,8 +655,10 @@ public class ThemeService : IThemeService
             res["Brush.LiquidGlass.CardSurfaceElevated"] = CreateGlassCardBrush(def, GetGlassAlpha(def, GlassLevel.Elevated));
             res["Brush.LiquidGlass.CardSurfaceSecondary"] = CreateGlassCardBrush(def, GetGlassAlpha(def, GlassLevel.Secondary));
             res["Brush.LiquidGlass.CardSurfaceSection"] = CreateGlassCardBrush(def, GetGlassAlpha(def, GlassLevel.Section));
-            res["Brush.LiquidGlass.CardBorder"] = new SolidColorBrush(Color.Parse(def.IsLight ? "#2494A3B8" : "#18FFFFFF"));
-            res["Brush.LiquidGlass.CardBorderHover"] = new SolidColorBrush(Color.Parse(def.IsLight ? "#4094A3B8" : "#35FFFFFF"));
+            res["Brush.LiquidGlass.CardSurfaceWater"] = CreateGlassCardBrush(def, GetGlassAlpha(def, GlassLevel.Water));
+            res["Brush.LiquidGlass.CardBorder"] = new SolidColorBrush(Color.Parse(def.IsLight ? "#3A94A3B8" : "#2AFFFFFF"));
+            res["Brush.LiquidGlass.CardBorderHover"] = new SolidColorBrush(Color.Parse(def.IsLight ? "#5894A3B8" : "#40FFFFFF"));
+            res["Brush.LiquidGlass.CardBorderWater"] = new SolidColorBrush(Color.Parse(def.IsLight ? "#4894A3B8" : "#32FFFFFF"));
             res["Brush.LiquidGlass.PillBackground"] = new SolidColorBrush(def.IsLight ? Color.Parse("#30EDF4FB") : Color.Parse("#1A061224"));
             res["Brush.LiquidGlass.PillBorder"] = new SolidColorBrush(def.IsLight ? Color.Parse("#40CBD5E1") : Color.Parse("#30284568"));
 
@@ -785,7 +787,8 @@ public class ThemeService : IThemeService
         Section,
         Primary,
         Elevated,
-        Secondary
+        Secondary,
+        Water
     }
 
     private static byte GetGlassAlpha(ThemeDefinition definition, GlassLevel level)
@@ -797,6 +800,7 @@ public class ThemeService : IThemeService
                 GlassLevel.Section => 8,
                 GlassLevel.Secondary => 16,
                 GlassLevel.Primary => 24,
+                GlassLevel.Water => 30,
                 _ => 32
             };
         }
@@ -813,9 +817,10 @@ public class ThemeService : IThemeService
         var baseAlpha = level switch
         {
             GlassLevel.Section => 5,
-            GlassLevel.Secondary => 10,
-            GlassLevel.Primary => 18,
-            _ => 24
+            GlassLevel.Secondary => 13,
+            GlassLevel.Primary => 23,
+            GlassLevel.Water => 30,
+            _ => 30
         };
         return (byte)Math.Clamp(baseAlpha + themeAdjustment, 2, 255);
     }
