@@ -161,10 +161,45 @@ public partial class LiveMonitoringViewModel : ViewModelBase, IDisposable
                 ChartSamples.Clear();
                 foreach (var s in samples) ChartSamples.Add(s);
 
-                // 3. Refresh Ranked Processes
+                // 3. Refresh Ranked Processes (in-place synchronization to prevent hover flickering)
                 var ranked = _engine.GetRankedProcesses(SelectedSortMode, SelectedRankCount);
-                RankedProcesses.Clear();
-                foreach (var r in ranked) RankedProcesses.Add(r);
+                var targetRankKeys = ranked.Select(r => $"{r.Pid}:{r.ProcessName}").ToHashSet();
+                for (int i = RankedProcesses.Count - 1; i >= 0; i--)
+                {
+                    var key = $"{RankedProcesses[i].Pid}:{RankedProcesses[i].ProcessName}";
+                    if (!targetRankKeys.Contains(key))
+                    {
+                        RankedProcesses.RemoveAt(i);
+                    }
+                }
+
+                for (int i = 0; i < ranked.Count; i++)
+                {
+                    var item = ranked[i];
+                    var key = $"{item.Pid}:{item.ProcessName}";
+                    int existingIndex = -1;
+                    for (int j = 0; j < RankedProcesses.Count; j++)
+                    {
+                        if ($"{RankedProcesses[j].Pid}:{RankedProcesses[j].ProcessName}".Equals(key, StringComparison.OrdinalIgnoreCase))
+                        {
+                            existingIndex = j;
+                            break;
+                        }
+                    }
+
+                    if (existingIndex >= 0)
+                    {
+                        RankedProcesses[existingIndex].UpdateFrom(item);
+                        if (existingIndex != i && i < RankedProcesses.Count)
+                        {
+                            RankedProcesses.Move(existingIndex, i);
+                        }
+                    }
+                    else
+                    {
+                        RankedProcesses.Insert(Math.Min(i, RankedProcesses.Count), item);
+                    }
+                }
 
                 // Default selection if none
                 if (SelectedProcess == null && RankedProcesses.Count > 0)

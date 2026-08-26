@@ -32,7 +32,7 @@ public class MonthSelectItem
     public override string ToString() => DisplayName;
 }
 
-public class HistoricalSessionViewModel
+public class HistoricalSessionViewModel : ObservableObject
 {
     public long Id { get; init; }
     public string NetworkName { get; init; } = string.Empty;
@@ -40,8 +40,41 @@ public class HistoricalSessionViewModel
     public string ConnectionType { get; init; } = string.Empty;
     public DateTime StartTime { get; init; }
     public DateTime? EndTime { get; init; }
-    public long BytesDownloaded { get; init; }
-    public long BytesUploaded { get; init; }
+
+    private long _bytesDownloaded;
+    public long BytesDownloaded
+    {
+        get => _bytesDownloaded;
+        set
+        {
+            if (SetProperty(ref _bytesDownloaded, value))
+            {
+                OnPropertyChanged(nameof(TotalBytes));
+                OnPropertyChanged(nameof(DownloadedText));
+                OnPropertyChanged(nameof(TotalText));
+                OnPropertyChanged(nameof(DownloadRatio));
+                OnPropertyChanged(nameof(UploadRatio));
+            }
+        }
+    }
+
+    private long _bytesUploaded;
+    public long BytesUploaded
+    {
+        get => _bytesUploaded;
+        set
+        {
+            if (SetProperty(ref _bytesUploaded, value))
+            {
+                OnPropertyChanged(nameof(TotalBytes));
+                OnPropertyChanged(nameof(UploadedText));
+                OnPropertyChanged(nameof(TotalText));
+                OnPropertyChanged(nameof(DownloadRatio));
+                OnPropertyChanged(nameof(UploadRatio));
+            }
+        }
+    }
+
     public long TotalBytes => BytesDownloaded + BytesUploaded;
     public string DownloadedText => ByteFormatter.FormatBytes(BytesDownloaded);
     public string UploadedText => ByteFormatter.FormatBytes(BytesUploaded);
@@ -49,13 +82,27 @@ public class HistoricalSessionViewModel
     public string SubtitleText => !string.IsNullOrWhiteSpace(ConnectionType) ? ConnectionType : (!string.IsNullOrWhiteSpace(InterfaceName) ? InterfaceName : "Network Session");
     public string DisplayName => !string.IsNullOrWhiteSpace(NetworkName) ? NetworkName : (!string.IsNullOrWhiteSpace(InterfaceName) ? InterfaceName : "Network Session");
     public bool IsActive => !EndTime.HasValue;
-    public int DisplayIndex { get; set; }
+
+    private int _displayIndex;
+    public int DisplayIndex { get => _displayIndex; set => SetProperty(ref _displayIndex, value); }
+
     public double DownloadRatio => TotalBytes > 0 ? (double)BytesDownloaded / TotalBytes * 100.0 : 0.0;
     public double UploadRatio => TotalBytes > 0 ? (double)BytesUploaded / TotalBytes * 100.0 : 0.0;
-    public double RelativeUsagePercent { get; set; } = 100.0;
+
+    private double _relativeUsagePercent = 100.0;
+    public double RelativeUsagePercent { get => _relativeUsagePercent; set => SetProperty(ref _relativeUsagePercent, value); }
+
     public string TimeRangeText => EndTime.HasValue
         ? $"{StartTime:HH:mm} — {EndTime.Value:HH:mm}"
         : $"{StartTime:HH:mm} — Live";
+
+    public void UpdateFrom(HistoricalSessionViewModel other)
+    {
+        BytesDownloaded = other.BytesDownloaded;
+        BytesUploaded = other.BytesUploaded;
+        DisplayIndex = other.DisplayIndex;
+        RelativeUsagePercent = other.RelativeUsagePercent;
+    }
 }
 
 public class NetworkUsageItemViewModel
@@ -1262,7 +1309,6 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     private void ApplyFilters()
     {
         // 1. Filter Network Sessions
-        FilteredNetworkSessions.Clear();
         var sessionQuery = NetworkSessions.AsEnumerable();
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
@@ -1272,14 +1318,49 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 s.SubtitleText.Contains(query, StringComparison.OrdinalIgnoreCase));
         }
 
-        foreach (var s in sessionQuery)
-            FilteredNetworkSessions.Add(s);
+        var sessionList = sessionQuery.ToList();
+        var targetSessionKeys = sessionList.Select(s => s.DisplayName + "|" + s.SubtitleText).ToHashSet();
+        for (int i = FilteredNetworkSessions.Count - 1; i >= 0; i--)
+        {
+            var key = FilteredNetworkSessions[i].DisplayName + "|" + FilteredNetworkSessions[i].SubtitleText;
+            if (!targetSessionKeys.Contains(key))
+            {
+                FilteredNetworkSessions.RemoveAt(i);
+            }
+        }
+
+        for (int i = 0; i < sessionList.Count; i++)
+        {
+            var item = sessionList[i];
+            var key = item.DisplayName + "|" + item.SubtitleText;
+            int existingIndex = -1;
+            for (int j = 0; j < FilteredNetworkSessions.Count; j++)
+            {
+                if ((FilteredNetworkSessions[j].DisplayName + "|" + FilteredNetworkSessions[j].SubtitleText).Equals(key, StringComparison.OrdinalIgnoreCase))
+                {
+                    existingIndex = j;
+                    break;
+                }
+            }
+
+            if (existingIndex >= 0)
+            {
+                FilteredNetworkSessions[existingIndex].UpdateFrom(item);
+                if (existingIndex != i && i < FilteredNetworkSessions.Count)
+                {
+                    FilteredNetworkSessions.Move(existingIndex, i);
+                }
+            }
+            else
+            {
+                FilteredNetworkSessions.Insert(Math.Min(i, FilteredNetworkSessions.Count), item);
+            }
+        }
 
         HasNetworkUsage = NetworkUsageItems.Count > 0;
         HasNetworkSessions = HasNetworkUsage;
 
         // 2. Filter & Sort Applications
-        FilteredApplications.Clear();
         var appQuery = Applications.AsEnumerable();
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
@@ -1301,7 +1382,45 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         for (int i = 0; i < appList.Count; i++)
         {
             appList[i].DisplayIndex = i;
-            FilteredApplications.Add(appList[i]);
+        }
+
+        // In-place collection synchronization to keep visual elements stable and prevent hover flickering
+        var targetAppNames = appList.Select(a => a.ProcessName.Trim().ToLowerInvariant()).ToHashSet();
+        for (int i = FilteredApplications.Count - 1; i >= 0; i--)
+        {
+            var name = FilteredApplications[i].ProcessName.Trim().ToLowerInvariant();
+            if (!targetAppNames.Contains(name))
+            {
+                FilteredApplications.RemoveAt(i);
+            }
+        }
+
+        for (int i = 0; i < appList.Count; i++)
+        {
+            var item = appList[i];
+            var name = item.ProcessName.Trim().ToLowerInvariant();
+            int existingIndex = -1;
+            for (int j = 0; j < FilteredApplications.Count; j++)
+            {
+                if (FilteredApplications[j].ProcessName.Trim().Equals(name, StringComparison.OrdinalIgnoreCase))
+                {
+                    existingIndex = j;
+                    break;
+                }
+            }
+
+            if (existingIndex >= 0)
+            {
+                FilteredApplications[existingIndex].UpdateFrom(item);
+                if (existingIndex != i && i < FilteredApplications.Count)
+                {
+                    FilteredApplications.Move(existingIndex, i);
+                }
+            }
+            else
+            {
+                FilteredApplications.Insert(Math.Min(i, FilteredApplications.Count), item);
+            }
         }
 
         HasApplications = FilteredApplications.Count > 0;

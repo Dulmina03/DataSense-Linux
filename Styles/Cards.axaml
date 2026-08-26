@@ -137,7 +137,7 @@
         <Setter Property="BorderThickness" Value="0" />
     </Style>
 
-    <!-- Process Analytics Table Row -->
+    <!-- Process Analytics Table Row (Live Process Traffic) -->
     <Style Selector="Border.ProcessRow">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -146,11 +146,31 @@
         <Setter Property="Padding" Value="12,8" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="Background" Duration="0:0:0.1" />
             </Transitions>
         </Setter>
     </Style>
     <Style Selector="Border.ProcessRow:pointerover">
         <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+    </Style>
+
+    <!-- Application Historical Profile Row (Usage Breakdown) -->
+    <Style Selector="Border.AppRow">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
+        <Setter Property="Padding" Value="14,12" />
+        <Setter Property="Margin" Value="0,0,0,10" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.1" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.1" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.AppRow:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
     </Style>
 </Styles>

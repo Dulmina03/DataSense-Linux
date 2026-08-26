@@ -1,5 +1,6 @@
 using System;
 using Avalonia.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
 using DataSense.Helpers;
 
 namespace DataSense.Models;
@@ -7,109 +8,160 @@ namespace DataSense.Models;
 /// <summary>
 /// A snapshot of per-process network usage emitted by the process monitoring backend.
 /// Contains both instantaneous rates (B/s) and integrated byte counts over sample intervals.
+/// Implements ObservableObject so in-place telemetry updates don't recreate UI visual rows.
 /// </summary>
-public class ProcessNetworkUsage
+public class ProcessNetworkUsage : ObservableObject
 {
-    public string ProcessIdentifier { get; init; } = string.Empty; // e.g. "chrome", "code"
-    public string ExecutablePath { get; init; } = string.Empty;
-    public int Pid { get; init; }
-    public string User { get; init; } = "unknown";
+    private string _processIdentifier = string.Empty;
+    public string ProcessIdentifier { get => _processIdentifier; init => _processIdentifier = value; }
 
-    // Instantaneous rates in bytes per second
-    public double DownloadRateBytesPerSec { get; init; }
-    public double UploadRateBytesPerSec { get; init; }
+    private string _executablePath = string.Empty;
+    public string ExecutablePath { get => _executablePath; init => _executablePath = value; }
 
-    // Integrated byte counts for the sample window
-    public long DownloadBytes { get; init; }
-    public long UploadBytes { get; init; }
+    private int _pid;
+    public int Pid { get => _pid; init => _pid = value; }
+
+    private string _user = "unknown";
+    public string User { get => _user; init => _user = value; }
+
+    private double _downloadRateBytesPerSec;
+    public double DownloadRateBytesPerSec
+    {
+        get => _downloadRateBytesPerSec;
+        set
+        {
+            if (SetProperty(ref _downloadRateBytesPerSec, value))
+            {
+                OnPropertyChanged(nameof(DownloadRateText));
+                OnPropertyChanged(nameof(TotalRateBytesPerSec));
+                OnPropertyChanged(nameof(TotalRateText));
+                OnPropertyChanged(nameof(IsCurrentlyActive));
+                OnPropertyChanged(nameof(ActivityText));
+                OnPropertyChanged(nameof(ActivityColor));
+            }
+        }
+    }
+
+    private double _uploadRateBytesPerSec;
+    public double UploadRateBytesPerSec
+    {
+        get => _uploadRateBytesPerSec;
+        set
+        {
+            if (SetProperty(ref _uploadRateBytesPerSec, value))
+            {
+                OnPropertyChanged(nameof(UploadRateText));
+                OnPropertyChanged(nameof(TotalRateBytesPerSec));
+                OnPropertyChanged(nameof(TotalRateText));
+                OnPropertyChanged(nameof(IsCurrentlyActive));
+                OnPropertyChanged(nameof(ActivityText));
+                OnPropertyChanged(nameof(ActivityColor));
+            }
+        }
+    }
+
+    private long _downloadBytes;
+    public long DownloadBytes
+    {
+        get => _downloadBytes;
+        set
+        {
+            if (SetProperty(ref _downloadBytes, value))
+            {
+                OnPropertyChanged(nameof(TotalBytes));
+                OnPropertyChanged(nameof(TotalDataText));
+                OnPropertyChanged(nameof(TotalRateText));
+                OnPropertyChanged(nameof(FormattedDownloadDataText));
+            }
+        }
+    }
+
+    private long _uploadBytes;
+    public long UploadBytes
+    {
+        get => _uploadBytes;
+        set
+        {
+            if (SetProperty(ref _uploadBytes, value))
+            {
+                OnPropertyChanged(nameof(TotalBytes));
+                OnPropertyChanged(nameof(TotalDataText));
+                OnPropertyChanged(nameof(TotalRateText));
+                OnPropertyChanged(nameof(FormattedUploadDataText));
+            }
+        }
+    }
+
     public long TotalBytes => DownloadBytes + UploadBytes;
-
     public double TotalRateBytesPerSec => DownloadRateBytesPerSec + UploadRateBytesPerSec;
 
-    public DateTime Timestamp { get; init; } = DateTime.UtcNow;
+    private DateTime _timestamp = DateTime.UtcNow;
+    public DateTime Timestamp { get => _timestamp; set => SetProperty(ref _timestamp, value); }
+
     public DateTime? FirstSeen { get; init; }
     public DateTime? LastSeen { get; init; }
-    public bool IsActive { get; init; } = true;
-    public string DataSource { get; init; } = "Nethogs";
 
-    /// <summary>
-    /// Composite key combining PID and start time ticks to distinguish PID reuse.
-    /// </summary>
+    private bool _isActive = true;
+    public bool IsActive
+    {
+        get => _isActive;
+        set
+        {
+            if (SetProperty(ref _isActive, value))
+            {
+                OnPropertyChanged(nameof(IsCurrentlyActive));
+                OnPropertyChanged(nameof(ActivityText));
+                OnPropertyChanged(nameof(ActivityColor));
+            }
+        }
+    }
+
+    public string DataSource { get; init; } = "Nethogs";
     public string ProcessIdentityKey { get; init; } = string.Empty;
 
-    /// <summary>
-    /// Resolved human-friendly application display name (e.g. "Brave Web Browser", "Visual Studio Code").
-    /// </summary>
-    public string ApplicationDisplayName { get; set; } = string.Empty;
+    private string _applicationDisplayName = string.Empty;
+    public string ApplicationDisplayName
+    {
+        get => _applicationDisplayName;
+        set
+        {
+            if (SetProperty(ref _applicationDisplayName, value))
+            {
+                OnPropertyChanged(nameof(EffectiveDisplayName));
+                OnPropertyChanged(nameof(HasDistinctProcessIdentifier));
+            }
+        }
+    }
 
-    /// <summary>
-    /// Resolved application icon from Linux desktop theme or clean generic fallback.
-    /// </summary>
-    public IImage? ApplicationIcon { get; set; }
+    private IImage? _applicationIcon;
+    public IImage? ApplicationIcon
+    {
+        get => _applicationIcon;
+        set => SetProperty(ref _applicationIcon, value);
+    }
 
-    /// <summary>
-    /// Indicates whether the display name is distinct from the raw process identifier.
-    /// </summary>
     public bool HasDistinctProcessIdentifier =>
         !string.IsNullOrWhiteSpace(ApplicationDisplayName) &&
         !string.Equals(ApplicationDisplayName, ProcessIdentifier, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>
-    /// Effective display name for UI presentation.
-    /// </summary>
     public string EffectiveDisplayName =>
         !string.IsNullOrWhiteSpace(ApplicationDisplayName) ? ApplicationDisplayName : ProcessIdentifier;
 
-    /// <summary>
-    /// Formatted download throughput string (e.g. "18.4 MB/s").
-    /// </summary>
     public string DownloadRateText => ByteFormatter.FormatSpeed(DownloadRateBytesPerSec);
-
-    /// <summary>
-    /// Formatted upload throughput string (e.g. "2.8 MB/s").
-    /// </summary>
     public string UploadRateText => ByteFormatter.FormatSpeed(UploadRateBytesPerSec);
 
-    /// <summary>
-    /// Formatted total throughput or total transfer string (e.g. "21.2 MB/s").
-    /// </summary>
     public string TotalRateText => TotalRateBytesPerSec > 0
         ? ByteFormatter.FormatSpeed(TotalRateBytesPerSec)
         : ByteFormatter.FormatBytes(TotalBytes);
 
-    /// <summary>
-    /// Formatted total transferred data bytes (downloaded + uploaded, e.g. "24.5 MB").
-    /// </summary>
     public string TotalDataText => ByteFormatter.FormatBytes(TotalBytes);
-
-    /// <summary>
-    /// Formatted downloaded data bytes (e.g. "18.2 MB").
-    /// </summary>
     public string FormattedDownloadDataText => ByteFormatter.FormatBytes(DownloadBytes);
-
-    /// <summary>
-    /// Formatted uploaded data bytes (e.g. "6.3 MB").
-    /// </summary>
     public string FormattedUploadDataText => ByteFormatter.FormatBytes(UploadBytes);
 
-    /// <summary>
-    /// Whether the process is actively communicating on the network in the current tick.
-    /// </summary>
     public bool IsCurrentlyActive => IsActive && (DownloadRateBytesPerSec > 0 || UploadRateBytesPerSec > 0);
-
-    /// <summary>
-    /// Semantic status text ("Active" or "Idle").
-    /// </summary>
     public string ActivityText => IsCurrentlyActive ? "Active" : "Idle";
-
-    /// <summary>
-    /// Semantic status color ("Success" or "Muted").
-    /// </summary>
     public string ActivityColor => IsCurrentlyActive ? "Success" : "Muted";
 
-    /// <summary>
-    /// Rich tooltip summary formatted with real process metrics.
-    /// </summary>
     public string TooltipSummary =>
         $"{EffectiveDisplayName}\n\n" +
         $"Process: {ProcessIdentifier}\n" +
@@ -119,4 +171,22 @@ public class ProcessNetworkUsage
         $"Uploaded: {FormattedUploadDataText}\n" +
         $"Total Data: {TotalDataText}\n" +
         $"Status: {ActivityText}";
+
+    public void UpdateFrom(ProcessNetworkUsage other)
+    {
+        DownloadRateBytesPerSec = other.DownloadRateBytesPerSec;
+        UploadRateBytesPerSec = other.UploadRateBytesPerSec;
+        DownloadBytes = other.DownloadBytes;
+        UploadBytes = other.UploadBytes;
+        Timestamp = other.Timestamp;
+        IsActive = other.IsActive;
+        if (!string.IsNullOrWhiteSpace(other.ApplicationDisplayName) && string.IsNullOrWhiteSpace(ApplicationDisplayName))
+        {
+            ApplicationDisplayName = other.ApplicationDisplayName;
+        }
+        if (other.ApplicationIcon != null && ApplicationIcon == null)
+        {
+            ApplicationIcon = other.ApplicationIcon;
+        }
+    }
 }

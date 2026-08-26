@@ -118,6 +118,8 @@
     <!-- Segment / Period Pill Button -->
     <Style Selector="Button.Segment">
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
         <Setter Property="Padding" Value="12,5" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
@@ -125,8 +127,9 @@
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.15" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+                <BrushTransition Property="Background" Duration="0:0:0.1" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.1" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.1" />
             </Transitions>
         </Setter>
     </Style>

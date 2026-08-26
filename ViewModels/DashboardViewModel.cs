@@ -608,15 +608,53 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
         Dispatcher.UIThread.Post(() =>
         {
-            LiveProcessTraffic.Clear();
+            // Synchronize LiveProcessTraffic collection in-place so visual elements remain stable and hover state never flickers
+            var targetKeys = active.Select(p => p.ProcessIdentifier.Trim().ToLowerInvariant()).ToHashSet();
+
+            // 1. Remove dead processes that are no longer in top active
+            for (int i = LiveProcessTraffic.Count - 1; i >= 0; i--)
+            {
+                var key = LiveProcessTraffic[i].ProcessIdentifier.Trim().ToLowerInvariant();
+                if (!targetKeys.Contains(key))
+                {
+                    LiveProcessTraffic.RemoveAt(i);
+                }
+            }
+
+            // 2. Update existing items in-place or insert new ones at matching positions
             long totalDl = 0;
             long totalUl = 0;
-            foreach (var process in active)
+            for (int i = 0; i < active.Count; i++)
             {
-                LiveProcessTraffic.Add(process);
-                totalDl += process.DownloadBytes;
-                totalUl += process.UploadBytes;
+                var item = active[i];
+                var key = item.ProcessIdentifier.Trim().ToLowerInvariant();
+                int existingIndex = -1;
+                for (int j = 0; j < LiveProcessTraffic.Count; j++)
+                {
+                    if (LiveProcessTraffic[j].ProcessIdentifier.Trim().Equals(key, StringComparison.OrdinalIgnoreCase))
+                    {
+                        existingIndex = j;
+                        break;
+                    }
+                }
+
+                if (existingIndex >= 0)
+                {
+                    LiveProcessTraffic[existingIndex].UpdateFrom(item);
+                    if (existingIndex != i && i < LiveProcessTraffic.Count)
+                    {
+                        LiveProcessTraffic.Move(existingIndex, i);
+                    }
+                }
+                else
+                {
+                    LiveProcessTraffic.Insert(Math.Min(i, LiveProcessTraffic.Count), item);
+                }
+
+                totalDl += item.DownloadBytes;
+                totalUl += item.UploadBytes;
             }
+
             HasLiveProcessTraffic = LiveProcessTraffic.Count > 0;
             LiveTotalDownloadedText = ByteFormatter.FormatBytes(totalDl);
             LiveTotalUploadedText = ByteFormatter.FormatBytes(totalUl);
@@ -658,20 +696,12 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                     p.DisplayIndex = i;
                 }
 
-                TopProcesses.Clear();
-                foreach (var p in liveGrouped)
-                {
-                    TopProcesses.Add(p);
-                }
+                SyncProfileCollection(TopProcesses, liveGrouped);
                 HasTopProcesses = TopProcesses.Count > 0;
 
                 if (!HasTopMonthProcesses || TopMonthProcesses.Count == 0 || TopMonthProcesses.All(p => p.DataSource == "Live Telemetry"))
                 {
-                    TopMonthProcesses.Clear();
-                    foreach (var p in liveGrouped)
-                    {
-                        TopMonthProcesses.Add(p);
-                    }
+                    SyncProfileCollection(TopMonthProcesses, liveGrouped);
                     HasTopMonthProcesses = TopMonthProcesses.Count > 0;
                 }
             }
@@ -1494,18 +1524,10 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
             Dispatcher.UIThread.Post(() =>
             {
-                TopProcesses.Clear();
-                foreach (var process in topProcessesList)
-                {
-                    TopProcesses.Add(process);
-                }
+                SyncProfileCollection(TopProcesses, topProcessesList);
                 HasTopProcesses = TopProcesses.Count > 0;
 
-                TopMonthProcesses.Clear();
-                foreach (var process in topMonthProcessesList)
-                {
-                    TopMonthProcesses.Add(process);
-                }
+                SyncProfileCollection(TopMonthProcesses, topMonthProcessesList);
                 HasTopMonthProcesses = TopMonthProcesses.Count > 0;
 
                 TopAppInsightText = insight;
@@ -2181,6 +2203,47 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             }
         }
         return items;
+    }
+
+    private static void SyncProfileCollection(ObservableCollection<ApplicationHistoricalProfile> target, List<ApplicationHistoricalProfile> source)
+    {
+        var targetKeys = source.Select(p => p.ProcessName.Trim().ToLowerInvariant()).ToHashSet();
+        for (int i = target.Count - 1; i >= 0; i--)
+        {
+            var key = target[i].ProcessName.Trim().ToLowerInvariant();
+            if (!targetKeys.Contains(key))
+            {
+                target.RemoveAt(i);
+            }
+        }
+
+        for (int i = 0; i < source.Count; i++)
+        {
+            var item = source[i];
+            var key = item.ProcessName.Trim().ToLowerInvariant();
+            int existingIndex = -1;
+            for (int j = 0; j < target.Count; j++)
+            {
+                if (target[j].ProcessName.Trim().Equals(key, StringComparison.OrdinalIgnoreCase))
+                {
+                    existingIndex = j;
+                    break;
+                }
+            }
+
+            if (existingIndex >= 0)
+            {
+                target[existingIndex].UpdateFrom(item);
+                if (existingIndex != i && i < target.Count)
+                {
+                    target.Move(existingIndex, i);
+                }
+            }
+            else
+            {
+                target.Insert(Math.Min(i, target.Count), item);
+            }
+        }
     }
 
     // ────────────────────────────────────────────────────────────────────────

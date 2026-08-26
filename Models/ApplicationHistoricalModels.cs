@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using CommunityToolkit.Mvvm.ComponentModel;
 using DataSense.Services;
 
 namespace DataSense.Models;
@@ -106,6 +107,11 @@ public class ApplicationTrafficBreakdown
     /// </summary>
     public double? UploadPercentage { get; set; }
 
+    /// <summary>Formatted ratio text (e.g. "82% down / 18% up"). Empty if no data.</summary>
+    public string FormattedRatio => TotalBytes > 0 && DownloadPercentage.HasValue && UploadPercentage.HasValue
+        ? $"{DownloadPercentage:F0}% ↓ / {UploadPercentage:F0}% ↑"
+        : string.Empty;
+
     /// <summary>True when DownloadBytes and UploadBytes can be distinguished.</summary>
     public bool CanDistinguishDirections => DownloadBytes >= 0 && UploadBytes >= 0 && TotalBytes > 0;
 }
@@ -144,12 +150,14 @@ public class ApplicationTrend
 /// Full historical intelligence profile for a single application identity
 /// (ProcessName + PID + StartTimeTicks).  All aggregate values are derived
 /// from real ProcessUsageRecords rows; no fabrication or estimation.
+/// Implements ObservableObject so in-place telemetry updates avoid recreating UI rows.
 /// </summary>
-public class ApplicationHistoricalProfile
+public class ApplicationHistoricalProfile : ObservableObject
 {
     // ── Identity ──────────────────────────────────────────────────────────────
 
-    public string ProcessName { get; set; } = string.Empty;
+    private string _processName = string.Empty;
+    public string ProcessName { get => _processName; set => SetProperty(ref _processName, value); }
 
     /// <summary>PID at time of capture; 0 = not available.</summary>
     public int Pid { get; set; }
@@ -167,13 +175,34 @@ public class ApplicationHistoricalProfile
     public string DataSource { get; set; } = string.Empty;
 
     /// <summary>Resolved human-friendly display name (e.g. "Brave Web Browser").</summary>
-    public string ApplicationDisplayName { get; set; } = string.Empty;
+    private string _applicationDisplayName = string.Empty;
+    public string ApplicationDisplayName
+    {
+        get => _applicationDisplayName;
+        set
+        {
+            if (SetProperty(ref _applicationDisplayName, value))
+            {
+                OnPropertyChanged(nameof(EffectiveDisplayName));
+            }
+        }
+    }
 
     /// <summary>Resolved application icon from Linux desktop theme or generic fallback.</summary>
-    public Avalonia.Media.IImage? ApplicationIcon { get; set; }
+    private Avalonia.Media.IImage? _applicationIcon;
+    public Avalonia.Media.IImage? ApplicationIcon
+    {
+        get => _applicationIcon;
+        set => SetProperty(ref _applicationIcon, value);
+    }
 
     /// <summary>Visual index in current chart display (0 to 11) for deterministic multi-color rendering.</summary>
-    public int DisplayIndex { get; set; } = -1;
+    private int _displayIndex = -1;
+    public int DisplayIndex
+    {
+        get => _displayIndex;
+        set => SetProperty(ref _displayIndex, value);
+    }
 
     /// <summary>Effective display name for UI rendering.</summary>
     public string EffectiveDisplayName =>
@@ -231,23 +260,73 @@ public class ApplicationHistoricalProfile
     // ── Download / Upload Split ───────────────────────────────────────────────
 
     /// <summary>Total download bytes across the selected profile window (AllTime).</summary>
-    public long DownloadBytes { get; set; }
+    private long _downloadBytes;
+    public long DownloadBytes
+    {
+        get => _downloadBytes;
+        set
+        {
+            if (SetProperty(ref _downloadBytes, value))
+            {
+                OnPropertyChanged(nameof(TotalBytes));
+                OnPropertyChanged(nameof(FormattedTotalText));
+                OnPropertyChanged(nameof(FormattedDownloadText));
+            }
+        }
+    }
 
     /// <summary>Total upload bytes across the selected profile window (AllTime).</summary>
-    public long UploadBytes { get; set; }
+    private long _uploadBytes;
+    public long UploadBytes
+    {
+        get => _uploadBytes;
+        set
+        {
+            if (SetProperty(ref _uploadBytes, value))
+            {
+                OnPropertyChanged(nameof(TotalBytes));
+                OnPropertyChanged(nameof(FormattedTotalText));
+                OnPropertyChanged(nameof(FormattedUploadText));
+            }
+        }
+    }
 
     public long TotalBytes => DownloadBytes + UploadBytes;
 
-    /// <summary>
-    /// Percentage of total process traffic across all applications.
-    /// Based on the AllTime window. 0 when total system traffic is 0.
-    /// </summary>
-    public double PercentageOfTotal { get; set; }
+    private double _percentageOfTotal;
+    public double PercentageOfTotal
+    {
+        get => _percentageOfTotal;
+        set => SetProperty(ref _percentageOfTotal, value);
+    }
 
-    /// <summary>
-    /// Percentage relative to the highest application in the active period (0.0 to 100.0) for dynamic horizontal bar scaling.
-    /// </summary>
-    public double RelativeUsagePercent { get; set; }
+    private double _relativeUsagePercent;
+    public double RelativeUsagePercent
+    {
+        get => _relativeUsagePercent;
+        set => SetProperty(ref _relativeUsagePercent, value);
+    }
+
+    public void UpdateFrom(ApplicationHistoricalProfile other)
+    {
+        DownloadBytes = other.DownloadBytes;
+        UploadBytes = other.UploadBytes;
+        PercentageOfTotal = other.PercentageOfTotal;
+        RelativeUsagePercent = other.RelativeUsagePercent;
+        DisplayIndex = other.DisplayIndex;
+        TodayBytes = other.TodayBytes;
+        YesterdayBytes = other.YesterdayBytes;
+        SevenDayTotalBytes = other.SevenDayTotalBytes;
+        ThirtyDayTotalBytes = other.ThirtyDayTotalBytes;
+        if (!string.IsNullOrWhiteSpace(other.ApplicationDisplayName) && string.IsNullOrWhiteSpace(ApplicationDisplayName))
+        {
+            ApplicationDisplayName = other.ApplicationDisplayName;
+        }
+        if (other.ApplicationIcon != null && ApplicationIcon == null)
+        {
+            ApplicationIcon = other.ApplicationIcon;
+        }
+    }
 
     // ── Trend ─────────────────────────────────────────────────────────────────
 

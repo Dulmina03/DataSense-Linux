@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 using DataSense.Models;
 
 namespace DataSense.Services;
@@ -13,20 +14,58 @@ public class LiveTrafficSample
     public double CombinedRateBytesPerSec => DownloadRateBytesPerSec + UploadRateBytesPerSec;
 }
 
-public class LiveProcessRankItem
+public class LiveProcessRankItem : ObservableObject
 {
-    public string ProcessName { get; set; } = string.Empty;
-    public int Pid { get; set; }
-    public string ExecutablePath { get; set; } = string.Empty;
-    public string UserName { get; set; } = string.Empty;
-    public string DataSource { get; set; } = "Nethogs";
-    public double DownloadRateBytesPerSec { get; set; }
-    public double UploadRateBytesPerSec { get; set; }
+    private string _processName = string.Empty;
+    public string ProcessName { get => _processName; set => SetProperty(ref _processName, value); }
+
+    private int _pid;
+    public int Pid { get => _pid; set => SetProperty(ref _pid, value); }
+
+    private string _executablePath = string.Empty;
+    public string ExecutablePath { get => _executablePath; set => SetProperty(ref _executablePath, value); }
+
+    private string _userName = string.Empty;
+    public string UserName { get => _userName; set => SetProperty(ref _userName, value); }
+
+    private string _dataSource = "Nethogs";
+    public string DataSource { get => _dataSource; set => SetProperty(ref _dataSource, value); }
+
+    private double _downloadRateBytesPerSec;
+    public double DownloadRateBytesPerSec { get => _downloadRateBytesPerSec; set => SetProperty(ref _downloadRateBytesPerSec, value); }
+
+    private double _uploadRateBytesPerSec;
+    public double UploadRateBytesPerSec { get => _uploadRateBytesPerSec; set => SetProperty(ref _uploadRateBytesPerSec, value); }
+
     public double CombinedRateBytesPerSec => DownloadRateBytesPerSec + UploadRateBytesPerSec;
-    public double PercentageOfTotalTraffic { get; set; }
-    public string DownloadRateText { get; set; } = "—";
-    public string UploadRateText { get; set; } = "—";
-    public string CombinedRateText { get; set; } = "—";
+
+    private double _percentageOfTotalTraffic;
+    public double PercentageOfTotalTraffic { get => _percentageOfTotalTraffic; set => SetProperty(ref _percentageOfTotalTraffic, value); }
+
+    private string _downloadRateText = "—";
+    public string DownloadRateText { get => _downloadRateText; set => SetProperty(ref _downloadRateText, value); }
+
+    private string _uploadRateText = "—";
+    public string UploadRateText { get => _uploadRateText; set => SetProperty(ref _uploadRateText, value); }
+
+    private string _combinedRateText = "—";
+    public string CombinedRateText { get => _combinedRateText; set => SetProperty(ref _combinedRateText, value); }
+
+    public void UpdateFrom(LiveProcessRankItem other)
+    {
+        ProcessName = other.ProcessName;
+        Pid = other.Pid;
+        ExecutablePath = other.ExecutablePath;
+        UserName = other.UserName;
+        DataSource = other.DataSource;
+        DownloadRateBytesPerSec = other.DownloadRateBytesPerSec;
+        UploadRateBytesPerSec = other.UploadRateBytesPerSec;
+        PercentageOfTotalTraffic = other.PercentageOfTotalTraffic;
+        DownloadRateText = other.DownloadRateText;
+        UploadRateText = other.UploadRateText;
+        CombinedRateText = other.CombinedRateText;
+        OnPropertyChanged(nameof(CombinedRateBytesPerSec));
+    }
 }
 
 public class TrafficSpikeInfo
