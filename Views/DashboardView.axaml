@@ -510,7 +510,7 @@
                     <ItemsControl ItemsSource="{Binding LiveProcessTraffic}" IsVisible="{Binding HasLiveProcessTraffic}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="models:ProcessNetworkUsage">
-                                <Border Classes="ProcessRow" ToolTip.Tip="{Binding TooltipSummary}">
+                                <Border Classes="ProcessRow">
                                     <Grid ColumnDefinitions="*,130,130,130,100" VerticalAlignment="Center">
                                         <!-- 1. Process Column: [Icon] Application Name & Live Subtitle -->
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
