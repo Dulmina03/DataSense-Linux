@@ -108,7 +108,7 @@ public class ThemeServiceTests
         var def = ThemeService.GetThemeDefinition("Arctic Light");
         Assert.True(def.IsLight);
         Assert.Equal("#F4F7FB", def.AppBackground);
-        Assert.Equal("#E6FFFFFF", def.Surface);
+        Assert.Equal("#B8FFFFFF", def.Surface);
         Assert.Equal("#111827", def.TextPrimary);
     }
 

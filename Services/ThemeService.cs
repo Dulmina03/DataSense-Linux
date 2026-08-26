@@ -104,16 +104,16 @@ public class ThemeService : IThemeService
             DisplayName: "Neon Space",
             Icon: "🌌",
             IsLight: false,
-            AppBackground: "#070714",
-            NavigationBackground: "#B8080816",
-            Surface: "#B813132A",
-            SurfaceElevated: "#CC1A1A36",
-            SurfaceSubtle: "#800D0D1E",
-            SurfaceHover: "#D826264C",
-            Border: "#386666A0",
-            BorderSubtle: "#20484878",
-            BorderStrong: "#558080C8",
-            Divider: "#30404070",
+            AppBackground: "#000000",
+            NavigationBackground: "#20020814",
+            Surface: "#24061224",
+            SurfaceElevated: "#2E0A1A32",
+            SurfaceSubtle: "#14040C18",
+            SurfaceHover: "#3810264A",
+            Border: "#283C6699",
+            BorderSubtle: "#18284568",
+            BorderStrong: "#454E80B8",
+            Divider: "#20284568",
             TextPrimary: "#FFFFFF",
             TextSecondary: "#C8C8EC",
             TextMuted: "#8888B2",
@@ -140,9 +140,9 @@ public class ThemeService : IThemeService
             Warning: "#FFD166",
             Danger: "#FF4D6D",
             DangerSurface: "#30FF4D6D",
-            ChartGrid: "#284A4780",
+            ChartGrid: "#1A3C6699",
             ChartAxis: "#8888B2",
-            ChartTooltipBackground: "#E01D1D3A",
+            ChartTooltipBackground: "#E8061222",
             ChartTooltipText: "#FFFFFF",
             ChartSegmentOther: "#6E6E9B",
             ProcessPalette: new[]
@@ -152,11 +152,11 @@ public class ThemeService : IThemeService
             },
             AppBackgroundGradientStops: new (string, double)[]
             {
-                ("#070714", 0.00),
-                ("#0B1536", 0.25),
-                ("#170E38", 0.50),
-                ("#250A36", 0.75),
-                ("#120520", 1.00)
+                ("#000000", 0.00),
+                ("#020B18", 0.25),
+                ("#04152D", 0.50),
+                ("#062B5C", 0.75),
+                ("#020812", 1.00)
             },
             DownloadBarGradient: ("#22E3FF", "#0077A8"),
             UploadBarGradient: ("#C56CFF", "#6D28D9"),
@@ -176,16 +176,16 @@ public class ThemeService : IThemeService
             DisplayName: "Deep Violet",
             Icon: "💜",
             IsLight: false,
-            AppBackground: "#090312",
-            NavigationBackground: "#B80B0414",
-            Surface: "#B81B0E28",
-            SurfaceElevated: "#CC261338",
-            SurfaceSubtle: "#8014081E",
-            SurfaceHover: "#D8361B4C",
-            Border: "#387A4A8E",
-            BorderSubtle: "#205C326E",
-            BorderStrong: "#55A065BA",
-            Divider: "#30683A78",
+            AppBackground: "#01040A",
+            NavigationBackground: "#20040816",
+            Surface: "#24081228",
+            SurfaceElevated: "#2E0E1A36",
+            SurfaceSubtle: "#14050C1C",
+            SurfaceHover: "#3814264E",
+            Border: "#284A6598",
+            BorderSubtle: "#182E446B",
+            BorderStrong: "#45587CB8",
+            Divider: "#202E446B",
             TextPrimary: "#FFF7FF",
             TextSecondary: "#D8C8E5",
             TextMuted: "#9F8AAA",
@@ -212,9 +212,9 @@ public class ThemeService : IThemeService
             Warning: "#FBBF24",
             Danger: "#FB7185",
             DangerSurface: "#30FB7185",
-            ChartGrid: "#286C3B87",
+            ChartGrid: "#1A4A6598",
             ChartAxis: "#9F8AAA",
-            ChartTooltipBackground: "#E02B183A",
+            ChartTooltipBackground: "#E8081228",
             ChartTooltipText: "#FFF7FF",
             ChartSegmentOther: "#7E6E9E",
             ProcessPalette: new[]
@@ -224,11 +224,11 @@ public class ThemeService : IThemeService
             },
             AppBackgroundGradientStops: new (string, double)[]
             {
-                ("#090312", 0.00),
-                ("#16082A", 0.25),
-                ("#260C3D", 0.50),
-                ("#2F0A38", 0.75),
-                ("#12031B", 1.00)
+                ("#000000", 0.00),
+                ("#020B18", 0.25),
+                ("#04152D", 0.50),
+                ("#062654", 0.75),
+                ("#020812", 1.00)
             },
             DownloadBarGradient: ("#D966FF", "#7B2CBF"),
             UploadBarGradient: ("#FF7EE0", "#B5179E"),
@@ -248,16 +248,16 @@ public class ThemeService : IThemeService
             DisplayName: "Cyber Ocean",
             Icon: "🌊",
             IsLight: false,
-            AppBackground: "#020810",
-            NavigationBackground: "#B8030C14",
-            Surface: "#B80B1A28",
-            SurfaceElevated: "#CC102436",
-            SurfaceSubtle: "#8007131E",
-            SurfaceHover: "#D818344E",
-            Border: "#38306A88",
-            BorderSubtle: "#20204E66",
-            BorderStrong: "#55448CAE",
-            Divider: "#302C5874",
+            AppBackground: "#000208",
+            NavigationBackground: "#20010814",
+            Surface: "#24041424",
+            SurfaceElevated: "#2E081C30",
+            SurfaceSubtle: "#14030D18",
+            SurfaceHover: "#380C2848",
+            Border: "#28306A98",
+            BorderSubtle: "#18204E6C",
+            BorderStrong: "#45448CB8",
+            Divider: "#20204E6C",
             TextPrimary: "#F2FCFF",
             TextSecondary: "#B8D7E5",
             TextMuted: "#7295A8",
@@ -284,9 +284,9 @@ public class ThemeService : IThemeService
             Warning: "#FFD166",
             Danger: "#FF647C",
             DangerSurface: "#30FF647C",
-            ChartGrid: "#282E6280",
+            ChartGrid: "#1A306A98",
             ChartAxis: "#7295A8",
-            ChartTooltipBackground: "#E012283A",
+            ChartTooltipBackground: "#E8041424",
             ChartTooltipText: "#F2FCFF",
             ChartSegmentOther: "#64748B",
             ProcessPalette: new[]
@@ -296,11 +296,11 @@ public class ThemeService : IThemeService
             },
             AppBackgroundGradientStops: new (string, double)[]
             {
-                ("#020810", 0.00),
-                ("#051828", 0.25),
-                ("#08253A", 0.50),
-                ("#061D30", 0.75),
-                ("#030C16", 1.00)
+                ("#000000", 0.00),
+                ("#010B18", 0.25),
+                ("#031934", 0.50),
+                ("#053268", 0.75),
+                ("#010914", 1.00)
             },
             DownloadBarGradient: ("#5CF2FF", "#0072B5"),
             UploadBarGradient: ("#4DAEFF", "#00529E"),
@@ -320,16 +320,16 @@ public class ThemeService : IThemeService
             DisplayName: "Aurora",
             Icon: "🌃",
             IsLight: false,
-            AppBackground: "#030D0B",
-            NavigationBackground: "#B8040E0C",
-            Surface: "#B80E1C1A",
-            SurfaceElevated: "#CC142826",
-            SurfaceSubtle: "#800A1413",
-            SurfaceHover: "#D81C3834",
-            Border: "#383A7064",
-            BorderSubtle: "#20285248",
-            BorderStrong: "#554E9284",
-            Divider: "#30346056",
+            AppBackground: "#000306",
+            NavigationBackground: "#20020A12",
+            Surface: "#24061522",
+            SurfaceElevated: "#2E0A1F30",
+            SurfaceSubtle: "#14040F18",
+            SurfaceHover: "#38102C46",
+            Border: "#2838708E",
+            BorderSubtle: "#1826506A",
+            BorderStrong: "#454E92B0",
+            Divider: "#2026506A",
             TextPrimary: "#F3FFFA",
             TextSecondary: "#C1DDD4",
             TextMuted: "#78978F",
@@ -356,9 +356,9 @@ public class ThemeService : IThemeService
             Warning: "#FACC15",
             Danger: "#FB7185",
             DangerSurface: "#30FB7185",
-            ChartGrid: "#283B7367",
+            ChartGrid: "#1A38708E",
             ChartAxis: "#78978F",
-            ChartTooltipBackground: "#E017302B",
+            ChartTooltipBackground: "#E8061522",
             ChartTooltipText: "#F3FFFA",
             ChartSegmentOther: "#5E8E7E",
             ProcessPalette: new[]
@@ -368,11 +368,11 @@ public class ThemeService : IThemeService
             },
             AppBackgroundGradientStops: new (string, double)[]
             {
-                ("#030D0B", 0.00),
-                ("#07211C", 0.25),
-                ("#0C2B26", 0.50),
-                ("#141C32", 0.75),
-                ("#060A14", 1.00)
+                ("#000000", 0.00),
+                ("#010C16", 0.25),
+                ("#03182E", 0.50),
+                ("#052E58", 0.75),
+                ("#010912", 1.00)
             },
             DownloadBarGradient: ("#67E8F9", "#0E7490"),
             UploadBarGradient: ("#A78BFA", "#581C87"),
@@ -392,16 +392,16 @@ public class ThemeService : IThemeService
             DisplayName: "Cyber Pink",
             Icon: "🌸",
             IsLight: false,
-            AppBackground: "#0E030D",
-            NavigationBackground: "#B80F040E",
-            Surface: "#B8220D1E",
-            SurfaceElevated: "#CC2E1128",
-            SurfaceSubtle: "#80180815",
-            SurfaceHover: "#D83E1738",
-            Border: "#38823565",
-            BorderSubtle: "#2060244A",
-            BorderStrong: "#55A44582",
-            Divider: "#306E2E56",
+            AppBackground: "#010309",
+            NavigationBackground: "#20050816",
+            Surface: "#24081226",
+            SurfaceElevated: "#2E0E1A34",
+            SurfaceSubtle: "#14050C1A",
+            SurfaceHover: "#3814264C",
+            Border: "#284A6598",
+            BorderSubtle: "#182E446B",
+            BorderStrong: "#45587CB8",
+            Divider: "#202E446B",
             TextPrimary: "#FFF5FC",
             TextSecondary: "#E7C7DD",
             TextMuted: "#A9859C",
@@ -428,9 +428,9 @@ public class ThemeService : IThemeService
             Warning: "#FBBF24",
             Danger: "#FF5C8A",
             DangerSurface: "#30FF5C8A",
-            ChartGrid: "#2878335D",
+            ChartGrid: "#1A4A6598",
             ChartAxis: "#A9859C",
-            ChartTooltipBackground: "#E035142C",
+            ChartTooltipBackground: "#E8081226",
             ChartTooltipText: "#FFF5FC",
             ChartSegmentOther: "#9D5C80",
             ProcessPalette: new[]
@@ -440,11 +440,11 @@ public class ThemeService : IThemeService
             },
             AppBackgroundGradientStops: new (string, double)[]
             {
-                ("#0E030D", 0.00),
-                ("#25071F", 0.25),
-                ("#380D2E", 0.50),
-                ("#240728", 0.75),
-                ("#0F0212", 1.00)
+                ("#000000", 0.00),
+                ("#020B18", 0.25),
+                ("#04152D", 0.50),
+                ("#062856", 0.75),
+                ("#020812", 1.00)
             },
             DownloadBarGradient: ("#FF7FE2", "#C026D3"),
             UploadBarGradient: ("#C77DFF", "#6B21A8"),
@@ -465,15 +465,15 @@ public class ThemeService : IThemeService
             Icon: "🤍",
             IsLight: true,
             AppBackground: "#F4F7FB",
-            NavigationBackground: "#D8F2F6FA",
-            Surface: "#E6FFFFFF",
-            SurfaceElevated: "#F4FFFFFF",
-            SurfaceSubtle: "#C0F0F4F9",
-            SurfaceHover: "#FFFFFFFF",
-            Border: "#40BAC6D6",
-            BorderSubtle: "#25D9E0EA",
-            BorderStrong: "#6094A3B8",
-            Divider: "#35D9E0EA",
+            NavigationBackground: "#90EDF4FB",
+            Surface: "#B8FFFFFF",
+            SurfaceElevated: "#D0FFFFFF",
+            SurfaceSubtle: "#60EDF4FB",
+            SurfaceHover: "#E6FFFFFF",
+            Border: "#306080A0",
+            BorderSubtle: "#1C8098B0",
+            BorderStrong: "#505A7A98",
+            Divider: "#25BAC6D6",
             TextPrimary: "#111827",
             TextSecondary: "#374151",
             TextMuted: "#6B7280",
@@ -502,7 +502,7 @@ public class ThemeService : IThemeService
             DangerSurface: "#25DC2626",
             ChartGrid: "#E2E8F0",
             ChartAxis: "#6B7280",
-            ChartTooltipBackground: "#F8FFFFFF",
+            ChartTooltipBackground: "#FAFFFFFF",
             ChartTooltipText: "#111827",
             ChartSegmentOther: "#94A3B8",
             ProcessPalette: new[]
@@ -512,10 +512,10 @@ public class ThemeService : IThemeService
             },
             AppBackgroundGradientStops: new (string, double)[]
             {
-                ("#F8FAFD", 0.00),
-                ("#EEF3F9", 0.35),
-                ("#E5EDF7", 0.65),
-                ("#DDE7F4", 1.00)
+                ("#FFFFFF", 0.00),
+                ("#F0F5FA", 0.30),
+                ("#E1EDF8", 0.65),
+                ("#D8E8F5", 1.00)
             },
             DownloadBarGradient: ("#06B6D4", "#0891B2"),
             UploadBarGradient: ("#8B5CF6", "#7C3AED"),
@@ -618,7 +618,7 @@ public class ThemeService : IThemeService
             // Set RequestedThemeVariant for FluentTheme controls
             Application.Current.RequestedThemeVariant = def.IsLight ? ThemeVariant.Light : ThemeVariant.Dark;
 
-            // 1. Backgrounds & Surfaces (Glass Translucency)
+            // 1. Backgrounds & Surfaces (Glass Translucency & Black-to-Blue Atmosphere)
             res["Brush.AppBackground"] = new SolidColorBrush(Color.Parse(def.AppBackground));
             res["Brush.AppBackgroundGradient"] = CreateDiagonalGradient(def.AppBackgroundGradientStops);
             res["Brush.NavigationBackground"] = new SolidColorBrush(Color.Parse(def.NavigationBackground));
@@ -626,13 +626,16 @@ public class ThemeService : IThemeService
             res["Brush.SurfaceElevated"] = new SolidColorBrush(Color.Parse(def.SurfaceElevated));
             res["Brush.SurfaceSubtle"] = new SolidColorBrush(Color.Parse(def.SurfaceSubtle));
             res["Brush.SurfaceHover"] = new SolidColorBrush(Color.Parse(def.SurfaceHover));
+            res["Brush.GlassSurface"] = res["Brush.Surface"];
+            res["Brush.GlassSurfaceElevated"] = res["Brush.SurfaceElevated"];
             res["Brush.GlassHighlight"] = new SolidColorBrush(def.IsLight ? Color.Parse("#40FFFFFF") : Color.Parse("#14FFFFFF"));
-            res["Brush.GlassShadow"] = new SolidColorBrush(def.IsLight ? Color.Parse("#10000000") : Color.Parse("#30000000"));
+            res["Brush.GlassShadow"] = new SolidColorBrush(def.IsLight ? Color.Parse("#10000000") : Color.Parse("#20000000"));
 
             // 2. Borders & Dividers
             res["Brush.Border"] = new SolidColorBrush(Color.Parse(def.Border));
             res["Brush.BorderSubtle"] = new SolidColorBrush(Color.Parse(def.BorderSubtle));
             res["Brush.BorderStrong"] = new SolidColorBrush(Color.Parse(def.BorderStrong));
+            res["Brush.GlassBorder"] = res["Brush.Border"];
             res["Brush.Divider"] = new SolidColorBrush(Color.Parse(def.Divider));
 
             // 3. Typography

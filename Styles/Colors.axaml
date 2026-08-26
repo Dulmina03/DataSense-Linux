@@ -7,30 +7,33 @@
     runtime ThemeService updates seamlessly propagate to all {DynamicResource} bindings.
     -->
 
-    <!-- Backgrounds & Navigation (Glassmorphism + Neon Translucency) -->
-    <SolidColorBrush x:Key="Brush.AppBackground" Color="#070714"/>
-    <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#B8080816"/>
-    <SolidColorBrush x:Key="Brush.Surface" Color="#B813132A"/>
-    <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#CC1A1A36"/>
-    <SolidColorBrush x:Key="Brush.SurfaceSubtle" Color="#800D0D1E"/>
-    <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#D826264C"/>
+    <!-- Backgrounds & Navigation (High Transparency Glassmorphism + Black/Blue Atmosphere) -->
+    <SolidColorBrush x:Key="Brush.AppBackground" Color="#000000"/>
+    <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#20020814"/>
+    <SolidColorBrush x:Key="Brush.Surface" Color="#24061224"/>
+    <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#2E0A1A32"/>
+    <SolidColorBrush x:Key="Brush.SurfaceSubtle" Color="#14040C18"/>
+    <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#3810264A"/>
+    <SolidColorBrush x:Key="Brush.GlassSurface" Color="#24061224"/>
+    <SolidColorBrush x:Key="Brush.GlassSurfaceElevated" Color="#2E0A1A32"/>
     <SolidColorBrush x:Key="Brush.GlassHighlight" Color="#14FFFFFF"/>
-    <SolidColorBrush x:Key="Brush.GlassShadow" Color="#30000000"/>
+    <SolidColorBrush x:Key="Brush.GlassShadow" Color="#20000000"/>
 
-    <!-- Application Background Diagonal Atmospheric Gradient (Top-Left ↘ Bottom-Right) -->
+    <!-- Application Background Diagonal Atmospheric Gradient (Black ↘ Deep Blue Atmosphere) -->
     <LinearGradientBrush x:Key="Brush.AppBackgroundGradient" StartPoint="0%,0%" EndPoint="100%,100%">
-        <GradientStop Color="#070714" Offset="0.0"/>
-        <GradientStop Color="#0B1536" Offset="0.25"/>
-        <GradientStop Color="#170E38" Offset="0.50"/>
-        <GradientStop Color="#250A36" Offset="0.75"/>
-        <GradientStop Color="#120520" Offset="1.0"/>
+        <GradientStop Color="#000000" Offset="0.0"/>
+        <GradientStop Color="#020B18" Offset="0.25"/>
+        <GradientStop Color="#04152D" Offset="0.50"/>
+        <GradientStop Color="#062B5C" Offset="0.75"/>
+        <GradientStop Color="#020812" Offset="1.0"/>
     </LinearGradientBrush>
 
     <!-- Borders & Dividers -->
-    <SolidColorBrush x:Key="Brush.Border" Color="#386666A0"/>
-    <SolidColorBrush x:Key="Brush.BorderSubtle" Color="#20484878"/>
-    <SolidColorBrush x:Key="Brush.BorderStrong" Color="#558080C8"/>
-    <SolidColorBrush x:Key="Brush.Divider" Color="#30404070"/>
+    <SolidColorBrush x:Key="Brush.Border" Color="#283C6699"/>
+    <SolidColorBrush x:Key="Brush.BorderSubtle" Color="#18284568"/>
+    <SolidColorBrush x:Key="Brush.BorderStrong" Color="#454E80B8"/>
+    <SolidColorBrush x:Key="Brush.GlassBorder" Color="#283C6699"/>
+    <SolidColorBrush x:Key="Brush.Divider" Color="#20284568"/>
 
     <!-- Typography -->
     <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FFFFFF"/>
