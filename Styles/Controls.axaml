@@ -3,7 +3,7 @@
 
     <!-- Base Window Style -->
     <Style Selector="Window">
-        <Setter Property="Background" Value="{DynamicResource Brush.AppBackground}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.AppBackgroundGradient}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
         <Setter Property="FontFamily" Value="Inter, Ubuntu, sans-serif" />
     </Style>
@@ -15,6 +15,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
+        <Setter Property="BoxShadow" Value="0 4 20 0 #25000000" />
     </Style>
 
     <!-- Sidebar Button (Navigation Rail Item) -->
@@ -38,7 +39,7 @@
     </Style>
     <Style Selector="Button.SidebarItem.active /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.ActiveNavGradient}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Download}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
         <Setter Property="BorderThickness" Value="2,0,0,0" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>

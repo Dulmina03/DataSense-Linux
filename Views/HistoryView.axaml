@@ -5,9 +5,9 @@
              xmlns:conv="using:DataSense.Converters"
              x:Class="DataSense.Views.HistoryView"
              x:DataType="vm:HistoryViewModel"
-             Background="{DynamicResource Brush.AppBackground}">
+             Background="Transparent">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{DynamicResource Brush.AppBackground}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="Transparent">
         <StackPanel Spacing="28" Margin="24">
 
             <!-- ── 1. PAGE HEADER & GLOBAL CONTROLS ──────────────────────────────────────── -->

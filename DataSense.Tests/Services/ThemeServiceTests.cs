@@ -62,6 +62,15 @@ public class ThemeServiceTests
             Assert.StartsWith("#", color);
         }
 
+        // Verify background gradient stops
+        Assert.NotNull(def.AppBackgroundGradientStops);
+        Assert.True(def.AppBackgroundGradientStops.Length >= 4);
+        foreach (var stop in def.AppBackgroundGradientStops)
+        {
+            Assert.StartsWith("#", stop.Hex);
+            Assert.InRange(stop.Offset, 0.0, 1.0);
+        }
+
         // Verify gradients
         Assert.StartsWith("#", def.DownloadBarGradient.Start);
         Assert.StartsWith("#", def.DownloadBarGradient.End);
@@ -99,7 +108,7 @@ public class ThemeServiceTests
         var def = ThemeService.GetThemeDefinition("Arctic Light");
         Assert.True(def.IsLight);
         Assert.Equal("#F4F7FB", def.AppBackground);
-        Assert.Equal("#FFFFFF", def.Surface);
+        Assert.Equal("#E6FFFFFF", def.Surface);
         Assert.Equal("#111827", def.TextPrimary);
     }
 

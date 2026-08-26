@@ -7,19 +7,30 @@
     runtime ThemeService updates seamlessly propagate to all {DynamicResource} bindings.
     -->
 
-    <!-- Backgrounds & Navigation -->
-    <SolidColorBrush x:Key="Brush.AppBackground" Color="#0B0B16"/>
-    <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#0D0D1A"/>
-    <SolidColorBrush x:Key="Brush.Surface" Color="#16162C"/>
-    <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#1D1D3A"/>
-    <SolidColorBrush x:Key="Brush.SurfaceSubtle" Color="#131326"/>
-    <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#222244"/>
+    <!-- Backgrounds & Navigation (Glassmorphism + Neon Translucency) -->
+    <SolidColorBrush x:Key="Brush.AppBackground" Color="#070714"/>
+    <SolidColorBrush x:Key="Brush.NavigationBackground" Color="#B8080816"/>
+    <SolidColorBrush x:Key="Brush.Surface" Color="#B813132A"/>
+    <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#CC1A1A36"/>
+    <SolidColorBrush x:Key="Brush.SurfaceSubtle" Color="#800D0D1E"/>
+    <SolidColorBrush x:Key="Brush.SurfaceHover" Color="#D826264C"/>
+    <SolidColorBrush x:Key="Brush.GlassHighlight" Color="#14FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.GlassShadow" Color="#30000000"/>
+
+    <!-- Application Background Diagonal Atmospheric Gradient (Top-Left ↘ Bottom-Right) -->
+    <LinearGradientBrush x:Key="Brush.AppBackgroundGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#070714" Offset="0.0"/>
+        <GradientStop Color="#0B1536" Offset="0.25"/>
+        <GradientStop Color="#170E38" Offset="0.50"/>
+        <GradientStop Color="#250A36" Offset="0.75"/>
+        <GradientStop Color="#120520" Offset="1.0"/>
+    </LinearGradientBrush>
 
     <!-- Borders & Dividers -->
-    <SolidColorBrush x:Key="Brush.Border" Color="#303052"/>
-    <SolidColorBrush x:Key="Brush.BorderSubtle" Color="#1E1C3D"/>
-    <SolidColorBrush x:Key="Brush.BorderStrong" Color="#4A4780"/>
-    <SolidColorBrush x:Key="Brush.Divider" Color="#303052"/>
+    <SolidColorBrush x:Key="Brush.Border" Color="#386666A0"/>
+    <SolidColorBrush x:Key="Brush.BorderSubtle" Color="#20484878"/>
+    <SolidColorBrush x:Key="Brush.BorderStrong" Color="#558080C8"/>
+    <SolidColorBrush x:Key="Brush.Divider" Color="#30404070"/>
 
     <!-- Typography -->
     <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FFFFFF"/>

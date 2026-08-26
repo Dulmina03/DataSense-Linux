@@ -5,9 +5,9 @@
              xmlns:conv="using:DataSense.Converters"
              x:DataType="vm:DashboardViewModel"
              x:Class="DataSense.Views.DashboardView"
-             Background="{DynamicResource Brush.AppBackground}">
+             Background="Transparent">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{DynamicResource Brush.AppBackground}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="Transparent">
         <StackPanel Spacing="20" Margin="24">
 
             <!-- ── 1. HEADER BAR ───────────────────────────────────────────────────────────── -->
