@@ -32,6 +32,7 @@ public record ThemeDefinition(
     string TextSecondary,
     string TextMuted,
     string TextDisabled,
+    string TextOnAccent,
     // Accents
     string AccentPrimary,
     string AccentSecondary,
@@ -114,10 +115,11 @@ public class ThemeService : IThemeService
             BorderSubtle: "#18284568",
             BorderStrong: "#454E80B8",
             Divider: "#20284568",
-            TextPrimary: "#FFFFFF",
-            TextSecondary: "#C8C8EC",
-            TextMuted: "#8888B2",
-            TextDisabled: "#4D4D72",
+            TextPrimary: "#F5F7FF",
+            TextSecondary: "#CAD0E8",
+            TextMuted: "#8E98B8",
+            TextDisabled: "#545D78",
+            TextOnAccent: "#FFFFFF",
             AccentPrimary: "#A100FF",
             AccentSecondary: "#00E5FF",
             AccentTertiary: "#FF007F",
@@ -141,9 +143,9 @@ public class ThemeService : IThemeService
             Danger: "#FF4D6D",
             DangerSurface: "#30FF4D6D",
             ChartGrid: "#1A3C6699",
-            ChartAxis: "#8888B2",
+            ChartAxis: "#8E98B8",
             ChartTooltipBackground: "#E8061222",
-            ChartTooltipText: "#FFFFFF",
+            ChartTooltipText: "#F5F7FF",
             ChartSegmentOther: "#6E6E9B",
             ProcessPalette: new[]
             {
@@ -153,10 +155,10 @@ public class ThemeService : IThemeService
             AppBackgroundGradientStops: new (string, double)[]
             {
                 ("#000000", 0.00),
-                ("#020B18", 0.25),
-                ("#04152D", 0.50),
-                ("#062B5C", 0.75),
-                ("#020812", 1.00)
+                ("#030C1E", 0.25),
+                ("#071938", 0.50),
+                ("#16123D", 0.75),
+                ("#070414", 1.00)
             },
             DownloadBarGradient: ("#22E3FF", "#0077A8"),
             UploadBarGradient: ("#C56CFF", "#6D28D9"),
@@ -186,10 +188,11 @@ public class ThemeService : IThemeService
             BorderSubtle: "#182E446B",
             BorderStrong: "#45587CB8",
             Divider: "#202E446B",
-            TextPrimary: "#FFF7FF",
-            TextSecondary: "#D8C8E5",
-            TextMuted: "#9F8AAA",
-            TextDisabled: "#5A4566",
+            TextPrimary: "#F5F7FF",
+            TextSecondary: "#D8C8E8",
+            TextMuted: "#9F8EB2",
+            TextDisabled: "#5E4B6E",
+            TextOnAccent: "#FFFFFF",
             AccentPrimary: "#C026FF",
             AccentSecondary: "#8B5CF6",
             AccentTertiary: "#FF4ECD",
@@ -213,9 +216,9 @@ public class ThemeService : IThemeService
             Danger: "#FB7185",
             DangerSurface: "#30FB7185",
             ChartGrid: "#1A4A6598",
-            ChartAxis: "#9F8AAA",
+            ChartAxis: "#9F8EB2",
             ChartTooltipBackground: "#E8081228",
-            ChartTooltipText: "#FFF7FF",
+            ChartTooltipText: "#F5F7FF",
             ChartSegmentOther: "#7E6E9E",
             ProcessPalette: new[]
             {
@@ -225,10 +228,10 @@ public class ThemeService : IThemeService
             AppBackgroundGradientStops: new (string, double)[]
             {
                 ("#000000", 0.00),
-                ("#020B18", 0.25),
-                ("#04152D", 0.50),
-                ("#062654", 0.75),
-                ("#020812", 1.00)
+                ("#0C031A", 0.25),
+                ("#1D0838", 0.50),
+                ("#300C4A", 0.75),
+                ("#0A0214", 1.00)
             },
             DownloadBarGradient: ("#D966FF", "#7B2CBF"),
             UploadBarGradient: ("#FF7EE0", "#B5179E"),
@@ -259,9 +262,10 @@ public class ThemeService : IThemeService
             BorderStrong: "#45448CB8",
             Divider: "#20204E6C",
             TextPrimary: "#F2FCFF",
-            TextSecondary: "#B8D7E5",
-            TextMuted: "#7295A8",
-            TextDisabled: "#3D5968",
+            TextSecondary: "#C0DCED",
+            TextMuted: "#7C9EB5",
+            TextDisabled: "#426075",
+            TextOnAccent: "#FFFFFF",
             AccentPrimary: "#00E5FF",
             AccentSecondary: "#008CFF",
             AccentTertiary: "#00FFC6",
@@ -285,7 +289,7 @@ public class ThemeService : IThemeService
             Danger: "#FF647C",
             DangerSurface: "#30FF647C",
             ChartGrid: "#1A306A98",
-            ChartAxis: "#7295A8",
+            ChartAxis: "#7C9EB5",
             ChartTooltipBackground: "#E8041424",
             ChartTooltipText: "#F2FCFF",
             ChartSegmentOther: "#64748B",
@@ -297,10 +301,10 @@ public class ThemeService : IThemeService
             AppBackgroundGradientStops: new (string, double)[]
             {
                 ("#000000", 0.00),
-                ("#010B18", 0.25),
-                ("#031934", 0.50),
-                ("#053268", 0.75),
-                ("#010914", 1.00)
+                ("#010C1A", 0.25),
+                ("#031E38", 0.50),
+                ("#063A5C", 0.75),
+                ("#010B14", 1.00)
             },
             DownloadBarGradient: ("#5CF2FF", "#0072B5"),
             UploadBarGradient: ("#4DAEFF", "#00529E"),
@@ -331,9 +335,10 @@ public class ThemeService : IThemeService
             BorderStrong: "#454E92B0",
             Divider: "#2026506A",
             TextPrimary: "#F3FFFA",
-            TextSecondary: "#C1DDD4",
-            TextMuted: "#78978F",
-            TextDisabled: "#435E57",
+            TextSecondary: "#C5E2D9",
+            TextMuted: "#80A398",
+            TextDisabled: "#486960",
+            TextOnAccent: "#FFFFFF",
             AccentPrimary: "#36F1B4",
             AccentSecondary: "#7C5CFF",
             AccentTertiary: "#22D3EE",
@@ -357,7 +362,7 @@ public class ThemeService : IThemeService
             Danger: "#FB7185",
             DangerSurface: "#30FB7185",
             ChartGrid: "#1A38708E",
-            ChartAxis: "#78978F",
+            ChartAxis: "#80A398",
             ChartTooltipBackground: "#E8061522",
             ChartTooltipText: "#F3FFFA",
             ChartSegmentOther: "#5E8E7E",
@@ -369,10 +374,10 @@ public class ThemeService : IThemeService
             AppBackgroundGradientStops: new (string, double)[]
             {
                 ("#000000", 0.00),
-                ("#010C16", 0.25),
-                ("#03182E", 0.50),
-                ("#052E58", 0.75),
-                ("#010912", 1.00)
+                ("#021410", 0.25),
+                ("#052B26", 0.50),
+                ("#121A38", 0.75),
+                ("#020812", 1.00)
             },
             DownloadBarGradient: ("#67E8F9", "#0E7490"),
             UploadBarGradient: ("#A78BFA", "#581C87"),
@@ -403,9 +408,10 @@ public class ThemeService : IThemeService
             BorderStrong: "#45587CB8",
             Divider: "#202E446B",
             TextPrimary: "#FFF5FC",
-            TextSecondary: "#E7C7DD",
-            TextMuted: "#A9859C",
-            TextDisabled: "#64465B",
+            TextSecondary: "#E8CDE0",
+            TextMuted: "#AC8EA0",
+            TextDisabled: "#694C60",
+            TextOnAccent: "#FFFFFF",
             AccentPrimary: "#FF1493",
             AccentSecondary: "#FF4FD8",
             AccentTertiary: "#9D4EDD",
@@ -429,7 +435,7 @@ public class ThemeService : IThemeService
             Danger: "#FF5C8A",
             DangerSurface: "#30FF5C8A",
             ChartGrid: "#1A4A6598",
-            ChartAxis: "#A9859C",
+            ChartAxis: "#AC8EA0",
             ChartTooltipBackground: "#E8081226",
             ChartTooltipText: "#FFF5FC",
             ChartSegmentOther: "#9D5C80",
@@ -441,10 +447,10 @@ public class ThemeService : IThemeService
             AppBackgroundGradientStops: new (string, double)[]
             {
                 ("#000000", 0.00),
-                ("#020B18", 0.25),
-                ("#04152D", 0.50),
-                ("#062856", 0.75),
-                ("#020812", 1.00)
+                ("#0E0314", 0.25),
+                ("#280628", 0.50),
+                ("#420B3A", 0.75),
+                ("#0E0212", 1.00)
             },
             DownloadBarGradient: ("#FF7FE2", "#C026D3"),
             UploadBarGradient: ("#C77DFF", "#6B21A8"),
@@ -478,6 +484,7 @@ public class ThemeService : IThemeService
             TextSecondary: "#374151",
             TextMuted: "#6B7280",
             TextDisabled: "#9CA3AF",
+            TextOnAccent: "#FFFFFF",
             AccentPrimary: "#6D28D9",
             AccentSecondary: "#0891B2",
             AccentTertiary: "#DB2777",
@@ -513,9 +520,10 @@ public class ThemeService : IThemeService
             AppBackgroundGradientStops: new (string, double)[]
             {
                 ("#FFFFFF", 0.00),
-                ("#F0F5FA", 0.30),
-                ("#E1EDF8", 0.65),
-                ("#D8E8F5", 1.00)
+                ("#F0F6FC", 0.25),
+                ("#E1EDF8", 0.50),
+                ("#D5E4F5", 0.75),
+                ("#CBE0F5", 1.00)
             },
             DownloadBarGradient: ("#06B6D4", "#0891B2"),
             UploadBarGradient: ("#8B5CF6", "#7C3AED"),
@@ -618,7 +626,7 @@ public class ThemeService : IThemeService
             // Set RequestedThemeVariant for FluentTheme controls
             Application.Current.RequestedThemeVariant = def.IsLight ? ThemeVariant.Light : ThemeVariant.Dark;
 
-            // 1. Backgrounds & Surfaces (Glass Translucency & Black-to-Blue Atmosphere)
+            // 1. Backgrounds & Surfaces (Glass Translucency & Theme Atmospheric Gradient)
             res["Brush.AppBackground"] = new SolidColorBrush(Color.Parse(def.AppBackground));
             res["Brush.AppBackgroundGradient"] = CreateDiagonalGradient(def.AppBackgroundGradientStops);
             res["Brush.NavigationBackground"] = new SolidColorBrush(Color.Parse(def.NavigationBackground));
@@ -638,11 +646,12 @@ public class ThemeService : IThemeService
             res["Brush.GlassBorder"] = res["Brush.Border"];
             res["Brush.Divider"] = new SolidColorBrush(Color.Parse(def.Divider));
 
-            // 3. Typography
+            // 3. Typography (Theme-Aware High-Contrast Typography)
             res["Brush.TextPrimary"] = new SolidColorBrush(Color.Parse(def.TextPrimary));
             res["Brush.TextSecondary"] = new SolidColorBrush(Color.Parse(def.TextSecondary));
             res["Brush.TextMuted"] = new SolidColorBrush(Color.Parse(def.TextMuted));
             res["Brush.TextDisabled"] = new SolidColorBrush(Color.Parse(def.TextDisabled));
+            res["Brush.TextOnAccent"] = new SolidColorBrush(Color.Parse(def.TextOnAccent));
 
             // 4. Accents
             res["Brush.Accent"] = new SolidColorBrush(Color.Parse(def.AccentPrimary));

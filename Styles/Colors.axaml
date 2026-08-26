@@ -35,11 +35,12 @@
     <SolidColorBrush x:Key="Brush.GlassBorder" Color="#283C6699"/>
     <SolidColorBrush x:Key="Brush.Divider" Color="#20284568"/>
 
-    <!-- Typography -->
-    <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="Brush.TextSecondary" Color="#C4C4E8"/>
-    <SolidColorBrush x:Key="Brush.TextMuted" Color="#8585AD"/>
-    <SolidColorBrush x:Key="Brush.TextDisabled" Color="#4D4D70"/>
+    <!-- Typography (High-Contrast Theme-Aware) -->
+    <SolidColorBrush x:Key="Brush.TextPrimary" Color="#F5F7FF"/>
+    <SolidColorBrush x:Key="Brush.TextSecondary" Color="#CAD0E8"/>
+    <SolidColorBrush x:Key="Brush.TextMuted" Color="#8E98B8"/>
+    <SolidColorBrush x:Key="Brush.TextDisabled" Color="#545D78"/>
+    <SolidColorBrush x:Key="Brush.TextOnAccent" Color="#FFFFFF"/>
 
     <!-- Primary Accent (Electric Purple / Violet) -->
     <SolidColorBrush x:Key="Brush.Accent" Color="#A100FF"/>

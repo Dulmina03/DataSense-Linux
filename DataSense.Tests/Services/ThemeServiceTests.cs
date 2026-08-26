@@ -45,6 +45,8 @@ public class ThemeServiceTests
         Assert.StartsWith("#", def.TextPrimary);
         Assert.StartsWith("#", def.TextSecondary);
         Assert.StartsWith("#", def.TextMuted);
+        Assert.StartsWith("#", def.TextDisabled);
+        Assert.StartsWith("#", def.TextOnAccent);
         Assert.StartsWith("#", def.AccentPrimary);
         Assert.StartsWith("#", def.AccentSecondary);
         Assert.StartsWith("#", def.AccentTertiary);
