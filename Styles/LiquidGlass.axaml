@@ -2,13 +2,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!--
-    DATASENSE LIQUID GLASS INTERACTION SYSTEM
-    =========================================
-    Polished, Apple-inspired translucent glass interaction architecture.
-    Provides fluid, layered, premium visual feedback for hovered, focused,
-    pressed, and selected elements while preserving underlying atmospheric gradients.
-    Note: BoxShadow is NOT valid on Button directly; it is only set on Border
-    and within /template/ ContentPresenter selectors.
+    DATASENSE TRUE LIQUID GLASS INTERACTION SYSTEM
+    ==============================================
+    Soft, translucent, glossy, reflective glass surface architecture.
+    Provides physical glass depth, specular edge highlights, subtle inner glow,
+    smooth material transitions, and dynamic theme/accent adaptation.
     -->
 
     <!-- ────────────────────────────────────────────────────────────────────────── -->
@@ -18,26 +16,27 @@
     <Style Selector="Button.SidebarItem">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="2,0,0,0" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
         <Setter Property="Padding" Value="14,10" />
+        <Setter Property="Margin" Value="0,1" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
-        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
+        <Setter Property="CornerRadius" Value="10" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.20" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.20" />
-                <BrushTransition Property="BorderBrush" Duration="0:0:0.20" />
+                <BrushTransition Property="Background" Duration="0:0:0.22" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.22" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.22" />
             </Transitions>
         </Setter>
     </Style>
 
-    <!-- SidebarItem: Hover (Subtle Translucent Glass) -->
+    <!-- SidebarItem: Hover (Translucent Reflective Glass Pill Emergence) -->
     <Style Selector="Button.SidebarItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceHover}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
-        <Setter Property="BorderThickness" Value="2,0,0,0" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
 
@@ -45,26 +44,26 @@
     <Style Selector="Button.SidebarItem:pressed /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfacePressed}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
-        <Setter Property="BorderThickness" Value="2,0,0,0" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
 
-    <!-- SidebarItem: Active / Selected (Full Liquid Glass Accent-Tinted Illumination) -->
+    <!-- SidebarItem: Active / Selected (Translucent Illuminated Glass Floating Pill) -->
     <Style Selector="Button.SidebarItem.active /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.ActiveNavGradient}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
-        <Setter Property="BorderThickness" Value="2,0,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderSelected}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
     <Style Selector="Button.SidebarItem.active">
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
-    <!-- SidebarItem: Active + Hover (Responsive Luminous Glow) -->
+    <!-- SidebarItem: Active + Hover (Intensified Specular Reflection) -->
     <Style Selector="Button.SidebarItem.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.ActiveNavGradient}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentBright}" />
-        <Setter Property="BorderThickness" Value="2,0,0,0" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
 
@@ -72,40 +71,40 @@
     <!-- 2. LIQUID GLASS SEGMENTED CONTAINER RAIL                                  -->
     <!-- ────────────────────────────────────────────────────────────────────────── -->
 
-    <!-- Segmented Container Rail (Border) -->
+    <!-- Segmented Container Rail (Rounded Glass Trough) -->
     <Style Selector="Border.SegmentContainer">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.PillBackground}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.PillBorder}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="CornerRadius" Value="12" />
         <Setter Property="Padding" Value="4" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #15FFFFFF, 0 4 16 0 #18000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #18000000" />
     </Style>
 
     <!-- ────────────────────────────────────────────────────────────────────────── -->
     <!-- 3. LIQUID GLASS PERIOD / SEGMENT BUTTONS (TODAY / 7 DAYS / MONTH)         -->
     <!-- ────────────────────────────────────────────────────────────────────────── -->
 
-    <!-- Segmented / Period Button base -->
+    <!-- Segmented / Period Button Base -->
     <Style Selector="Button.Segment">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
         <Setter Property="Padding" Value="16,8" />
-        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.20" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.20" />
-                <BrushTransition Property="BorderBrush" Duration="0:0:0.20" />
+                <BrushTransition Property="Background" Duration="0:0:0.22" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.22" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.22" />
             </Transitions>
         </Setter>
     </Style>
 
-    <!-- Segment: Hover -->
+    <!-- Segment: Hover (Soft Glossy Specular Surface) -->
     <Style Selector="Button.Segment:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceHover}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
@@ -121,7 +120,7 @@
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
 
-    <!-- Segment: Active / Selected (Translucent Accent-Tinted Liquid Glass) -->
+    <!-- Segment: Active / Selected (Physical Floating Glass Pill with Accent Tint) -->
     <Style Selector="Button.Segment.active /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceSelected}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderSelected}" />
@@ -132,7 +131,7 @@
         <Setter Property="FontWeight" Value="Bold" />
     </Style>
 
-    <!-- Segment: Active + Hover (Enhanced Luminous Rim) -->
+    <!-- Segment: Active + Hover (Luminous Edge Reflection) -->
     <Style Selector="Button.Segment.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceSelectedHover}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentBright}" />
@@ -155,9 +154,9 @@
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.20" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.20" />
-                <BrushTransition Property="BorderBrush" Duration="0:0:0.20" />
+                <BrushTransition Property="Background" Duration="0:0:0.22" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.22" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.22" />
             </Transitions>
         </Setter>
     </Style>
@@ -180,15 +179,15 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.Border}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
-        <Setter Property="Padding" Value="12,5" />
+        <Setter Property="Padding" Value="14,6" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Pill}" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.20" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.20" />
-                <BrushTransition Property="BorderBrush" Duration="0:0:0.20" />
+                <BrushTransition Property="Background" Duration="0:0:0.22" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.22" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.22" />
             </Transitions>
         </Setter>
     </Style>
@@ -201,12 +200,110 @@
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceSelected}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderSelected}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style Selector="Button.FilterPill.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceSelectedHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentBright}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
 
     <!-- ────────────────────────────────────────────────────────────────────────── -->
     <!-- 5. ACCESSIBILITY KEYBOARD FOCUS FOR LIQUID GLASS BUTTONS                  -->
     <!-- ────────────────────────────────────────────────────────────────────────── -->
+
+    <!-- ────────────────────────────────────────────────────────────────────────── -->
+    <!-- 4b. 3D WATER-DROP PERIOD SELECTOR BUTTONS (TODAY / 7 DAYS / MONTH)        -->
+    <!--     Used exclusively in the Dashboard period analytics header              -->
+    <!-- ────────────────────────────────────────────────────────────────────────── -->
+
+    <!-- Outer glass trough for water-drop buttons — deeper shadow than standard   -->
+    <Style Selector="Border.WaterDropContainer">
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.PillBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.PillBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="5,5" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #28FFFFFF, 0 6 24 0 #22000000, 0 2 6 0 #10000000" />
+    </Style>
+
+    <!-- WaterDropSegment Base (unselected) — gentle glass ghost                   -->
+    <Style Selector="Button.WaterDropSegment">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+        <Setter Property="Padding" Value="18,9" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.22" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.22" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.22" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!-- WaterDropSegment unselected content presenter — subtle resting glass      -->
+    <Style Selector="Button.WaterDropSegment /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.WaterDrop.Rest}" />
+        <Setter Property="BorderBrush" Value="#14FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.22" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.22" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!-- WaterDropSegment: Hover — bubble reflection intensifies gently            -->
+    <Style Selector="Button.WaterDropSegment:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.WaterDrop.Hover}" />
+        <Setter Property="BorderBrush" Value="#45FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+    </Style>
+    <Style Selector="Button.WaterDropSegment:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    </Style>
+
+    <!-- WaterDropSegment: Pressed — squish inward feeling                         -->
+    <Style Selector="Button.WaterDropSegment:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfacePressed}" />
+        <Setter Property="BorderBrush" Value="#35FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+    </Style>
+
+    <!-- WaterDropSegment: Active / Selected — full 3D water-droplet floating pill -->
+    <!--   Bright specular crown → translucent body → subtle dark base             -->
+    <!--   Double border: bright top rim (specular) + accent-tinted outer ring     -->
+    <Style Selector="Button.WaterDropSegment.active /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.WaterDrop.Selected}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.WaterDrop.SpecularRim}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+    </Style>
+    <Style Selector="Button.WaterDropSegment.active">
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <!-- Depth is achieved via the ContentPresenter gradient + specular rim + WaterDropContainer shadow -->
+    </Style>
+
+    <!-- WaterDropSegment: Active + Hover — intensified specular reflection        -->
+    <Style Selector="Button.WaterDropSegment.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.WaterDrop.Selected}" />
+        <Setter Property="BorderBrush" Value="#80FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+    </Style>
+    <!-- Active + Hover foreground stays TextPrimary (inherited from active style) -->
+
+
 
     <Style Selector="Button.Segment:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
@@ -215,7 +312,7 @@
 
     <Style Selector="Button.SidebarItem:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
-        <Setter Property="BorderThickness" Value="2,0,0,0" />
+        <Setter Property="BorderThickness" Value="1" />
     </Style>
 
     <Style Selector="Button.LiquidGlass:focus-visible /template/ ContentPresenter#PART_ContentPresenter">

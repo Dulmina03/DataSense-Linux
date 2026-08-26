@@ -8,7 +8,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="0 4 20 0 #25000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 6 24 0 #25000000" />
     </Style>
 
     <!-- Elevated Panel -->
@@ -18,7 +18,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="0 6 24 0 #2D000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #30FFFFFF, 0 8 30 0 #30000000" />
     </Style>
 
     <!-- Hero Panel (Large central focal point) -->
@@ -28,7 +28,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Hero}" />
-        <Setter Property="BoxShadow" Value="0 8 28 0 #30000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #35FFFFFF, 0 12 36 0 #35000000" />
     </Style>
 
     <!-- Interactive Panel (Liquid Glass hover treatment) -->
@@ -38,7 +38,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #10FFFFFF, 0 4 20 0 #25000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #22FFFFFF, 0 6 24 0 #25000000" />
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.22" />
@@ -49,8 +49,8 @@
     </Style>
     <Style Selector="Border.CardInteractive:pointerover">
         <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #22FFFFFF, 0 8 28 0 #35000000, 0 0 16 0 #12A100FF" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #45FFFFFF, 0 10 32 0 #38000000, 0 0 16 0 #18A100FF" />
     </Style>
 
     <!-- Status Cards -->
@@ -60,7 +60,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="0 4 16 0 #20000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000" />
     </Style>
 
     <Style Selector="Border.CardWarning">
@@ -69,7 +69,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="0 4 16 0 #20000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000" />
     </Style>
 
     <Style Selector="Border.CardDanger">
@@ -78,7 +78,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="0 4 16 0 #20000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000" />
     </Style>
 
     <!-- NEW: Modern Analytics Surfaces -->
@@ -88,7 +88,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Hero}" />
-        <Setter Property="BoxShadow" Value="0 8 32 0 #30000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #30FFFFFF, 0 10 36 0 #30000000" />
     </Style>
 
     <Style Selector="Border.MetricSurface">
@@ -97,7 +97,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
-        <Setter Property="BoxShadow" Value="0 4 16 0 #20000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000" />
     </Style>
 
     <Style Selector="Border.AnalyticsSurface">
@@ -106,7 +106,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Large}" />
-        <Setter Property="BoxShadow" Value="0 6 24 0 #28000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #25FFFFFF, 0 8 28 0 #28000000" />
     </Style>
 
     <!-- Status Pills and Indicators -->
@@ -116,6 +116,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Pill}" />
         <Setter Property="Padding" Value="10,4" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 2 8 0 #15000000" />
     </Style>
     
     <!-- Legacy Badge Support -->
@@ -125,6 +126,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Pill}" />
         <Setter Property="Padding" Value="8,4" />
+        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 2 8 0 #15000000" />
     </Style>
 
     <Style Selector="Ellipse.LiveIndicator">

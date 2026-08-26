@@ -97,6 +97,8 @@ public partial class SettingsViewModel : ViewModelBase
     // ── 2. Dashboard ────────────────────────────────────────────────────────
     [ObservableProperty] private bool _showSummaryCards = true;
     [ObservableProperty] private bool _showNetworkChart = true;
+    [ObservableProperty] private bool _showTopConsumers = true;
+    [ObservableProperty] private bool _showLiveProcessTraffic = true;
     [ObservableProperty] private bool _showApplicationUsage = true;
     [ObservableProperty] private bool _showNetworkInfo = true;
 
@@ -251,6 +253,7 @@ public partial class SettingsViewModel : ViewModelBase
             long todayDl = 0, todayUl = 0;
             long monthDl = 0, monthUl = 0;
 
+            bool sHero = true, sNet = true, sTop = true, sProc = true, sApp = true, sInfo = true;
             if (_repository != null)
             {
                 totalRecords = await _repository.GetTotalRecordCountAsync();
@@ -261,6 +264,24 @@ public partial class SettingsViewModel : ViewModelBase
                 var monthSummary = await _repository.GetMonthSummaryAsync();
                 monthDl = monthSummary.BytesDownloaded;
                 monthUl = monthSummary.BytesUploaded;
+
+                var sHeroVal = await _repository.GetSettingAsync("ShowSummaryCards");
+                if (bool.TryParse(sHeroVal, out bool bHero)) sHero = bHero;
+
+                var sNetVal = await _repository.GetSettingAsync("ShowNetworkChart");
+                if (bool.TryParse(sNetVal, out bool bNet)) sNet = bNet;
+
+                var sTopVal = await _repository.GetSettingAsync("ShowTopConsumers");
+                if (bool.TryParse(sTopVal, out bool bTop)) sTop = bTop;
+
+                var sProcVal = await _repository.GetSettingAsync("ShowLiveProcessTraffic");
+                if (bool.TryParse(sProcVal, out bool bProc)) sProc = bProc;
+
+                var sAppVal = await _repository.GetSettingAsync("ShowApplicationUsage");
+                if (bool.TryParse(sAppVal, out bool bApp)) sApp = bApp;
+
+                var sInfoVal = await _repository.GetSettingAsync("ShowNetworkInfo");
+                if (bool.TryParse(sInfoVal, out bool bInfo)) sInfo = bInfo;
             }
 
             var budget = await _forecastService.GetBudgetAsync();
@@ -277,6 +298,13 @@ public partial class SettingsViewModel : ViewModelBase
             RunOnUI(() =>
             {
                 SelectedTheme = matchedTheme;
+
+                ShowSummaryCards = sHero;
+                ShowNetworkChart = sNet;
+                ShowTopConsumers = sTop;
+                ShowLiveProcessTraffic = sProc;
+                ShowApplicationUsage = sApp;
+                ShowNetworkInfo = sInfo;
 
                 DatabaseSizeFormatted = ByteFormatter.FormatBytes(dbSizeBytes);
                 StoredRecordsCountFormatted = $"{totalRecords:N0} Records";
@@ -400,6 +428,12 @@ public partial class SettingsViewModel : ViewModelBase
 
             if (_repository != null)
             {
+                await _repository.SaveSettingAsync("ShowSummaryCards", ShowSummaryCards.ToString());
+                await _repository.SaveSettingAsync("ShowNetworkChart", ShowNetworkChart.ToString());
+                await _repository.SaveSettingAsync("ShowTopConsumers", ShowTopConsumers.ToString());
+                await _repository.SaveSettingAsync("ShowLiveProcessTraffic", ShowLiveProcessTraffic.ToString());
+                await _repository.SaveSettingAsync("ShowApplicationUsage", ShowApplicationUsage.ToString());
+                await _repository.SaveSettingAsync("ShowNetworkInfo", ShowNetworkInfo.ToString());
                 await _repository.SaveSettingAsync("EnableDesktopNotifications", EnableNotifications.ToString());
                 await _repository.SaveSettingAsync("NotifyDailyLimit", NotifyDailyLimit.ToString());
                 await _repository.SaveSettingAsync("NotifyMonthlyLimit", NotifyMonthlyLimit.ToString());

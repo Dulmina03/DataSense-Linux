@@ -29,7 +29,7 @@
                     </Border>
 
                     <!-- Network Name Pill -->
-                    <Border CornerRadius="16" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Padding="12,6">
+                    <Border CornerRadius="16" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Padding="12,6" BoxShadow="inset 0 1 0 0 #20FFFFFF, 0 2 8 0 #15000000">
                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                             <TextBlock Text="📶" Classes="Caption" VerticalAlignment="Center"/>
                             <TextBlock Text="Wi-Fi/network ▾" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
@@ -40,15 +40,15 @@
             </Grid>
 
             <!-- ── 2. LARGE HERO NETWORK ANALYTICS SURFACE (FLOATING GLOW CARDS) ─────────────── -->
-            <Border Classes="HeroSurface" Padding="20">
+            <Border Classes="HeroSurface" Padding="20" IsVisible="{Binding ShowHeroNetwork}">
                 <StackPanel Spacing="16">
                     <!-- Hero Header Label -->
-                    <TextBlock Text="HERO NETWORK ANALYTICS" Classes="Caption" FontWeight="Bold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                    <TextBlock Text="NETWORK ANALYTICS" Classes="Caption" FontWeight="Bold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextSecondary}"/>
 
                     <!-- 3 Floating Glow Metric Instruments -->
                     <Grid ColumnDefinitions="*,16,*,16,*">
                         <!-- 1. DOWNLOAD FLOATING GLOW CARD (Electric Violet Glow) -->
-                        <Border Grid.Column="0" Background="{DynamicResource Brush.HeroDownloadGradient}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="14" Padding="20">
+                        <Border Grid.Column="0" Background="{DynamicResource Brush.HeroDownloadGradient}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="14" Padding="20" BoxShadow="inset 0 1 0 0 #35FFFFFF, 0 6 20 0 #20000000">
                             <StackPanel Spacing="12">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -72,7 +72,7 @@
                         </Border>
 
                         <!-- 2. UPLOAD FLOATING GLOW CARD (Electric Cyan Glow) -->
-                        <Border Grid.Column="2" Background="{DynamicResource Brush.HeroUploadGradient}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="14" Padding="20">
+                        <Border Grid.Column="2" Background="{DynamicResource Brush.HeroUploadGradient}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="14" Padding="20" BoxShadow="inset 0 1 0 0 #35FFFFFF, 0 6 20 0 #20000000">
                             <StackPanel Spacing="12">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -96,7 +96,7 @@
                         </Border>
 
                         <!-- 3. TODAY'S USAGE FLOATING GLOW CARD (Ambient Purple Glow) -->
-                        <Border Grid.Column="4" Background="{DynamicResource Brush.HeroUsageGradient}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="14" Padding="20">
+                        <Border Grid.Column="4" Background="{DynamicResource Brush.HeroUsageGradient}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="14" Padding="20" BoxShadow="inset 0 1 0 0 #35FFFFFF, 0 6 20 0 #20000000">
                             <StackPanel Spacing="12">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -165,7 +165,7 @@
             </Border>
 
             <!-- ── 4. PREMIUM LIVE NETWORK THROUGHPUT GRAPH (60-SECOND ROLLING WINDOW) ─────── -->
-            <Border Classes="AnalyticsSurface" Padding="20">
+            <Border Classes="AnalyticsSurface" Padding="20" IsVisible="{Binding ShowLiveThroughputGraph}">
                 <StackPanel Spacing="16">
                     <!-- Header with Title, Subtitle, and Live Speed Readouts -->
                     <Grid ColumnDefinitions="*,Auto">
@@ -332,7 +332,7 @@
             </Border>
 
             <!-- ── 5. TWO SIDE-BY-SIDE PROCESS DONUT ANALYTICS PANELS ──────────────────────── -->
-            <Grid ColumnDefinitions="*,16,*">
+            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding ShowTopConsumers}">
 
                 <!-- LEFT: Today's Process Network Traffic Donut Panel -->
                 <Border Grid.Column="0" Classes="AnalyticsSurface" Padding="20">
@@ -374,11 +374,11 @@
                             </ItemsControl>
 
                             <!-- Donut Center Hole -->
-                            <Border Width="116" Height="116" CornerRadius="100" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                            <Border Width="116" Height="116" CornerRadius="100" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" BoxShadow="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000">
                                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="2">
                                     <TextBlock Text="TODAY" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}" HorizontalAlignment="Center"/>
                                     <TextBlock Text="{Binding TodayTotalText}" Classes="MetricSmall" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                </StackPanel>
+                                 </StackPanel>
                             </Border>
                         </Grid>
 
@@ -440,7 +440,7 @@
                             </ItemsControl>
 
                             <!-- Donut Center Hole -->
-                            <Border Width="116" Height="116" CornerRadius="100" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                            <Border Width="116" Height="116" CornerRadius="100" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" BoxShadow="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000">
                                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="2">
                                     <TextBlock Text="THIS MONTH" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}" HorizontalAlignment="Center"/>
                                     <TextBlock Text="{Binding MonthTotalText}" Classes="MetricSmall" FontWeight="Bold" HorizontalAlignment="Center"/>
@@ -448,7 +448,7 @@
                             </Border>
                         </Grid>
 
-                        <!-- Monthly Process Legend Table (Deterministic Color Dots) -->
+                        <!-- Process Legend Table (Deterministic Color Dots) -->
                         <ItemsControl ItemsSource="{Binding TopMonthProcesses}" Margin="0,4,0,0" IsVisible="{Binding HasTopMonthProcesses}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="models:ApplicationHistoricalProfile">
@@ -469,7 +469,7 @@
             </Grid>
 
             <!-- ── 6. PREMIUM LIVE PROCESS TRAFFIC TABLE ─────────────────────────────────── -->
-            <Border Classes="AnalyticsSurface" Padding="20">
+            <Border Classes="AnalyticsSurface" Padding="20" IsVisible="{Binding ShowLiveProcessTraffic}">
                 <StackPanel Spacing="16">
                     <!-- Header with Title, Subtitle, and Live Badge -->
                     <Grid ColumnDefinitions="*,Auto">
@@ -555,7 +555,7 @@
                     </ItemsControl>
 
                     <!-- Total Live Process Traffic Summary Footer -->
-                    <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="10" Padding="18,14" Margin="0,6,0,0" IsVisible="{Binding HasLiveProcessTraffic}">
+                    <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="10" Padding="18,14" Margin="0,6,0,0" BoxShadow="inset 0 1 0 0 #20FFFFFF, 0 4 14 0 #18000000" IsVisible="{Binding HasLiveProcessTraffic}">
                         <Grid ColumnDefinitions="Auto,*,Auto,24,Auto" VerticalAlignment="Center">
                             <TextBlock Grid.Column="0" Text="TOTAL LIVE PROCESS DATA" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
 

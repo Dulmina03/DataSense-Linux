@@ -49,31 +49,31 @@
             </Grid>
 
             <!-- ── 2. GLOBAL PERIOD CONTROL ([TODAY] [7 DAYS] [MONTH ▾]) ─────────────────── -->
-            <Border Classes="SegmentContainer" Padding="6,6">
+            <Border Classes="WaterDropContainer">
                 <Grid ColumnDefinitions="Auto,*,Auto">
-                    <!-- Segmented Period Buttons -->
+                    <!-- 3D Water-Drop Period Buttons -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
-                        <Button Classes="Segment"
+                        <Button Classes="WaterDropSegment"
                                 Classes.active="{Binding IsTodayActive}"
                                 Command="{Binding SelectTodayCommand}"
                                 Padding="20,10"
-                                CornerRadius="8">
+                                CornerRadius="10">
                             <TextBlock Text="TODAY" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Center"/>
                         </Button>
 
-                        <Button Classes="Segment"
+                        <Button Classes="WaterDropSegment"
                                 Classes.active="{Binding Is7DaysActive}"
                                 Command="{Binding SelectLast7DaysCommand}"
                                 Padding="20,10"
-                                CornerRadius="8">
+                                CornerRadius="10">
                             <TextBlock Text="7 DAYS" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Center"/>
                         </Button>
 
-                        <Button Classes="Segment"
+                        <Button Classes="WaterDropSegment"
                                 Classes.active="{Binding IsMonthActive}"
                                 Command="{Binding SelectMonthCommand}"
                                 Padding="20,10"
-                                CornerRadius="8">
+                                CornerRadius="10">
                             <TextBlock Text="MONTH ▾" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Center"/>
                         </Button>
                     </StackPanel>

@@ -227,6 +227,20 @@
                                 <Border Height="1" Background="{DynamicResource Brush.BorderSubtle}"/>
 
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                                    <TextBlock Text="Top data consumers" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <CheckBox Grid.Column="1" IsChecked="{Binding ShowTopConsumers}" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Border Height="1" Background="{DynamicResource Brush.BorderSubtle}"/>
+
+                                <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                                    <TextBlock Text="Live process traffic" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <CheckBox Grid.Column="1" IsChecked="{Binding ShowLiveProcessTraffic}" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Border Height="1" Background="{DynamicResource Brush.BorderSubtle}"/>
+
+                                <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                                     <TextBlock Text="Application usage" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
                                     <CheckBox Grid.Column="1" IsChecked="{Binding ShowApplicationUsage}" VerticalAlignment="Center"/>
                                 </Grid>

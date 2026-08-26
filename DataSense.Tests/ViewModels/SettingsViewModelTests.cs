@@ -166,4 +166,39 @@ public class SettingsViewModelTests
         Assert.Equal("5.0 GB", vm.DailyLimitText);
         Assert.Equal("100.0 GB", vm.MonthlyLimitText);
     }
+
+    [Fact]
+    public async Task Dashboard_WidgetPreferences_PersistAndLoad()
+    {
+        using var context = await TestDatabaseFactory.CreateAsync();
+        var forecastMock = new Mock<IForecastService>();
+        forecastMock.Setup(f => f.GetBudgetAsync()).ReturnsAsync(new DataBudget());
+
+        var vm = new SettingsViewModel(forecastMock.Object, repository: context.Repository);
+        await vm.LoadSettingsAsync();
+
+        // Initially defaults are true
+        Assert.True(vm.ShowSummaryCards);
+        Assert.True(vm.ShowNetworkChart);
+        Assert.True(vm.ShowTopConsumers);
+        Assert.True(vm.ShowLiveProcessTraffic);
+
+        // Change values
+        vm.ShowSummaryCards = false;
+        vm.ShowNetworkChart = false;
+        vm.ShowTopConsumers = false;
+        vm.ShowLiveProcessTraffic = false;
+
+        // Save
+        await vm.SaveSettingsAsync();
+
+        // Create new instance and load
+        var vm2 = new SettingsViewModel(forecastMock.Object, repository: context.Repository);
+        await vm2.LoadSettingsAsync();
+
+        Assert.False(vm2.ShowSummaryCards);
+        Assert.False(vm2.ShowNetworkChart);
+        Assert.False(vm2.ShowTopConsumers);
+        Assert.False(vm2.ShowLiveProcessTraffic);
+    }
 }

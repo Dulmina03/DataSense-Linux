@@ -139,6 +139,13 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     
     [ObservableProperty] private bool _hasInsights;
 
+    // ── Widget Visibility & Personalization ─────────────────────────────────
+
+    [ObservableProperty] private bool _showHeroNetwork = true;
+    [ObservableProperty] private bool _showLiveThroughputGraph = true;
+    [ObservableProperty] private bool _showTopConsumers = true;
+    [ObservableProperty] private bool _showLiveProcessTraffic = true;
+
     // ── Chart ───────────────────────────────────────────────────────────────
 
     public ObservableCollection<DailyChartBarViewModel> DailyChartItems { get; } = new();
@@ -417,6 +424,32 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
         // Initial load of connection details
         _ = LoadConnectionDetailsAsync(_networkMonitorWorker.ActiveInterface);
+
+        // Load persisted dashboard widget preferences
+        _ = LoadDashboardPreferencesAsync();
+    }
+
+    public async Task LoadDashboardPreferencesAsync()
+    {
+        try
+        {
+            var showHero = await _repository.GetSettingAsync("ShowSummaryCards");
+            if (bool.TryParse(showHero, out bool sh))
+                ShowHeroNetwork = sh;
+
+            var showGraph = await _repository.GetSettingAsync("ShowNetworkChart");
+            if (bool.TryParse(showGraph, out bool sg))
+                ShowLiveThroughputGraph = sg;
+
+            var showConsumers = await _repository.GetSettingAsync("ShowTopConsumers");
+            if (bool.TryParse(showConsumers, out bool sc))
+                ShowTopConsumers = sc;
+
+            var showProcess = await _repository.GetSettingAsync("ShowLiveProcessTraffic");
+            if (bool.TryParse(showProcess, out bool sp))
+                ShowLiveProcessTraffic = sp;
+        }
+        catch { }
     }
 
     // ────────────────────────────────────────────────────────────────────────
