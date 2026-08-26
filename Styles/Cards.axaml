@@ -3,42 +3,42 @@
         
     <!-- Base Panel / Glass Card -->
     <Style Selector="Border.Card">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 6 24 0 #25000000" />
+        <Setter Property="BoxShadow" Value="inset 2 1 7 0 #22FFFFFF, inset -1 -2 5 0 #16000000, 0 8 24 0 #26000000" />
     </Style>
 
     <!-- Elevated Panel -->
     <Style Selector="Border.CardElevated">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurfaceElevated}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #30FFFFFF, 0 8 30 0 #30000000" />
+        <Setter Property="BoxShadow" Value="inset 3 1 9 0 #2CFFFFFF, inset -2 -3 7 0 #1C000000, 0 10 28 0 #2C000000" />
     </Style>
 
     <!-- Hero Panel (Large central focal point) -->
     <Style Selector="Border.CardHero">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurfaceElevated}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Hero}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #35FFFFFF, 0 12 36 0 #35000000" />
+        <Setter Property="BoxShadow" Value="inset 3 1 10 0 #30FFFFFF, inset -2 -3 8 0 #1E000000, 0 12 32 0 #30000000" />
     </Style>
 
     <!-- Interactive Panel (Liquid Glass hover treatment) -->
     <Style Selector="Border.CardInteractive">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurface}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #22FFFFFF, 0 6 24 0 #25000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 9 0 #14FFFFFF, 0 7 22 0 #1A000000" />
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.22" />
@@ -48,65 +48,65 @@
         </Setter>
     </Style>
     <Style Selector="Border.CardInteractive:pointerover">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #45FFFFFF, 0 10 32 0 #38000000, 0 0 16 0 #18A100FF" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurfaceElevated}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BoxShadow" Value="inset 0 1 12 0 #20FFFFFF, 0 9 26 0 #20000000" />
     </Style>
 
     <!-- Status Cards -->
     <Style Selector="Border.CardSuccess">
-        <Setter Property="Background" Value="{DynamicResource Brush.SuccessSurface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurface}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 7 0 #10FFFFFF, 0 5 16 0 #14000000" />
     </Style>
 
     <Style Selector="Border.CardWarning">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Warning}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurface}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 7 0 #10FFFFFF, 0 5 16 0 #14000000" />
     </Style>
 
     <Style Selector="Border.CardDanger">
-        <Setter Property="Background" Value="{DynamicResource Brush.DangerSurface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurface}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Card}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000" />
+        <Setter Property="BoxShadow" Value="inset 0 1 7 0 #10FFFFFF, 0 5 16 0 #14000000" />
     </Style>
 
     <!-- NEW: Modern Analytics Surfaces -->
     <Style Selector="Border.HeroSurface">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Hero}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #30FFFFFF, 0 10 36 0 #30000000" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurfaceSection}" />
+        <Setter Property="BoxShadow" Value="inset 1 1 6 0 #16FFFFFF, 0 6 20 0 #18000000" />
     </Style>
 
     <Style Selector="Border.MetricSurface">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurfaceSecondary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Medium}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000" />
+        <Setter Property="BoxShadow" Value="inset 1 1 5 0 #14FFFFFF, 0 5 16 0 #18000000" />
     </Style>
 
     <Style Selector="Border.AnalyticsSurface">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.CardSurfaceSection}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
         <Setter Property="Padding" Value="{DynamicResource Padding.Large}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #25FFFFFF, 0 8 28 0 #28000000" />
+        <Setter Property="BoxShadow" Value="inset 1 1 6 0 #16FFFFFF, 0 6 20 0 #18000000" />
     </Style>
 
     <!-- Status Pills and Indicators -->
@@ -142,11 +142,12 @@
 
     <!-- Process Analytics Table Row (Live Process Traffic) – Liquid Glass subtle hover -->
     <Style Selector="Border.ProcessRow">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
         <Setter Property="Padding" Value="12,8" />
+        <Setter Property="BoxShadow" Value="inset 1 1 5 0 #14FFFFFF, inset -1 -2 4 0 #10000000, 0 4 14 0 #18000000" />
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.18" />
@@ -156,16 +157,19 @@
     </Style>
     <Style Selector="Border.ProcessRow:pointerover">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorderHover}" />
+        <Setter Property="BoxShadow" Value="inset 2 1 7 0 #20FFFFFF, inset -1 -2 5 0 #14000000, 0 5 16 0 #1C000000" />
     </Style>
 
     <!-- Application Historical Profile Row (Usage Breakdown) – Liquid Glass subtle hover -->
     <Style Selector="Border.AppRow">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorder}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
-        <Setter Property="Padding" Value="14,12" />
-        <Setter Property="Margin" Value="0,0,0,10" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+        <Setter Property="BoxShadow" Value="inset 1 1 6 0 #16FFFFFF, inset -1 -2 4 0 #10000000, 0 5 16 0 #18000000" />
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.18" />
@@ -176,7 +180,7 @@
     </Style>
     <Style Selector="Border.AppRow:pointerover">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
-        <Setter Property="BoxShadow" Value="inset 0 1 0 0 #18FFFFFF, 0 4 12 0 #22000000" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorderHover}" />
+        <Setter Property="BoxShadow" Value="inset 0 1 9 0 #18FFFFFF, 0 5 16 0 #18000000" />
     </Style>
 </Styles>

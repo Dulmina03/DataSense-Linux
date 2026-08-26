@@ -33,7 +33,7 @@
                     <StackPanel Grid.Column="0" Spacing="20" VerticalAlignment="Center">
 
                         <!-- Diagnostics List Items -->
-                        <Border Classes="Card" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="{DynamicResource Radius.Large}" Padding="20,18">
+                        <Border Classes="Card" Padding="20,18">
                             <StackPanel Spacing="16">
                                 <!-- IP Address -->
                                 <Grid ColumnDefinitions="32,*">
@@ -80,7 +80,7 @@
                         </Border>
 
                         <!-- Bottom-Left Diagnostic Health Card -->
-                        <Border Classes="Card" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="1" CornerRadius="{DynamicResource Radius.Medium}" Padding="16,14">
+                        <Border Classes="Card" Padding="16,14">
                             <Grid ColumnDefinitions="Auto,*">
                                 <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18" Background="{DynamicResource Brush.SurfaceHover}" VerticalAlignment="Center" Margin="0,0,12,0">
                                     <TextBlock Text="🛡️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -206,7 +206,7 @@
                     <StackPanel Grid.Column="2" Spacing="14" VerticalAlignment="Center">
 
                         <!-- Download Card -->
-                        <Border Classes="Card" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="{DynamicResource Radius.Large}" Padding="20,18">
+                        <Border Classes="Card" Padding="20,18">
                             <StackPanel Spacing="8">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock Text="☁️↓" FontSize="16" Foreground="{DynamicResource Brush.Download}" VerticalAlignment="Center"/>
@@ -220,7 +220,7 @@
                         </Border>
 
                         <!-- Upload Card -->
-                        <Border Classes="Card" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="{DynamicResource Radius.Large}" Padding="20,18">
+                        <Border Classes="Card" Padding="20,18">
                             <StackPanel Spacing="8">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock Text="☁️↑" FontSize="16" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
@@ -234,7 +234,7 @@
                         </Border>
 
                         <!-- Ping Card -->
-                        <Border Classes="Card" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="{DynamicResource Radius.Large}" Padding="20,18">
+                        <Border Classes="Card" Padding="20,18">
                             <StackPanel Spacing="8">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock Text="📈" FontSize="16" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
@@ -250,7 +250,7 @@
                 </Grid>
 
                 <!-- ── BOTTOM TELEMETRY & SPARKLINE WAVEFORM ───────────────────────── -->
-                <Border Classes="Card" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="{DynamicResource Radius.Large}" Padding="20,16">
+                <Border Classes="Card" Padding="20,16">
                     <StackPanel Spacing="10">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -311,7 +311,7 @@
                 </Border>
 
                 <!-- ── RECENT TEST RESULTS TABLE ────────────────────────────────────── -->
-                <Border Classes="Card" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="{DynamicResource Radius.Large}" Padding="0">
+                <Border Classes="Card" Padding="0">
                     <Grid RowDefinitions="Auto,Auto,*">
                         <Grid Grid.Row="0" Margin="20,16">
                             <Grid ColumnDefinitions="*,Auto">

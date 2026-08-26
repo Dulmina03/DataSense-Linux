@@ -651,6 +651,12 @@ public class ThemeService : IThemeService
             res["Brush.LiquidGlass.InnerHighlight"] = new SolidColorBrush(def.IsLight ? Color.Parse("#90FFFFFF") : Color.Parse("#40FFFFFF"));
             res["Brush.LiquidGlass.Glow"] = new SolidColorBrush(Color.Parse(WithAlpha(def.AccentPrimary, "25")));
             res["Brush.LiquidGlass.ActiveIndicator"] = new SolidColorBrush(Color.Parse(def.AccentPrimary));
+            res["Brush.LiquidGlass.CardSurface"] = CreateGlassCardBrush(def, GetGlassAlpha(def, GlassLevel.Primary));
+            res["Brush.LiquidGlass.CardSurfaceElevated"] = CreateGlassCardBrush(def, GetGlassAlpha(def, GlassLevel.Elevated));
+            res["Brush.LiquidGlass.CardSurfaceSecondary"] = CreateGlassCardBrush(def, GetGlassAlpha(def, GlassLevel.Secondary));
+            res["Brush.LiquidGlass.CardSurfaceSection"] = CreateGlassCardBrush(def, GetGlassAlpha(def, GlassLevel.Section));
+            res["Brush.LiquidGlass.CardBorder"] = new SolidColorBrush(Color.Parse(def.IsLight ? "#2494A3B8" : "#18FFFFFF"));
+            res["Brush.LiquidGlass.CardBorderHover"] = new SolidColorBrush(Color.Parse(def.IsLight ? "#4094A3B8" : "#35FFFFFF"));
             res["Brush.LiquidGlass.PillBackground"] = new SolidColorBrush(def.IsLight ? Color.Parse("#30EDF4FB") : Color.Parse("#1A061224"));
             res["Brush.LiquidGlass.PillBorder"] = new SolidColorBrush(def.IsLight ? Color.Parse("#40CBD5E1") : Color.Parse("#30284568"));
 
@@ -764,6 +770,54 @@ public class ThemeService : IThemeService
             EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
             GradientStops = gradientStops
         };
+    }
+
+    private static SolidColorBrush CreateGlassCardBrush(ThemeDefinition definition, byte alpha)
+    {
+        var smokedGlass = definition.IsLight
+            ? Color.FromRgb(248, 250, 252)
+            : Color.FromRgb(16, 20, 28);
+        return new SolidColorBrush(Color.FromArgb(alpha, smokedGlass.R, smokedGlass.G, smokedGlass.B));
+    }
+
+    private enum GlassLevel
+    {
+        Section,
+        Primary,
+        Elevated,
+        Secondary
+    }
+
+    private static byte GetGlassAlpha(ThemeDefinition definition, GlassLevel level)
+    {
+        if (definition.IsLight)
+        {
+            return level switch
+            {
+                GlassLevel.Section => 8,
+                GlassLevel.Secondary => 16,
+                GlassLevel.Primary => 24,
+                _ => 32
+            };
+        }
+
+        var themeAdjustment = definition.Id switch
+        {
+            "Deep Violet" => 1,
+            "Aurora" => 1,
+            "Cyber Ocean" => -1,
+            "Cyber Pink" => 0,
+            _ => 0
+        };
+
+        var baseAlpha = level switch
+        {
+            GlassLevel.Section => 5,
+            GlassLevel.Secondary => 10,
+            GlassLevel.Primary => 18,
+            _ => 24
+        };
+        return (byte)Math.Clamp(baseAlpha + themeAdjustment, 2, 255);
     }
 
     private static LinearGradientBrush CreateLinearGradient(string startHex, string endHex, bool isVertical)
