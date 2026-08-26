@@ -28,24 +28,36 @@
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.20" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.20" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="ComboBox:pointerover /template/ Border#Background">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
     </Style>
     <Style Selector="ComboBoxItem">
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
         <Setter Property="Padding" Value="12,8" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.18" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.18" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceHover}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
     <Style Selector="ComboBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceSelected}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="FontWeight" Value="Bold" />
     </Style>
 
     <!-- TextBox / SearchBox -->
@@ -59,10 +71,16 @@
         <Setter Property="CaretBrush" Value="{DynamicResource Brush.Accent}" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Padding" Value="12,8" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.20" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.20" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
     </Style>
     <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
         <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
@@ -94,14 +112,14 @@
         <Setter Property="Height" Value="20" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.12" />
-                <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+                <BrushTransition Property="Background" Duration="0:0:0.18" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.18" />
             </Transitions>
         </Setter>
     </Style>
     <Style Selector="CheckBox:pointerover /template/ Border#NormalRectangle">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
     </Style>
     <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
         <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
@@ -109,7 +127,7 @@
     </Style>
     <Style Selector="CheckBox:checked:pointerover /template/ Border#NormalRectangle">
         <Setter Property="Background" Value="{DynamicResource Brush.AccentHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentBright}" />
     </Style>
     <Style Selector="CheckBox:checked:pressed /template/ Border#NormalRectangle">
         <Setter Property="Background" Value="{DynamicResource Brush.AccentDeep}" />

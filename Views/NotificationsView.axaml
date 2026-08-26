@@ -51,11 +51,11 @@
                     <StackPanel Spacing="{DynamicResource Spacing.MD}">
                         <TextBlock Text="FILTER BY SEVERITY" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" FontWeight="SemiBold" LetterSpacing="0.5"/>
                         <WrapPanel Orientation="Horizontal">
-                            <Button Content="All" Command="{Binding SetFilterCommand}" CommandParameter="All" Classes="Secondary" Margin="0,0,8,8"/>
-                            <Button Content="Critical" Command="{Binding SetFilterCommand}" CommandParameter="Critical" Classes="Secondary" Foreground="{DynamicResource Brush.Danger}" Margin="0,0,8,8"/>
-                            <Button Content="Warning" Command="{Binding SetFilterCommand}" CommandParameter="Warning" Classes="Secondary" Foreground="{DynamicResource Brush.Warning}" Margin="0,0,8,8"/>
-                            <Button Content="Info" Command="{Binding SetFilterCommand}" CommandParameter="Info" Classes="Secondary" Foreground="{DynamicResource Brush.Download}" Margin="0,0,8,8"/>
-                            <Button Content="Success" Command="{Binding SetFilterCommand}" CommandParameter="Success" Classes="Secondary" Foreground="{DynamicResource Brush.Success}" Margin="0,0,8,8"/>
+                            <Button Content="All" Command="{Binding SetFilterCommand}" CommandParameter="All" Classes="FilterPill" Classes.active="{Binding IsFilterAll}" Margin="0,0,8,8"/>
+                            <Button Content="Critical" Command="{Binding SetFilterCommand}" CommandParameter="Critical" Classes="FilterPill" Classes.active="{Binding IsFilterCritical}" Foreground="{DynamicResource Brush.Danger}" Margin="0,0,8,8"/>
+                            <Button Content="Warning" Command="{Binding SetFilterCommand}" CommandParameter="Warning" Classes="FilterPill" Classes.active="{Binding IsFilterWarning}" Foreground="{DynamicResource Brush.Warning}" Margin="0,0,8,8"/>
+                            <Button Content="Info" Command="{Binding SetFilterCommand}" CommandParameter="Info" Classes="FilterPill" Classes.active="{Binding IsFilterInfo}" Foreground="{DynamicResource Brush.Download}" Margin="0,0,8,8"/>
+                            <Button Content="Success" Command="{Binding SetFilterCommand}" CommandParameter="Success" Classes="FilterPill" Classes.active="{Binding IsFilterSuccess}" Foreground="{DynamicResource Brush.Success}" Margin="0,0,8,8"/>
                         </WrapPanel>
                     </StackPanel>
                 </Border>

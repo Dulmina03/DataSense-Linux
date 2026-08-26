@@ -4,19 +4,27 @@
     <!-- Primary Button -->
     <Style Selector="Button.Primary">
         <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
         <Setter Property="Padding" Value="16,8" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="Background" Duration="0:0:0.20" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.20" />
             </Transitions>
         </Setter>
     </Style>
     <Style Selector="Button.Primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.AccentHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentBright}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    </Style>
+    <Style Selector="Button.Primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.AccentDeep}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
     </Style>
     <Style Selector="Button.Primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Opacity" Value="0.5" />
@@ -32,12 +40,12 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Transitions">
             <Transitions>
-                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.20" />
             </Transitions>
         </Setter>
     </Style>
     <Style Selector="Button.Gradient:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Opacity" Value="0.88" />
+        <Setter Property="Opacity" Value="0.90" />
     </Style>
     <Style Selector="Button.Gradient:pressed /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Opacity" Value="0.75" />
@@ -46,7 +54,7 @@
         <Setter Property="Opacity" Value="0.45" />
     </Style>
 
-    <!-- Secondary Button -->
+    <!-- Secondary Button (Liquid Glass Surface & Border) -->
     <Style Selector="Button.Secondary">
         <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
@@ -56,57 +64,88 @@
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="Background" Duration="0:0:0.20" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.20" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.20" />
             </Transitions>
         </Setter>
     </Style>
     <Style Selector="Button.Secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
+    <Style Selector="Button.Secondary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfacePressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
+    </Style>
 
-    <!-- Ghost Button (Refined) -->
+    <!-- Ghost Button (Liquid Glass Hover) -->
     <Style Selector="Button.Ghost">
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
         <Setter Property="Padding" Value="12,6" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.15" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+                <BrushTransition Property="Background" Duration="0:0:0.20" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.20" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.20" />
             </Transitions>
         </Setter>
     </Style>
     <Style Selector="Button.Ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    </Style>
+    <Style Selector="Button.Ghost:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfacePressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
     </Style>
 
     <!-- Danger Button -->
     <Style Selector="Button.Danger">
         <Setter Property="Background" Value="{DynamicResource Brush.Danger}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
         <Setter Property="Padding" Value="16,8" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Medium}" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.20" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.20" />
+            </Transitions>
+        </Setter>
     </Style>
 
-    <!-- Icon Button (Refined) -->
+    <!-- Icon Button (Liquid Glass Hover) -->
     <Style Selector="Button.Icon">
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
         <Setter Property="Padding" Value="6" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Small}" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.15" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+                <BrushTransition Property="Background" Duration="0:0:0.20" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.20" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.20" />
             </Transitions>
         </Setter>
     </Style>
     <Style Selector="Button.Icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    </Style>
+    <Style Selector="Button.Icon:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfacePressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderHover}" />
     </Style>
     
     <!-- Keyboard Focus Indication -->
