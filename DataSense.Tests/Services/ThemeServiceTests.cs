@@ -10,18 +10,20 @@ namespace DataSense.Tests.Services;
 public class ThemeServiceTests
 {
     [Fact]
-    public void ThemeService_AvailableThemes_HasAllSixThemes()
+    public void ThemeService_AvailableThemes_HasAllNineThemes()
     {
         var themeService = new ThemeService();
         var themes = themeService.AvailableThemes;
 
-        Assert.Equal(6, themes.Count);
+        Assert.Equal(8, themes.Count);
         Assert.Contains(themes, t => t.Id == "Neon Space");
         Assert.Contains(themes, t => t.Id == "Deep Violet");
         Assert.Contains(themes, t => t.Id == "Cyber Ocean");
         Assert.Contains(themes, t => t.Id == "Aurora");
         Assert.Contains(themes, t => t.Id == "Cyber Pink");
         Assert.Contains(themes, t => t.Id == "Arctic Light");
+        Assert.Contains(themes, t => t.Id == "Midnight Ocean");
+        Assert.Contains(themes, t => t.Id == "Obsidian Black");
     }
 
     [Theory]
@@ -31,6 +33,8 @@ public class ThemeServiceTests
     [InlineData("Aurora")]
     [InlineData("Cyber Pink")]
     [InlineData("Arctic Light")]
+    [InlineData("Midnight Ocean")]
+    [InlineData("Obsidian Black")]
     public void ThemeDefinitions_EachTheme_HasCompleteAndValidPalette(string themeId)
     {
         var def = ThemeService.GetThemeDefinition(themeId);
@@ -85,7 +89,7 @@ public class ThemeServiceTests
     [Fact]
     public void ThemeDefinitions_AllThemes_HaveDistinctBackgroundsAndAccents()
     {
-        var themeIds = new[] { "Neon Space", "Deep Violet", "Cyber Ocean", "Aurora", "Cyber Pink", "Arctic Light" };
+        var themeIds = new[] { "Neon Space", "Deep Violet", "Cyber Ocean", "Aurora", "Cyber Pink", "Arctic Light", "Midnight Ocean", "Obsidian Black" };
         var backgrounds = new HashSet<string>();
         var surfaces = new HashSet<string>();
         var accents = new HashSet<string>();
@@ -99,9 +103,9 @@ public class ThemeServiceTests
         }
 
         // All 6 themes must have distinct backgrounds, surfaces, and primary accents
-        Assert.Equal(6, backgrounds.Count);
-        Assert.Equal(6, surfaces.Count);
-        Assert.Equal(6, accents.Count);
+        Assert.Equal(7, backgrounds.Count);
+        Assert.Equal(8, surfaces.Count);
+        Assert.Equal(8, accents.Count);
     }
 
     [Fact]

@@ -639,9 +639,9 @@
                         <TextBlock Text="{Binding NetworkUsageSectionTitle}" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
 
                         <!-- Network Usage Items List -->
-                        <ItemsControl ItemsSource="{Binding NetworkUsageItems}">
+                        <ItemsControl ItemsSource="{Binding NetworkSessions}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="vm:NetworkUsageItemViewModel">
+                                <DataTemplate DataType="vm:HistoricalSessionViewModel">
                                     <Border Margin="0,0,0,12" Padding="18,16" CornerRadius="10"
                                             Background="{DynamicResource Brush.SurfaceElevated}"
                                             BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
@@ -661,6 +661,9 @@
                                                         <TextBlock Text="{Binding SubtitleText}"
                                                                    Classes="Caption"
                                                                    Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                                        <TextBlock Text="{Binding TimeRangeText}"
+                                                                   Classes="Caption"
+                                                                   Foreground="{DynamicResource Brush.TextMuted}"/>
                                                     </StackPanel>
                                                 </StackPanel>
 

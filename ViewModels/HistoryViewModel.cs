@@ -948,18 +948,29 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
                 NetworkSessions.Clear();
                 MonthlyNetworkSummaries.Clear();
-                foreach (var item in networkGrouped)
+                long maxSessionTotal = sessions.Count > 0 ? sessions.Max(s => s.TotalBytes) : 0;
+                foreach (var session in sessions)
                 {
+                    string displayName = _identityService.NormalizeNetworkName(session.NetworkName, session.InterfaceName);
                     NetworkSessions.Add(new HistoricalSessionViewModel
                     {
-                        NetworkName = item.NetworkName,
-                        InterfaceName = item.InterfaceName,
-                        ConnectionType = item.ConnectionType,
-                        BytesDownloaded = item.BytesDownloaded,
-                        BytesUploaded = item.BytesUploaded,
-                        DisplayIndex = item.DisplayIndex,
-                        RelativeUsagePercent = item.RelativeUsagePercent
+                        Id = session.Id,
+                        NetworkName = displayName,
+                        InterfaceName = session.InterfaceName,
+                        ConnectionType = session.ConnectionType,
+                        StartTime = session.StartTime,
+                        EndTime = session.EndTime,
+                        BytesDownloaded = session.BytesDownloaded,
+                        BytesUploaded = session.BytesUploaded,
+                        DisplayIndex = NetworkSessions.Count,
+                        RelativeUsagePercent = maxSessionTotal > 0
+                            ? Math.Max((double)session.TotalBytes / maxSessionTotal * 100.0, session.TotalBytes > 0 ? 3.0 : 0.0)
+                            : 0.0
                     });
+                }
+
+                foreach (var item in networkGrouped)
+                {
                     MonthlyNetworkSummaries.Add(new MonthlyNetworkSummaryViewModel
                     {
                         NetworkName = item.NetworkName,

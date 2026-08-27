@@ -66,18 +66,20 @@ public class SettingsViewModelTests
     }
 
     [Fact]
-    public void ThemeService_AvailableThemes_HasAllSixThemes()
+    public void ThemeService_AvailableThemes_HasAllNineThemes()
     {
         var themeService = new ThemeService();
         var themes = themeService.AvailableThemes;
 
-        Assert.Equal(6, themes.Count);
+        Assert.Equal(8, themes.Count);
         Assert.Contains(themes, t => t.Id == "Neon Space");
         Assert.Contains(themes, t => t.Id == "Deep Violet");
         Assert.Contains(themes, t => t.Id == "Cyber Ocean");
         Assert.Contains(themes, t => t.Id == "Aurora");
         Assert.Contains(themes, t => t.Id == "Cyber Pink");
         Assert.Contains(themes, t => t.Id == "Arctic Light");
+        Assert.Contains(themes, t => t.Id == "Midnight Ocean");
+        Assert.Contains(themes, t => t.Id == "Obsidian Black");
     }
 
     [Fact]

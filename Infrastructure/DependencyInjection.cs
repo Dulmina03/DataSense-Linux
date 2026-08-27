@@ -48,6 +48,8 @@ public static class DependencyInjection
         services.AddSingleton<IUnifiedAnalyticsIntelligenceService, UnifiedAnalyticsIntelligenceService>();
         services.AddSingleton<IChartDataService, ChartDataService>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<IGnomeExtensionController, GnomeExtensionController>();
+        services.AddSingleton<ITopBarSpeedMeterService, TopBarSpeedMeterService>();
 
         // Monitoring Services
         services.AddSingleton<INetworkMonitorService, LinuxNetworkMonitorService>();

@@ -95,7 +95,9 @@ public class ThemeService : IThemeService
         new("Cyber Ocean", "Cyber Ocean", "🌊"),
         new("Aurora", "Aurora", "🌃"),
         new("Cyber Pink", "Cyber Pink", "🌸"),
-        new("Arctic Light", "Arctic Light", "🤍")
+        new("Arctic Light", "Arctic Light", "🤍"),
+        new("Midnight Ocean", "Midnight Ocean", "🌑"),
+        new("Obsidian Black", "Obsidian Black", "⬛")
     };
 
     private static readonly Dictionary<string, ThemeDefinition> ThemeDefinitions = new(StringComparer.OrdinalIgnoreCase)
@@ -537,6 +539,152 @@ public class ThemeService : IThemeService
             GradientUpload: ("#7C3AED", "#8B5CF6"),
             GradientVioletPink: ("#6D28D9", "#DB2777"),
             GradientCyanPink: ("#0891B2", "#DB2777")
+        ),
+        ["Midnight Ocean"] = new(
+            Id: "Midnight Ocean",
+            DisplayName: "Midnight Ocean",
+            Icon: "🌑",
+            IsLight: false,
+            AppBackground: "#02060D",
+            NavigationBackground: "#18060D18",
+            Surface: "#24101E2C",
+            SurfaceElevated: "#30203950",
+            SurfaceSubtle: "#100A1420",
+            SurfaceHover: "#3828445C",
+            Border: "#283A5268",
+            BorderSubtle: "#1830475C",
+            BorderStrong: "#40587892",
+            Divider: "#2030475C",
+            TextPrimary: "#E6EFFB",
+            TextSecondary: "#A9BCD8",
+            TextMuted: "#7186A5",
+            TextDisabled: "#4B5E7B",
+            TextOnAccent: "#F2F7FF",
+            AccentPrimary: "#4D82D1",
+            AccentSecondary: "#91B9F0",
+            AccentTertiary: "#2E5A9E",
+            AccentHover: "#6B9BE0",
+            AccentGlow: "#74A8EA",
+            AccentSurface: "#284D82D1",
+            AmbientGlow: "#163A70",
+            Download: "#A78BFA",
+            DownloadBright: "#C4B5FD",
+            DownloadMuted: "#8872D0",
+            DownloadGlow: "#9C82E8",
+            DownloadSurface: "#28A78BFA",
+            Upload: "#E879B5",
+            UploadBright: "#F5A6D1",
+            UploadDeep: "#A94D83",
+            UploadGlow: "#D568A5",
+            UploadSurface: "#28E879B5",
+            Success: "#69D39A",
+            SuccessSurface: "#2869D39A",
+            Warning: "#E5B86B",
+            Danger: "#E47D89",
+            DangerSurface: "#28E47D89",
+            ChartGrid: "#18324F78",
+            ChartAxis: "#7894B8",
+            ChartTooltipBackground: "#E814253D",
+            ChartTooltipText: "#E6EFFB",
+            ChartSegmentOther: "#58739B",
+            ProcessPalette: new[]
+            {
+                "#A78BFA", "#E879B5", "#E5B86B", "#69D39A", "#C4B5FD", "#8872D0",
+                "#D568A5", "#4D82D1", "#A94D83", "#F5A6D1", "#E47D89", "#6FA8E8"
+            },
+            AppBackgroundGradientStops: new (string, double)[]
+            {
+                ("#010309", 0.00),
+                ("#020916", 0.24),
+                ("#06182B", 0.48),
+                ("#0A2942", 0.72),
+                ("#020711", 1.00)
+            },
+            DownloadBarGradient: ("#C4B5FD", "#6A4FB3"),
+            UploadBarGradient: ("#F5A6D1", "#A94D83"),
+            HeroDownloadGradient: ("#38A78BFA", "#00101E2C"),
+            HeroUploadGradient: ("#38E879B5", "#00101E2C"),
+            HeroUsageGradient: ("#284D82D1", "#00101E2C"),
+            DownloadAreaGradient: ("#286FA8E8", "#026FA8E8"),
+            UploadAreaGradient: ("#28416FAF", "#02416FAF"),
+            ActiveNavGradient: ("#384D82D1", "#184D82D1"),
+            GradientDownload: ("#8872D0", "#C4B5FD"),
+            GradientUpload: ("#A94D83", "#F5A6D1"),
+            GradientVioletPink: ("#8B5CF6", "#E879B5"),
+            GradientCyanPink: ("#4D82D1", "#E879B5")
+        ),
+        ["Obsidian Black"] = new(
+            Id: "Obsidian Black",
+            DisplayName: "Obsidian Black",
+            Icon: "⬛",
+            IsLight: false,
+            AppBackground: "#000000",
+            NavigationBackground: "#12000000",
+            Surface: "#24141418",
+            SurfaceElevated: "#30202026",
+            SurfaceSubtle: "#100A0A0D",
+            SurfaceHover: "#382C2C34",
+            Border: "#28383A40",
+            BorderSubtle: "#18282A30",
+            BorderStrong: "#40585A64",
+            Divider: "#20282A30",
+            TextPrimary: "#F0F0F2",
+            TextSecondary: "#C2C3C8",
+            TextMuted: "#85868D",
+            TextDisabled: "#55565C",
+            TextOnAccent: "#FFFFFF",
+            AccentPrimary: "#4D8FE8",
+            AccentSecondary: "#8DBAFF",
+            AccentTertiary: "#2860A8",
+            AccentHover: "#70A8F0",
+            AccentGlow: "#75AFFF",
+            AccentSurface: "#284D8FE8",
+            AmbientGlow: "#172B4A",
+            Download: "#65B7E8",
+            DownloadBright: "#A9D9F5",
+            DownloadMuted: "#4684B4",
+            DownloadGlow: "#5FA7D4",
+            DownloadSurface: "#2865B7E8",
+            Upload: "#A78BFA",
+            UploadBright: "#C4B5FD",
+            UploadDeep: "#6A4FB3",
+            UploadGlow: "#9478E6",
+            UploadSurface: "#28A78BFA",
+            Success: "#69C48F",
+            SuccessSurface: "#2869C48F",
+            Warning: "#D6A85D",
+            Danger: "#D96B7D",
+            DangerSurface: "#28D96B7D",
+            ChartGrid: "#182F333D",
+            ChartAxis: "#85868D",
+            ChartTooltipBackground: "#E8141418",
+            ChartTooltipText: "#F0F0F2",
+            ChartSegmentOther: "#6B6C74",
+            ProcessPalette: new[]
+            {
+                "#4D8FE8", "#A78BFA", "#D6A85D", "#D8874F", "#69C48F", "#D96B7D",
+                "#8DBAFF", "#65B7E8", "#6A4FB3", "#C4B5FD", "#A9D9F5", "#6B6C74"
+            },
+            AppBackgroundGradientStops: new (string, double)[]
+            {
+                ("#000000", 0.00),
+                ("#08080B", 0.24),
+                ("#24262B", 0.50),
+                ("#0A0A0D", 0.76),
+                ("#000000", 1.00)
+            },
+            DownloadBarGradient: ("#A9D9F5", "#2860A8"),
+            UploadBarGradient: ("#C4B5FD", "#6A4FB3"),
+            HeroDownloadGradient: ("#3865B7E8", "#00141418"),
+            HeroUploadGradient: ("#38A78BFA", "#00141418"),
+            HeroUsageGradient: ("#28D6A85D", "#00141418"),
+            DownloadAreaGradient: ("#2865B7E8", "#0265B7E8"),
+            UploadAreaGradient: ("#28A78BFA", "#02A78BFA"),
+            ActiveNavGradient: ("#384D8FE8", "#184D8FE8"),
+            GradientDownload: ("#4684B4", "#A9D9F5"),
+            GradientUpload: ("#6A4FB3", "#C4B5FD"),
+            GradientVioletPink: ("#6A4FB3", "#D96B7D"),
+            GradientCyanPink: ("#4D8FE8", "#D8874F")
         )
     };
 
@@ -661,6 +809,13 @@ public class ThemeService : IThemeService
             res["Brush.LiquidGlass.CardBorderWater"] = new SolidColorBrush(Color.Parse(def.IsLight ? "#4894A3B8" : "#32FFFFFF"));
             res["Brush.LiquidGlass.PillBackground"] = new SolidColorBrush(def.IsLight ? Color.Parse("#30EDF4FB") : Color.Parse("#1A061224"));
             res["Brush.LiquidGlass.PillBorder"] = new SolidColorBrush(def.IsLight ? Color.Parse("#40CBD5E1") : Color.Parse("#30284568"));
+            res["Brush.WaterDrop.Rest"] = CreateWaterDropBrush(def, 26, 14, 8, 14);
+            res["Brush.WaterDrop.Hover"] = CreateWaterDropBrush(def, 40, 22, 12, 20);
+            res["Brush.WaterDrop.Selected"] = CreateWaterDropBrush(def, 54, 30, 16, 28);
+            res["Brush.WaterDrop.SpecularRim"] = CreateWaterDropRim(def);
+            res["Brush.WaterDrop.Border"] = CreateWaterDropBorder(def, 42);
+            res["Brush.WaterDrop.BorderPressed"] = CreateWaterDropBorder(def, 60);
+            res["Brush.WaterDrop.ContainerBorder"] = CreateWaterDropBorder(def, 48);
 
             // 2. Borders & Dividers
             res["Brush.Border"] = new SolidColorBrush(Color.Parse(def.Border));
@@ -780,6 +935,46 @@ public class ThemeService : IThemeService
             ? Color.FromRgb(248, 250, 252)
             : Color.FromRgb(16, 20, 28);
         return new SolidColorBrush(Color.FromArgb(alpha, smokedGlass.R, smokedGlass.G, smokedGlass.B));
+    }
+
+    private static LinearGradientBrush CreateWaterDropBrush(ThemeDefinition definition, byte topAlpha, byte midAlpha, byte lowAlpha, byte shadowAlpha)
+    {
+        var accent = Color.Parse(definition.AccentPrimary);
+        return new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+            EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
+            GradientStops = new GradientStops
+            {
+                new(Color.FromArgb(topAlpha, accent.R, accent.G, accent.B), 0),
+                new(Color.FromArgb(midAlpha, accent.R, accent.G, accent.B), 0.22),
+                new(Color.FromArgb(lowAlpha, accent.R, accent.G, accent.B), 0.68),
+                new(Color.FromArgb(shadowAlpha, 0, 0, 0), 1)
+            }
+        };
+    }
+
+    private static LinearGradientBrush CreateWaterDropRim(ThemeDefinition definition)
+    {
+        var accent = Color.Parse(definition.AccentSecondary);
+        return new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+            EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
+            GradientStops = new GradientStops
+            {
+                new(Color.FromArgb(58, accent.R, accent.G, accent.B), 0),
+                new(Color.FromArgb(28, accent.R, accent.G, accent.B), 0.18),
+                new(Color.FromArgb(14, accent.R, accent.G, accent.B), 0.62),
+                new(Color.FromArgb(40, 0, 0, 0), 1)
+            }
+        };
+    }
+
+    private static SolidColorBrush CreateWaterDropBorder(ThemeDefinition definition, byte alpha)
+    {
+        var accent = Color.Parse(definition.AccentSecondary);
+        return new SolidColorBrush(Color.FromArgb(alpha, accent.R, accent.G, accent.B));
     }
 
     private enum GlassLevel

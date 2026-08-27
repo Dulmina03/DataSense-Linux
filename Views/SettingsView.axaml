@@ -658,6 +658,53 @@
                                 </Grid>
                             </StackPanel>
                         </Border>
+
+                        <Border Classes="AnalyticsSurface" Padding="20">
+                            <StackPanel Spacing="16">
+                                <TextBlock Text="TOP BAR NETWORK SPEED" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
+
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="Show Network Speed Meter" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <CheckBox Grid.Column="1" IsChecked="{Binding ShowNetworkSpeedMeter}" VerticalAlignment="Center"/>
+                                </Grid>
+                                <Border Height="1" Background="{DynamicResource Brush.BorderSubtle}"/>
+
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                                    <TextBlock Grid.Row="0" Text="Download" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding ShowMeterDownload}"/>
+                                    <TextBlock Grid.Row="1" Text="Upload" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <CheckBox Grid.Row="1" Grid.Column="1" IsChecked="{Binding ShowMeterUpload}"/>
+                                    <TextBlock Grid.Row="2" Text="Show icons" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <CheckBox Grid.Row="2" Grid.Column="1" IsChecked="{Binding ShowMeterIcons}"/>
+                                    <TextBlock Grid.Row="3" Text="Compact mode" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding MeterCompactMode}"/>
+                                    <TextBlock Grid.Row="4" Text="Units" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <ComboBox Grid.Row="4" Grid.Column="1" ItemsSource="{Binding MeterUnitOptions}" SelectedItem="{Binding MeterUnits}" MinWidth="150"/>
+                                    <TextBlock Grid.Row="5" Text="Precision" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding MeterPrecisionOptions}" SelectedItem="{Binding MeterPrecision}" MinWidth="150"/>
+                                    <TextBlock Grid.Row="6" Text="Refresh rate" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <ComboBox Grid.Row="6" Grid.Column="1" ItemsSource="{Binding MeterRefreshRateOptions}" SelectedItem="{Binding MeterRefreshRate}" MinWidth="150"/>
+                                    <TextBlock Grid.Row="7" Text="Show details on hover" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <CheckBox Grid.Row="7" Grid.Column="1" IsChecked="{Binding MeterShowDetailsOnHover}"/>
+                                    <TextBlock Grid.Row="8" Text="Color mode" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <ComboBox Grid.Row="8" Grid.Column="1" ItemsSource="{Binding MeterColorModeOptions}" SelectedItem="{Binding MeterColorMode}" MinWidth="150"/>
+                                    <TextBlock Grid.Row="9" Text="Single color (hex)" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding MeterSingleColor}" MinWidth="150"/>
+                                    <TextBlock Grid.Row="10" Text="Download color (hex)" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding MeterDownloadColor}" MinWidth="150"/>
+                                    <TextBlock Grid.Row="11" Text="Upload color (hex)" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <TextBox Grid.Row="11" Grid.Column="1" Text="{Binding MeterUploadColor}" MinWidth="150"/>
+                                    <TextBlock Grid.Row="12" Text="Size" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <ComboBox Grid.Row="12" Grid.Column="1" ItemsSource="{Binding MeterSizeOptions}" SelectedItem="{Binding MeterSize}" MinWidth="150"/>
+                                    <TextBlock Grid.Row="13" Text="Font weight" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <ComboBox Grid.Row="13" Grid.Column="1" ItemsSource="{Binding MeterFontWeightOptions}" SelectedItem="{Binding MeterFontWeight}" MinWidth="150"/>
+                                    <TextBlock Grid.Row="14" Text="Position" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <ComboBox Grid.Row="14" Grid.Column="1" ItemsSource="{Binding MeterPositionOptions}" SelectedItem="{Binding MeterPosition}" MinWidth="150"/>
+                                    <TextBlock Grid.Row="15" Text="Click action" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                    <ComboBox Grid.Row="15" Grid.Column="1" ItemsSource="{Binding MeterClickActionOptions}" SelectedItem="{Binding MeterClickAction}" MinWidth="150"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
 
                 </StackPanel>

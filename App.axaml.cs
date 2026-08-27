@@ -174,12 +174,20 @@ public partial class App : Application
             sessionManager?.Start();
         }
         catch { }
+
+        try
+        {
+            var topBarMeter = Services.GetService<ITopBarSpeedMeterService>();
+            topBarMeter?.Start();
+        }
+        catch { }
     }
 
     private static void StopBackgroundWorkers()
     {
         if (Services == null) return;
 
+        try { Services.GetService<ITopBarSpeedMeterService>()?.Dispose(); } catch { }
         try { Services.GetService<INetworkMonitorWorker>()?.Stop(); } catch { }
         try { Services.GetService<ProcessNetworkMonitorWorker>()?.Stop(); } catch { }
         try { Services.GetService<INetworkPersistenceService>()?.Stop(); } catch { }

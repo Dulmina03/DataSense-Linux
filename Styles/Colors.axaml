@@ -37,6 +37,9 @@
     <SolidColorBrush x:Key="Brush.LiquidGlass.CardSurfaceSection" Color="#04FFFFFF"/>
     <SolidColorBrush x:Key="Brush.LiquidGlass.CardSurfaceWater" Color="#20FFFFFF"/>
     <SolidColorBrush x:Key="Brush.LiquidGlass.CardBorderWater" Color="#32FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.WaterDrop.Border" Color="#38608090"/>
+    <SolidColorBrush x:Key="Brush.WaterDrop.BorderPressed" Color="#50608090"/>
+    <SolidColorBrush x:Key="Brush.WaterDrop.ContainerBorder" Color="#30608090"/>
     <SolidColorBrush x:Key="Brush.LiquidGlass.CardBorder" Color="#10FFFFFF"/>
     <SolidColorBrush x:Key="Brush.LiquidGlass.CardBorderHover" Color="#22FFFFFF"/>
     <SolidColorBrush x:Key="Brush.LiquidGlass.PillBackground" Color="#18061224"/>
@@ -206,38 +209,37 @@
     <!-- SELECTED: intense specular band at top, near-transparent glass body,     -->
     <!--           concave inner shadow at base = convincing thick curved glass   -->
     <LinearGradientBrush x:Key="Brush.WaterDrop.Selected" StartPoint="0%,0%" EndPoint="0%,100%">
-        <GradientStop Color="#C8FFFFFF" Offset="0.00"/>
-        <GradientStop Color="#65FFFFFF" Offset="0.10"/>
-        <GradientStop Color="#22FFFFFF" Offset="0.28"/>
-        <GradientStop Color="#10FFFFFF" Offset="0.60"/>
-        <GradientStop Color="#06FFFFFF" Offset="0.78"/>
-        <GradientStop Color="#22000000" Offset="1.00"/>
+        <GradientStop Color="#38608090" Offset="0.00"/>
+        <GradientStop Color="#24445C70" Offset="0.12"/>
+        <GradientStop Color="#14263848" Offset="0.32"/>
+        <GradientStop Color="#0C182838" Offset="0.70"/>
+        <GradientStop Color="#20000000" Offset="1.00"/>
     </LinearGradientBrush>
 
     <!-- SELECTED BORDER: glass rim — blazing top edge, dark concave bottom rim  -->
     <LinearGradientBrush x:Key="Brush.WaterDrop.SpecularRim" StartPoint="0%,0%" EndPoint="0%,100%">
-        <GradientStop Color="#E8FFFFFF" Offset="0.00"/>
-        <GradientStop Color="#90FFFFFF" Offset="0.12"/>
-        <GradientStop Color="#35FFFFFF" Offset="0.40"/>
-        <GradientStop Color="#12FFFFFF" Offset="0.72"/>
-        <GradientStop Color="#25000000" Offset="1.00"/>
+        <GradientStop Color="#686A8792" Offset="0.00"/>
+        <GradientStop Color="#3C526A78" Offset="0.14"/>
+        <GradientStop Color="#24405260" Offset="0.42"/>
+        <GradientStop Color="#12202E3A" Offset="0.72"/>
+        <GradientStop Color="#30000000" Offset="1.00"/>
     </LinearGradientBrush>
 
     <!-- HOVER: mid-strength specular, slightly more visible than rest            -->
     <LinearGradientBrush x:Key="Brush.WaterDrop.Hover" StartPoint="0%,0%" EndPoint="0%,100%">
-        <GradientStop Color="#80FFFFFF" Offset="0.00"/>
-        <GradientStop Color="#35FFFFFF" Offset="0.14"/>
-        <GradientStop Color="#16FFFFFF" Offset="0.45"/>
-        <GradientStop Color="#08FFFFFF" Offset="0.75"/>
-        <GradientStop Color="#16000000" Offset="1.00"/>
+        <GradientStop Color="#48608090" Offset="0.00"/>
+        <GradientStop Color="#283E5666" Offset="0.14"/>
+        <GradientStop Color="#14263848" Offset="0.45"/>
+        <GradientStop Color="#0A182838" Offset="0.75"/>
+        <GradientStop Color="#20000000" Offset="1.00"/>
     </LinearGradientBrush>
 
     <!-- REST (unselected): ghost glass — nearly invisible, just a whisper        -->
     <LinearGradientBrush x:Key="Brush.WaterDrop.Rest" StartPoint="0%,0%" EndPoint="0%,100%">
-        <GradientStop Color="#20FFFFFF" Offset="0.00"/>
-        <GradientStop Color="#0AFFFFFF" Offset="0.35"/>
-        <GradientStop Color="#05FFFFFF" Offset="0.70"/>
-        <GradientStop Color="#08000000" Offset="1.00"/>
+        <GradientStop Color="#284C6878" Offset="0.00"/>
+        <GradientStop Color="#142C4050" Offset="0.35"/>
+        <GradientStop Color="#0A182838" Offset="0.70"/>
+        <GradientStop Color="#18000000" Offset="1.00"/>
     </LinearGradientBrush>
 
     <!-- FluentTheme System Overrides -->

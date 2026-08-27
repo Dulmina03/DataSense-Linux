@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -25,12 +26,14 @@ public enum SettingsCategory
     System
 }
 
-public partial class SettingsViewModel : ViewModelBase
+public partial class SettingsViewModel : ViewModelBase, IDisposable
 {
     private readonly IForecastService _forecastService;
     private readonly ILinuxStartupService? _startupService;
     private readonly INetworkUsageRepository? _repository;
     private readonly IThemeService _themeService;
+    private readonly ITopBarSpeedMeterService? _topBarSpeedMeterService;
+    private CancellationTokenSource? _saveStatusCancellation;
 
     public override string Title => "Settings";
 
@@ -177,6 +180,34 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _showTrayIcon = true;
     [ObservableProperty] private bool _showLiveSpeedInTray = true;
 
+    // ── Top Bar Speed Meter ─────────────────────────────────────────────────
+    [ObservableProperty] private bool _showNetworkSpeedMeter = false;
+    [ObservableProperty] private bool _showMeterDownload = true;
+    [ObservableProperty] private bool _showMeterUpload = true;
+    [ObservableProperty] private bool _showMeterIcons = true;
+    [ObservableProperty] private bool _meterCompactMode = true;
+    [ObservableProperty] private string _meterUnits = "Auto";
+    [ObservableProperty] private string _meterPrecision = "1 decimal";
+    [ObservableProperty] private string _meterRefreshRate = "1 second";
+    [ObservableProperty] private string _meterColorMode = "Theme colors";
+    [ObservableProperty] private string _meterSingleColor = "#d8e4f2";
+    [ObservableProperty] private string _meterDownloadColor = "#62d2a2";
+    [ObservableProperty] private string _meterUploadColor = "#f4b860";
+    [ObservableProperty] private string _meterSize = "Medium";
+    [ObservableProperty] private string _meterFontWeight = "Normal";
+    [ObservableProperty] private string _meterPosition = "Right area";
+    [ObservableProperty] private string _meterClickAction = "Open Dashboard";
+    [ObservableProperty] private bool _meterShowDetailsOnHover = true;
+
+    public IReadOnlyList<string> MeterUnitOptions { get; } = new[] { "Auto", "B/s", "KB/s", "MB/s", "GB/s", "bits/s", "Kbit/s", "Mbit/s", "Gbit/s" };
+    public IReadOnlyList<string> MeterPrecisionOptions { get; } = new[] { "0 decimals", "1 decimal", "2 decimals" };
+    public IReadOnlyList<string> MeterRefreshRateOptions { get; } = new[] { "250 ms", "500 ms", "1 second", "2 seconds", "5 seconds" };
+    public IReadOnlyList<string> MeterColorModeOptions { get; } = new[] { "Theme colors", "Single color", "Separate colors" };
+    public IReadOnlyList<string> MeterSizeOptions { get; } = new[] { "Small", "Medium", "Large" };
+    public IReadOnlyList<string> MeterFontWeightOptions { get; } = new[] { "Normal", "Medium", "Bold" };
+    public IReadOnlyList<string> MeterPositionOptions { get; } = new[] { "Left area", "Center area", "Right area" };
+    public IReadOnlyList<string> MeterClickActionOptions { get; } = new[] { "Open DataSense", "Open Dashboard", "Open Network Analytics", "Do nothing" };
+
     // ── Save & Status ───────────────────────────────────────────────────────
     [ObservableProperty] private string _saveStatusText = "";
     [ObservableProperty] private bool _isSaving = false;
@@ -185,12 +216,14 @@ public partial class SettingsViewModel : ViewModelBase
         IForecastService forecastService,
         IThemeService? themeService = null,
         ILinuxStartupService? startupService = null,
-        INetworkUsageRepository? repository = null)
+        INetworkUsageRepository? repository = null,
+        ITopBarSpeedMeterService? topBarSpeedMeterService = null)
     {
         _forecastService = forecastService ?? throw new ArgumentNullException(nameof(forecastService));
         _themeService = themeService ?? new ThemeService(repository);
         _startupService = startupService;
         _repository = repository;
+        _topBarSpeedMeterService = topBarSpeedMeterService;
 
         _selectedTheme = _themeService.CurrentTheme;
 
@@ -282,6 +315,24 @@ public partial class SettingsViewModel : ViewModelBase
 
                 var sInfoVal = await _repository.GetSettingAsync("ShowNetworkInfo");
                 if (bool.TryParse(sInfoVal, out bool bInfo)) sInfo = bInfo;
+
+                ShowNetworkSpeedMeter = await ReadBoolSettingAsync("ShowNetworkSpeedMeter", false);
+                ShowMeterDownload = await ReadBoolSettingAsync("ShowMeterDownload", true);
+                ShowMeterUpload = await ReadBoolSettingAsync("ShowMeterUpload", true);
+                ShowMeterIcons = await ReadBoolSettingAsync("ShowMeterIcons", true);
+                MeterCompactMode = await ReadBoolSettingAsync("MeterCompactMode", true);
+                MeterShowDetailsOnHover = await ReadBoolSettingAsync("MeterShowDetailsOnHover", true);
+                MeterUnits = await ReadStringSettingAsync("MeterUnits", "Auto");
+                MeterPrecision = await ReadStringSettingAsync("MeterPrecision", "1 decimal");
+                MeterRefreshRate = await ReadStringSettingAsync("MeterRefreshRate", "1 second");
+                MeterColorMode = await ReadStringSettingAsync("MeterColorMode", "Theme colors");
+                MeterSingleColor = await ReadStringSettingAsync("MeterSingleColor", "#d8e4f2");
+                MeterDownloadColor = await ReadStringSettingAsync("MeterDownloadColor", "#62d2a2");
+                MeterUploadColor = await ReadStringSettingAsync("MeterUploadColor", "#f4b860");
+                MeterSize = await ReadStringSettingAsync("MeterSize", "Medium");
+                MeterFontWeight = await ReadStringSettingAsync("MeterFontWeight", "Normal");
+                MeterPosition = await ReadStringSettingAsync("MeterPosition", "Right area");
+                MeterClickAction = await ReadStringSettingAsync("MeterClickAction", "Open Dashboard");
             }
 
             var budget = await _forecastService.GetBudgetAsync();
@@ -305,6 +356,17 @@ public partial class SettingsViewModel : ViewModelBase
                 ShowLiveProcessTraffic = sProc;
                 ShowApplicationUsage = sApp;
                 ShowNetworkInfo = sInfo;
+                EnableChartAnimations = await ReadBoolSettingAsync("EnableChartAnimations", EnableChartAnimations);
+                SmoothGraphRendering = await ReadBoolSettingAsync("SmoothGraphRendering", SmoothGraphRendering);
+                ShowChartTooltips = await ReadBoolSettingAsync("ShowChartTooltips", ShowChartTooltips);
+                EnableNetworkMonitoring = await ReadBoolSettingAsync("EnableNetworkMonitoring", EnableNetworkMonitoring);
+                MonitorAppTraffic = await ReadBoolSettingAsync("MonitorAppTraffic", MonitorAppTraffic);
+                DetectNetworkChanges = await ReadBoolSettingAsync("DetectNetworkChanges", DetectNetworkChanges);
+                NotificationSound = await ReadBoolSettingAsync("NotificationSound", NotificationSound);
+                NotifyWhileMinimized = await ReadBoolSettingAsync("NotifyWhileMinimized", NotifyWhileMinimized);
+                ShowTrayIcon = await ReadBoolSettingAsync("ShowTrayIcon", ShowTrayIcon);
+                ShowLiveSpeedInTray = await ReadBoolSettingAsync("ShowLiveSpeedInTray", ShowLiveSpeedInTray);
+                CardLayout = await ReadStringSettingAsync("CardLayout", CardLayout);
 
                 DatabaseSizeFormatted = ByteFormatter.FormatBytes(dbSizeBytes);
                 StoredRecordsCountFormatted = $"{totalRecords:N0} Records";
@@ -446,9 +508,34 @@ public partial class SettingsViewModel : ViewModelBase
                 await _repository.SaveSettingAsync("TransferRateUnit", TransferRateUnit);
                 await _repository.SaveSettingAsync("AutoDetectNetworkNames", AutoDetectNetworkNames.ToString());
                 await _repository.SaveSettingAsync("UseWifiSsid", UseWifiSsid.ToString());
+                await _repository.SaveSettingAsync("ShowNetworkSpeedMeter", ShowNetworkSpeedMeter.ToString());
+                await _repository.SaveSettingAsync("ShowMeterDownload", ShowMeterDownload.ToString());
+                await _repository.SaveSettingAsync("ShowMeterUpload", ShowMeterUpload.ToString());
+                await _repository.SaveSettingAsync("ShowMeterIcons", ShowMeterIcons.ToString());
+                await _repository.SaveSettingAsync("MeterCompactMode", MeterCompactMode.ToString());
+                await _repository.SaveSettingAsync("MeterShowDetailsOnHover", MeterShowDetailsOnHover.ToString());
+                await _repository.SaveSettingAsync("MeterUnits", MeterUnits);
+                await _repository.SaveSettingAsync("MeterPrecision", MeterPrecision);
+                await _repository.SaveSettingAsync("MeterRefreshRate", MeterRefreshRate);
+                await _repository.SaveSettingAsync("MeterColorMode", MeterColorMode);
+                await _repository.SaveSettingAsync("MeterSingleColor", MeterSingleColor);
+                await _repository.SaveSettingAsync("MeterDownloadColor", MeterDownloadColor);
+                await _repository.SaveSettingAsync("MeterUploadColor", MeterUploadColor);
+                await _repository.SaveSettingAsync("MeterSize", MeterSize);
+                await _repository.SaveSettingAsync("MeterFontWeight", MeterFontWeight);
+                await _repository.SaveSettingAsync("MeterPosition", MeterPosition);
+                await _repository.SaveSettingAsync("MeterClickAction", MeterClickAction);
             }
 
-            SaveStatusText = "✅ Settings saved successfully.";
+            var extensionSynchronized = true;
+            if (_topBarSpeedMeterService != null)
+            {
+                extensionSynchronized = await _topBarSpeedMeterService.RefreshConfigurationAsync();
+            }
+
+            SaveStatusText = extensionSynchronized
+                ? "Settings saved successfully."
+                : "Settings saved, but the GNOME Speed Meter is unavailable.";
         }
         catch (Exception ex)
         {
@@ -458,5 +545,17 @@ public partial class SettingsViewModel : ViewModelBase
         {
             IsSaving = false;
         }
+    }
+
+    private async Task<bool> ReadBoolSettingAsync(string key, bool fallback)
+    {
+        var value = await _repository!.GetSettingAsync(key);
+        return bool.TryParse(value, out var result) ? result : fallback;
+    }
+
+    private async Task<string> ReadStringSettingAsync(string key, string fallback)
+    {
+        var value = await _repository!.GetSettingAsync(key);
+        return string.IsNullOrWhiteSpace(value) ? fallback : value;
     }
 }

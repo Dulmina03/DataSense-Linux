@@ -488,12 +488,11 @@
                     </Grid>
 
                     <!-- Table Column Headers -->
-                    <Grid ColumnDefinitions="*,130,130,130,100" Margin="12,4,12,0">
+                    <Grid ColumnDefinitions="*,130,130,100" Margin="12,4,12,0">
                         <TextBlock Grid.Column="0" Text="PROCESS" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
                         <TextBlock Grid.Column="1" Text="DOWNLOAD" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
                         <TextBlock Grid.Column="2" Text="UPLOAD" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                        <TextBlock Grid.Column="3" Text="TOTAL DATA" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
-                        <TextBlock Grid.Column="4" Text="ACTIVITY" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        <TextBlock Grid.Column="3" Text="ACTIVITY" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
                     </Grid>
                     <Border Height="1" Background="{DynamicResource Brush.Border}" Opacity="0.5"/>
 
@@ -511,7 +510,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="models:ProcessNetworkUsage">
                                 <Border Classes="ProcessRow">
-                                    <Grid ColumnDefinitions="*,130,130,130,100" VerticalAlignment="Center">
+                                    <Grid ColumnDefinitions="*,130,130,100" VerticalAlignment="Center">
                                         <!-- 1. Process Column: [Icon] Application Name & Live Subtitle -->
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                                             <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -538,11 +537,8 @@
                                             <TextBlock Text="{Binding UploadRateText}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}" VerticalAlignment="Center"/>
                                         </StackPanel>
 
-                                        <!-- 4. TOTAL DATA: formatted total data uploaded + downloaded -->
-                                        <TextBlock Grid.Column="3" Text="{Binding TotalDataText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-
-                                        <!-- 5. ACTIVITY: calm status badge -->
-                                        <Border Grid.Column="4" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="10" Padding="8,3" HorizontalAlignment="Right" VerticalAlignment="Center" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
+                                        <!-- 4. ACTIVITY: calm status badge -->
+                                        <Border Grid.Column="3" Background="{DynamicResource Brush.SurfaceElevated}" CornerRadius="10" Padding="8,3" HorizontalAlignment="Right" VerticalAlignment="Center" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
                                             <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                                                 <Ellipse Width="6" Height="6" Fill="{Binding ActivityColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" VerticalAlignment="Center"/>
                                                 <TextBlock Text="{Binding ActivityText}" Classes="Caption" FontWeight="SemiBold" Foreground="{Binding ActivityColor, Converter={x:Static conv:SemanticBrushConverter.Instance}}" VerticalAlignment="Center"/>
@@ -554,19 +550,6 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <!-- Total Live Process Traffic Summary Footer -->
-                    <Border Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="10" Padding="18,14" Margin="0,6,0,0" BoxShadow="inset 0 1 0 0 #20FFFFFF, 0 4 14 0 #18000000" IsVisible="{Binding HasLiveProcessTraffic}">
-                        <Grid ColumnDefinitions="Auto,*,Auto,24,Auto" VerticalAlignment="Center">
-                            <TextBlock Grid.Column="0" Text="TOTAL LIVE PROCESS DATA" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
-
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding LiveTotalDownloadedText, StringFormat='{}↓ {0} Downloaded'}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Download}"/>
-                                <TextBlock Text="{Binding LiveTotalUploadedText, StringFormat='{}↑ {0} Uploaded'}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Upload}"/>
-                            </StackPanel>
-
-                            <TextBlock Grid.Column="4" Text="{Binding LiveTotalUsageText}" Classes="Body" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
                 </StackPanel>
             </Border>
 

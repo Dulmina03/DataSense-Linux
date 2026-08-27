@@ -166,8 +166,6 @@ public partial class TrayIconViewModel : ViewModelBase, IDisposable
             {
                 case "Dashboard": mainVm.NavigateToDashboardCommand.Execute(null); break;
                 case "EventCenter": mainVm.NavigateToEventCenterCommand.Execute(null); break;
-                case "Diagnostics": mainVm.NavigateToDiagnosticsCommand.Execute(null); break;
-                case "Performance": mainVm.NavigateToPerformanceCommand.Execute(null); break;
             }
         }
     }
