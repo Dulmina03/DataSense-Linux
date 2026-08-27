@@ -145,6 +145,94 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _showLiveThroughputGraph = true;
     [ObservableProperty] private bool _showTopConsumers = true;
     [ObservableProperty] private bool _showLiveProcessTraffic = true;
+    [ObservableProperty] private bool _showApplicationUsage = true;
+    [ObservableProperty] private bool _showNetworkInfo = true;
+    [ObservableProperty] private string _cardLayout = "Standard (Default)";
+    [ObservableProperty] private string _dataUnit = "Dynamic (Auto)";
+    [ObservableProperty] private string _transferRateUnit = "MB/s";
+    [ObservableProperty] private bool _enableChartAnimations = true;
+    [ObservableProperty] private bool _smoothGraphRendering = true;
+    [ObservableProperty] private bool _showChartTooltips = true;
+
+    public bool IsApplicationUsageVisible => ShowTopConsumers && ShowApplicationUsage;
+    public bool IsLiveProcessTrafficVisible => ShowLiveProcessTraffic && ShowApplicationUsage;
+    public bool IsChartTooltipVisible => ShowChartTooltips && IsHoveringRealtimeGraph;
+    public double DashboardSpacing => CardLayout switch
+    {
+        "Compact Grid" => 12,
+        "Expanded Flow" => 28,
+        _ => 20
+    };
+
+    private string FormatBytesForDisplay(long bytes)
+    {
+        bytes = Math.Max(0, bytes);
+        return DataUnit switch
+        {
+            "Gigabytes (GB)" => $"{bytes / (1024d * 1024 * 1024):F1} GB",
+            "Megabytes (MB)" => $"{bytes / (1024d * 1024):F1} MB",
+            _ => ByteFormatter.FormatBytes(bytes)
+        };
+    }
+
+    private string FormatSpeedForDisplay(double bytesPerSecond)
+    {
+        bytesPerSecond = Math.Max(0, bytesPerSecond);
+        return TransferRateUnit switch
+        {
+            "KB/s" => $"{bytesPerSecond / 1024:F1} KB/s",
+            "Mbps" => $"{bytesPerSecond * 8 / 1_000_000:F1} Mbps",
+            _ => ByteFormatter.FormatSpeed(bytesPerSecond)
+        };
+    }
+
+    public void ApplyDashboardPreferences(
+        bool showSummaryCards,
+        bool showNetworkChart,
+        bool showTopConsumers,
+        bool showLiveProcessTraffic,
+        bool showApplicationUsage,
+        bool showNetworkInfo,
+        string? cardLayout,
+        string? dataUnit,
+        string? transferRateUnit,
+        bool smoothGraphRendering,
+        bool showChartTooltips)
+    {
+        ShowHeroNetwork = showSummaryCards;
+        ShowLiveThroughputGraph = showNetworkChart;
+        ShowTopConsumers = showTopConsumers;
+        ShowLiveProcessTraffic = showLiveProcessTraffic;
+        ShowApplicationUsage = showApplicationUsage;
+        ShowNetworkInfo = showNetworkInfo;
+        if (!string.IsNullOrWhiteSpace(cardLayout)) CardLayout = cardLayout;
+        if (!string.IsNullOrWhiteSpace(dataUnit)) DataUnit = dataUnit;
+        if (!string.IsNullOrWhiteSpace(transferRateUnit)) TransferRateUnit = transferRateUnit;
+        SmoothGraphRendering = smoothGraphRendering;
+        ShowChartTooltips = showChartTooltips;
+        UpdateLiveValues(
+            _networkMonitorWorker.ActiveInterface,
+            _networkMonitorWorker.DownloadSpeed,
+            _networkMonitorWorker.UploadSpeed,
+            _networkMonitorWorker.TotalBytesDownloaded,
+            _networkMonitorWorker.TotalBytesUploaded);
+    }
+
+    public async Task ApplyDefaultPeriodAsync(string? periodName)
+    {
+        var period = periodName?.Equals("7 Days", StringComparison.OrdinalIgnoreCase) == true
+            ? AnalyticsPeriod.Last7Days
+            : periodName?.Equals("Month", StringComparison.OrdinalIgnoreCase) == true
+                ? AnalyticsPeriod.Last30Days
+                : AnalyticsPeriod.Today;
+        if (SelectedPeriod == period) return;
+
+        SelectedPeriod = period;
+        IsPeriodToday = period == AnalyticsPeriod.Today;
+        IsPeriod7Days = period == AnalyticsPeriod.Last7Days;
+        IsPeriod30Days = period == AnalyticsPeriod.Last30Days;
+        await LoadPeriodAnalyticsAsync(showLoading: false);
+    }
 
     // ── Chart ───────────────────────────────────────────────────────────────
 
@@ -433,6 +521,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     {
         try
         {
+            bool periodChanged = false;
             var showHero = await _repository.GetSettingAsync("ShowSummaryCards");
             if (bool.TryParse(showHero, out bool sh))
                 ShowHeroNetwork = sh;
@@ -448,9 +537,80 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             var showProcess = await _repository.GetSettingAsync("ShowLiveProcessTraffic");
             if (bool.TryParse(showProcess, out bool sp))
                 ShowLiveProcessTraffic = sp;
+
+            var showApplications = await _repository.GetSettingAsync("ShowApplicationUsage");
+            if (bool.TryParse(showApplications, out bool sa))
+                ShowApplicationUsage = sa;
+
+            var showNetworkInfo = await _repository.GetSettingAsync("ShowNetworkInfo");
+            if (bool.TryParse(showNetworkInfo, out bool si))
+                ShowNetworkInfo = si;
+
+            var savedPeriod = await _repository.GetSettingAsync("DefaultDashboardPeriod");
+            if (!string.IsNullOrWhiteSpace(savedPeriod))
+            {
+                var period = savedPeriod.Equals("7 Days", StringComparison.OrdinalIgnoreCase)
+                    ? AnalyticsPeriod.Last7Days
+                    : savedPeriod.Equals("Month", StringComparison.OrdinalIgnoreCase)
+                        ? AnalyticsPeriod.Last30Days
+                        : AnalyticsPeriod.Today;
+                if (SelectedPeriod != period)
+                {
+                    SelectedPeriod = period;
+                    IsPeriodToday = period == AnalyticsPeriod.Today;
+                    IsPeriod7Days = period == AnalyticsPeriod.Last7Days;
+                    IsPeriod30Days = period == AnalyticsPeriod.Last30Days;
+                    periodChanged = true;
+                }
+            }
+
+            var savedLayout = await _repository.GetSettingAsync("CardLayout");
+            if (!string.IsNullOrWhiteSpace(savedLayout))
+                CardLayout = savedLayout;
+
+            var savedDataUnit = await _repository.GetSettingAsync("DataUnit");
+            if (!string.IsNullOrWhiteSpace(savedDataUnit))
+                DataUnit = savedDataUnit;
+
+            var savedTransferUnit = await _repository.GetSettingAsync("TransferRateUnit");
+            if (!string.IsNullOrWhiteSpace(savedTransferUnit))
+                TransferRateUnit = savedTransferUnit;
+
+            var savedChartAnimations = await _repository.GetSettingAsync("EnableChartAnimations");
+            if (bool.TryParse(savedChartAnimations, out bool chartAnimations))
+                EnableChartAnimations = chartAnimations;
+
+            var savedSmoothRendering = await _repository.GetSettingAsync("SmoothGraphRendering");
+            if (bool.TryParse(savedSmoothRendering, out bool smoothRendering))
+                SmoothGraphRendering = smoothRendering;
+
+            var savedTooltips = await _repository.GetSettingAsync("ShowChartTooltips");
+            if (bool.TryParse(savedTooltips, out bool showTooltips))
+                ShowChartTooltips = showTooltips;
+
+            UpdateLiveValues(
+                _networkMonitorWorker.ActiveInterface,
+                _networkMonitorWorker.DownloadSpeed,
+                _networkMonitorWorker.UploadSpeed,
+                _networkMonitorWorker.TotalBytesDownloaded,
+                _networkMonitorWorker.TotalBytesUploaded);
+
+            if (periodChanged)
+                await LoadPeriodAnalyticsAsync(showLoading: false);
         }
         catch { }
     }
+
+    partial void OnCardLayoutChanged(string value) => OnPropertyChanged(nameof(DashboardSpacing));
+    partial void OnShowTopConsumersChanged(bool value) => OnPropertyChanged(nameof(IsApplicationUsageVisible));
+    partial void OnShowApplicationUsageChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsApplicationUsageVisible));
+        OnPropertyChanged(nameof(IsLiveProcessTrafficVisible));
+    }
+    partial void OnShowLiveProcessTrafficChanged(bool value) => OnPropertyChanged(nameof(IsLiveProcessTrafficVisible));
+    partial void OnShowChartTooltipsChanged(bool value) => OnPropertyChanged(nameof(IsChartTooltipVisible));
+    partial void OnIsHoveringRealtimeGraphChanged(bool value) => OnPropertyChanged(nameof(IsChartTooltipVisible));
 
     // ────────────────────────────────────────────────────────────────────────
     // Commands
@@ -868,14 +1028,14 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             RealtimeTrafficPoints.RemoveAt(0);
         }
 
-        CurrentLiveDownloadSpeedText = ByteFormatter.FormatSpeed(downloadSpeed);
-        CurrentLiveUploadSpeedText = ByteFormatter.FormatSpeed(uploadSpeed);
+        CurrentLiveDownloadSpeedText = FormatSpeedForDisplay(downloadSpeed);
+        CurrentLiveUploadSpeedText = FormatSpeedForDisplay(uploadSpeed);
 
         PeakDownloadRateInWindow = LiveThroughputSamples.Max(p => p.DownloadBytesPerSecond);
         PeakUploadRateInWindow = LiveThroughputSamples.Max(p => p.UploadBytesPerSecond);
 
-        PeakLiveDownloadSpeedText = ByteFormatter.FormatSpeed(PeakDownloadRateInWindow);
-        PeakLiveUploadSpeedText = ByteFormatter.FormatSpeed(PeakUploadRateInWindow);
+        PeakLiveDownloadSpeedText = FormatSpeedForDisplay(PeakDownloadRateInWindow);
+        PeakLiveUploadSpeedText = FormatSpeedForDisplay(PeakUploadRateInWindow);
 
         HasRealtimeGraphData = LiveThroughputSamples.Count > 0;
 
@@ -935,8 +1095,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             uploadPoints.Add(new Point(x, ulY));
         }
 
-        var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, yBase, canvasWidth);
-        var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, yBase, canvasWidth);
+        var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, yBase, canvasWidth, SmoothGraphRendering);
+        var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, yBase, canvasWidth, SmoothGraphRendering);
 
         RealtimeDownloadLineGeometry = dlLine;
         RealtimeDownloadAreaGeometry = dlArea;
@@ -969,7 +1129,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         TimeAxisLabels.Add("NOW");
     }
 
-    private static (Geometry Line, Geometry Area) BuildCurveGeometry(List<Point> points, double yBase, double canvasWidth)
+    private static (Geometry Line, Geometry Area) BuildCurveGeometry(List<Point> points, double yBase, double canvasWidth, bool smooth)
     {
         if (points.Count == 0)
         {
@@ -1007,11 +1167,13 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 var p1 = points[i + 1];
                 double midX = (p0.X + p1.X) / 2.0;
 
-                var segment = new QuadraticBezierSegment
-                {
-                    Point1 = new Point(midX, p0.Y),
-                    Point2 = p1
-                };
+                PathSegment segment = smooth
+                    ? new QuadraticBezierSegment
+                    {
+                        Point1 = new Point(midX, p0.Y),
+                        Point2 = p1
+                    }
+                    : new LineSegment { Point = p1 };
                 lineFigure.Segments!.Add(segment);
                 areaFigure.Segments!.Add(segment);
             }
@@ -1066,10 +1228,10 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     {
         bool isConnected   = !string.IsNullOrEmpty(iface) && iface != "None";
         ActiveInterface     = isConnected ? iface! : "Disconnected";
-        DownloadSpeedText   = ByteFormatter.FormatSpeed(downloadSpeed);
-        UploadSpeedText     = ByteFormatter.FormatSpeed(uploadSpeed);
-        TotalDownloadedText = ByteFormatter.FormatBytes(bytesReceived);
-        TotalUploadedText   = ByteFormatter.FormatBytes(bytesSent);
+        DownloadSpeedText   = FormatSpeedForDisplay(downloadSpeed);
+        UploadSpeedText     = FormatSpeedForDisplay(uploadSpeed);
+        TotalDownloadedText = FormatBytesForDisplay(bytesReceived);
+        TotalUploadedText   = FormatBytesForDisplay(bytesSent);
         StatusText          = isConnected ? "Monitoring" : "Offline";
         StatusDotColor      = isConnected ? "Success" : "Muted";
 
@@ -1084,9 +1246,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 ? $"{(int)duration.TotalHours}h {duration.Minutes}m" 
                 : $"{duration.Minutes}m {duration.Seconds}s";
 
-            CurrentSessionDownload = ByteFormatter.FormatBytes(current.BytesDownloaded);
-            CurrentSessionUpload = ByteFormatter.FormatBytes(current.BytesUploaded);
-            CurrentSessionTotal = ByteFormatter.FormatBytes(current.BytesDownloaded + current.BytesUploaded);
+            CurrentSessionDownload = FormatBytesForDisplay(current.BytesDownloaded);
+            CurrentSessionUpload = FormatBytesForDisplay(current.BytesUploaded);
+            CurrentSessionTotal = FormatBytesForDisplay(current.BytesDownloaded + current.BytesUploaded);
         }
         else
         {
@@ -1694,8 +1856,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             items.Add(bar);
         }
 
-        var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
-        var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, canvasHeight, canvasWidth);
+        var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, canvasHeight, canvasWidth, true);
+        var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, canvasHeight, canvasWidth, true);
         var (trendLine, trendGlow) = BuildTrendCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
 
         Dispatcher.UIThread.Post(() =>
@@ -1878,8 +2040,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             items.Add(bar);
         }
 
-        var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
-        var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, canvasHeight, canvasWidth);
+        var (dlLine, dlArea) = BuildCurveGeometry(downloadPoints, canvasHeight, canvasWidth, true);
+        var (ulLine, ulArea) = BuildCurveGeometry(uploadPoints, canvasHeight, canvasWidth, true);
         var (trendLine, trendGlow) = BuildTrendCurveGeometry(downloadPoints, canvasHeight, canvasWidth);
 
         Dispatcher.UIThread.Post(() =>

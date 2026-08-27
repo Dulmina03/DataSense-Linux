@@ -11,6 +11,7 @@ using DataSense.Database;
 using DataSense.Helpers;
 using DataSense.Models;
 using DataSense.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DataSense.ViewModels;
 
@@ -267,6 +268,47 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         UpdateDataLimitDisplay();
     }
 
+    partial void OnShowSummaryCardsChanged(bool value) => ApplyDashboardPreferencesToRuntime();
+    partial void OnShowNetworkChartChanged(bool value) => ApplyDashboardPreferencesToRuntime();
+    partial void OnShowTopConsumersChanged(bool value) => ApplyDashboardPreferencesToRuntime();
+    partial void OnShowLiveProcessTrafficChanged(bool value) => ApplyDashboardPreferencesToRuntime();
+    partial void OnShowApplicationUsageChanged(bool value) => ApplyDashboardPreferencesToRuntime();
+    partial void OnShowNetworkInfoChanged(bool value) => ApplyDashboardPreferencesToRuntime();
+    partial void OnCardLayoutChanged(string value) => ApplyDashboardPreferencesToRuntime();
+    partial void OnDataUnitChanged(string value) => ApplyDashboardPreferencesToRuntime();
+    partial void OnTransferRateUnitChanged(string value) => ApplyDashboardPreferencesToRuntime();
+    partial void OnDefaultDashboardPeriodChanged(string value) => ApplyDashboardPeriodToRuntime(value);
+
+    partial void OnSmoothGraphRenderingChanged(bool value) => ApplyDashboardPreferencesToRuntime();
+    partial void OnShowChartTooltipsChanged(bool value) => ApplyDashboardPreferencesToRuntime();
+
+    private void ApplyDashboardPreferencesToRuntime()
+    {
+        if (App.Services?.GetService<DashboardViewModel>() is DashboardViewModel dashboard)
+        {
+            dashboard.ApplyDashboardPreferences(
+                ShowSummaryCards,
+                ShowNetworkChart,
+                ShowTopConsumers,
+                ShowLiveProcessTraffic,
+                ShowApplicationUsage,
+                ShowNetworkInfo,
+                CardLayout,
+                DataUnit,
+                TransferRateUnit,
+                SmoothGraphRendering,
+                ShowChartTooltips);
+        }
+    }
+
+    private void ApplyDashboardPeriodToRuntime(string value)
+    {
+        if (App.Services?.GetService<DashboardViewModel>() is DashboardViewModel dashboard)
+        {
+            _ = dashboard.ApplyDefaultPeriodAsync(value);
+        }
+    }
+
     public async Task LoadSettingsAsync()
     {
         try
@@ -287,6 +329,17 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
             long monthDl = 0, monthUl = 0;
 
             bool sHero = true, sNet = true, sTop = true, sProc = true, sApp = true, sInfo = true;
+            bool enableChartAnimations = EnableChartAnimations;
+            bool smoothGraphRendering = SmoothGraphRendering;
+            bool showChartTooltips = ShowChartTooltips;
+            bool enableNetworkMonitoring = EnableNetworkMonitoring;
+            bool monitorAppTraffic = MonitorAppTraffic;
+            bool detectNetworkChanges = DetectNetworkChanges;
+            bool notificationSound = NotificationSound;
+            bool notifyWhileMinimized = NotifyWhileMinimized;
+            bool showTrayIcon = ShowTrayIcon;
+            bool showLiveSpeedInTray = ShowLiveSpeedInTray;
+            string cardLayout = CardLayout;
             if (_repository != null)
             {
                 totalRecords = await _repository.GetTotalRecordCountAsync();
@@ -315,6 +368,18 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
 
                 var sInfoVal = await _repository.GetSettingAsync("ShowNetworkInfo");
                 if (bool.TryParse(sInfoVal, out bool bInfo)) sInfo = bInfo;
+
+                enableChartAnimations = await ReadBoolSettingAsync("EnableChartAnimations", enableChartAnimations);
+                smoothGraphRendering = await ReadBoolSettingAsync("SmoothGraphRendering", smoothGraphRendering);
+                showChartTooltips = await ReadBoolSettingAsync("ShowChartTooltips", showChartTooltips);
+                enableNetworkMonitoring = await ReadBoolSettingAsync("EnableNetworkMonitoring", enableNetworkMonitoring);
+                monitorAppTraffic = await ReadBoolSettingAsync("MonitorAppTraffic", monitorAppTraffic);
+                detectNetworkChanges = await ReadBoolSettingAsync("DetectNetworkChanges", detectNetworkChanges);
+                notificationSound = await ReadBoolSettingAsync("NotificationSound", notificationSound);
+                notifyWhileMinimized = await ReadBoolSettingAsync("NotifyWhileMinimized", notifyWhileMinimized);
+                showTrayIcon = await ReadBoolSettingAsync("ShowTrayIcon", showTrayIcon);
+                showLiveSpeedInTray = await ReadBoolSettingAsync("ShowLiveSpeedInTray", showLiveSpeedInTray);
+                cardLayout = await ReadStringSettingAsync("CardLayout", cardLayout);
 
                 ShowNetworkSpeedMeter = await ReadBoolSettingAsync("ShowNetworkSpeedMeter", false);
                 ShowMeterDownload = await ReadBoolSettingAsync("ShowMeterDownload", true);
@@ -356,17 +421,18 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
                 ShowLiveProcessTraffic = sProc;
                 ShowApplicationUsage = sApp;
                 ShowNetworkInfo = sInfo;
-                EnableChartAnimations = await ReadBoolSettingAsync("EnableChartAnimations", EnableChartAnimations);
-                SmoothGraphRendering = await ReadBoolSettingAsync("SmoothGraphRendering", SmoothGraphRendering);
-                ShowChartTooltips = await ReadBoolSettingAsync("ShowChartTooltips", ShowChartTooltips);
-                EnableNetworkMonitoring = await ReadBoolSettingAsync("EnableNetworkMonitoring", EnableNetworkMonitoring);
-                MonitorAppTraffic = await ReadBoolSettingAsync("MonitorAppTraffic", MonitorAppTraffic);
-                DetectNetworkChanges = await ReadBoolSettingAsync("DetectNetworkChanges", DetectNetworkChanges);
-                NotificationSound = await ReadBoolSettingAsync("NotificationSound", NotificationSound);
-                NotifyWhileMinimized = await ReadBoolSettingAsync("NotifyWhileMinimized", NotifyWhileMinimized);
-                ShowTrayIcon = await ReadBoolSettingAsync("ShowTrayIcon", ShowTrayIcon);
-                ShowLiveSpeedInTray = await ReadBoolSettingAsync("ShowLiveSpeedInTray", ShowLiveSpeedInTray);
-                CardLayout = await ReadStringSettingAsync("CardLayout", CardLayout);
+                EnableChartAnimations = enableChartAnimations;
+                SmoothGraphRendering = smoothGraphRendering;
+                ShowChartTooltips = showChartTooltips;
+                EnableNetworkMonitoring = enableNetworkMonitoring;
+                MonitorAppTraffic = monitorAppTraffic;
+                DetectNetworkChanges = detectNetworkChanges;
+                NotificationSound = notificationSound;
+                NotifyWhileMinimized = notifyWhileMinimized;
+                ShowTrayIcon = showTrayIcon;
+                ShowLiveSpeedInTray = showLiveSpeedInTray;
+                CardLayout = cardLayout;
+                ApplyDashboardPreferencesToRuntime();
 
                 DatabaseSizeFormatted = ByteFormatter.FormatBytes(dbSizeBytes);
                 StoredRecordsCountFormatted = $"{totalRecords:N0} Records";
@@ -508,6 +574,17 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
                 await _repository.SaveSettingAsync("TransferRateUnit", TransferRateUnit);
                 await _repository.SaveSettingAsync("AutoDetectNetworkNames", AutoDetectNetworkNames.ToString());
                 await _repository.SaveSettingAsync("UseWifiSsid", UseWifiSsid.ToString());
+                await _repository.SaveSettingAsync("EnableChartAnimations", EnableChartAnimations.ToString());
+                await _repository.SaveSettingAsync("SmoothGraphRendering", SmoothGraphRendering.ToString());
+                await _repository.SaveSettingAsync("ShowChartTooltips", ShowChartTooltips.ToString());
+                await _repository.SaveSettingAsync("EnableNetworkMonitoring", EnableNetworkMonitoring.ToString());
+                await _repository.SaveSettingAsync("MonitorAppTraffic", MonitorAppTraffic.ToString());
+                await _repository.SaveSettingAsync("DetectNetworkChanges", DetectNetworkChanges.ToString());
+                await _repository.SaveSettingAsync("NotificationSound", NotificationSound.ToString());
+                await _repository.SaveSettingAsync("NotifyWhileMinimized", NotifyWhileMinimized.ToString());
+                await _repository.SaveSettingAsync("ShowTrayIcon", ShowTrayIcon.ToString());
+                await _repository.SaveSettingAsync("ShowLiveSpeedInTray", ShowLiveSpeedInTray.ToString());
+                await _repository.SaveSettingAsync("CardLayout", CardLayout);
                 await _repository.SaveSettingAsync("ShowNetworkSpeedMeter", ShowNetworkSpeedMeter.ToString());
                 await _repository.SaveSettingAsync("ShowMeterDownload", ShowMeterDownload.ToString());
                 await _repository.SaveSettingAsync("ShowMeterUpload", ShowMeterUpload.ToString());
@@ -533,9 +610,30 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
                 extensionSynchronized = await _topBarSpeedMeterService.RefreshConfigurationAsync();
             }
 
+            if (App.Services?.GetService(typeof(DashboardViewModel)) is DashboardViewModel dashboard)
+            {
+                await dashboard.LoadDashboardPreferencesAsync();
+            }
+
             SaveStatusText = extensionSynchronized
                 ? "Settings saved successfully."
                 : "Settings saved, but the GNOME Speed Meter is unavailable.";
+            _saveStatusCancellation?.Cancel();
+            _saveStatusCancellation?.Dispose();
+            _saveStatusCancellation = new CancellationTokenSource();
+            var statusToken = _saveStatusCancellation.Token;
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(3), statusToken);
+                    if (!statusToken.IsCancellationRequested)
+                    {
+                        RunOnUI(() => SaveStatusText = "");
+                    }
+                }
+                catch (OperationCanceledException) { }
+            }, statusToken);
         }
         catch (Exception ex)
         {
@@ -545,6 +643,13 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         {
             IsSaving = false;
         }
+    }
+
+    public void Dispose()
+    {
+        _saveStatusCancellation?.Cancel();
+        _saveStatusCancellation?.Dispose();
+        _saveStatusCancellation = null;
     }
 
     private async Task<bool> ReadBoolSettingAsync(string key, bool fallback)

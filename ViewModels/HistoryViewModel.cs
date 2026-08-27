@@ -948,7 +948,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
                 NetworkSessions.Clear();
                 MonthlyNetworkSummaries.Clear();
-                long maxSessionTotal = sessions.Count > 0 ? sessions.Max(s => s.TotalBytes) : 0;
+                long totalSessionUsage = sessions.Sum(s => Math.Max(0, s.TotalBytes));
                 foreach (var session in sessions)
                 {
                     string displayName = _identityService.NormalizeNetworkName(session.NetworkName, session.InterfaceName);
@@ -963,8 +963,8 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                         BytesDownloaded = session.BytesDownloaded,
                         BytesUploaded = session.BytesUploaded,
                         DisplayIndex = NetworkSessions.Count,
-                        RelativeUsagePercent = maxSessionTotal > 0
-                            ? Math.Max((double)session.TotalBytes / maxSessionTotal * 100.0, session.TotalBytes > 0 ? 3.0 : 0.0)
+                        RelativeUsagePercent = totalSessionUsage > 0
+                            ? Math.Max((double)Math.Max(0, session.TotalBytes) / totalSessionUsage * 100.0, session.TotalBytes > 0 ? 1.5 : 0.0)
                             : 0.0
                     });
                 }

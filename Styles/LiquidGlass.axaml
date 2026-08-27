@@ -62,7 +62,7 @@
     <!-- SidebarItem: Active + Hover (Intensified Specular Reflection) -->
     <Style Selector="Button.SidebarItem.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.ActiveNavGradient}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentBright}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderSelected}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
@@ -134,7 +134,7 @@
     <!-- Segment: Active + Hover (Luminous Edge Reflection) -->
     <Style Selector="Button.Segment.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceSelectedHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentBright}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderSelected}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
@@ -204,7 +204,7 @@
     </Style>
     <Style Selector="Button.FilterPill.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceSelectedHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentBright}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.BorderSelected}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     </Style>
 
@@ -317,7 +317,7 @@
     <!-- WaterDropSegment: Active + Hover — specular crown blazes brighter         -->
     <Style Selector="Button.WaterDropSegment.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource Brush.WaterDrop.Selected}" />
-        <Setter Property="BorderBrush" Value="#F0FFFFFF" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.WaterDrop.SpecularRim}" />
         <Setter Property="BorderThickness" Value="1.5" />
         <Setter Property="CornerRadius" Value="10" />
     </Style>
@@ -338,6 +338,10 @@
     <Style Selector="Button.LiquidGlass:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
         <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="Button.WaterDropSegment:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 0 0 2px {DynamicResource Brush.Accent}" />
     </Style>
 
 </Styles>

@@ -116,10 +116,16 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource Radius.Large}" />
         <Setter Property="BoxShadow" Value="inset 3 1 8 0 #28FFFFFF, inset -3 -4 9 0 #42000000, 0 2 6 0 #50000000, 0 10 22 0 #38000000, 0 20 38 0 #28000000" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.16" />
+                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.16" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="Border.LiquidWaterCard:pointerover">
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.LiquidGlass.CardBorderHover}" />
-        <Setter Property="BoxShadow" Value="inset 4 1 10 0 #32FFFFFF, inset -3 -4 10 0 #48000000, 0 2 7 0 #58000000, 0 12 26 0 #40000000, 0 22 42 0 #30000000" />
+        <Setter Property="BoxShadow" Value="inset 3 1 9 0 #2CFFFFFF, inset -3 -4 9 0 #46000000, 0 3 7 0 #50000000, 0 11 24 0 #38000000, 0 20 38 0 #2A000000" />
     </Style>
 
     <!-- Status Pills and Indicators -->

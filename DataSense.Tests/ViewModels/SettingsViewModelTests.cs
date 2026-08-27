@@ -203,4 +203,31 @@ public class SettingsViewModelTests
         Assert.False(vm2.ShowTopConsumers);
         Assert.False(vm2.ShowLiveProcessTraffic);
     }
+
+    [Fact]
+    public async Task Settings_AdditionalPreferences_PersistAndLoad()
+    {
+        using var context = await TestDatabaseFactory.CreateAsync();
+        var forecastMock = new Mock<IForecastService>();
+        forecastMock.Setup(f => f.GetBudgetAsync()).ReturnsAsync(new DataBudget());
+
+        var vm = new SettingsViewModel(forecastMock.Object, repository: context.Repository);
+        await vm.LoadSettingsAsync();
+
+        vm.EnableChartAnimations = false;
+        vm.EnableNetworkMonitoring = false;
+        vm.NotificationSound = true;
+        vm.ShowTrayIcon = false;
+        vm.CardLayout = "Compact Grid";
+        await vm.SaveSettingsAsync();
+
+        var vm2 = new SettingsViewModel(forecastMock.Object, repository: context.Repository);
+        await vm2.LoadSettingsAsync();
+
+        Assert.False(vm2.EnableChartAnimations);
+        Assert.False(vm2.EnableNetworkMonitoring);
+        Assert.True(vm2.NotificationSound);
+        Assert.False(vm2.ShowTrayIcon);
+        Assert.Equal("Compact Grid", vm2.CardLayout);
+    }
 }

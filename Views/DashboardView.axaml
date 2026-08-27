@@ -8,7 +8,7 @@
              Background="Transparent">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Background="Transparent">
-        <StackPanel Spacing="20" Margin="24">
+        <StackPanel Spacing="{Binding DashboardSpacing}" Margin="24">
 
             <!-- ── 1. HEADER BAR ───────────────────────────────────────────────────────────── -->
             <Grid ColumnDefinitions="*,Auto">
@@ -32,8 +32,8 @@
                     <Border CornerRadius="16" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Padding="12,6" BoxShadow="inset 0 1 0 0 #20FFFFFF, 0 2 8 0 #15000000">
                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                             <TextBlock Text="📶" Classes="Caption" VerticalAlignment="Center"/>
-                            <TextBlock Text="Wi-Fi/network ▾" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding WifiSsid}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Wi-Fi/network ▾" Classes="Caption" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" IsVisible="{Binding ShowNetworkInfo}"/>
+                            <TextBlock Text="{Binding WifiSsid}" Classes="Caption" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="220" IsVisible="{Binding ShowNetworkInfo}"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -260,7 +260,7 @@
                                 </Canvas>
 
                                 <!-- Interactive Hover Guide Line & Floating Tooltip Card -->
-                                <Canvas Height="180" IsVisible="{Binding IsHoveringRealtimeGraph}">
+                                <Canvas Height="180" IsVisible="{Binding IsChartTooltipVisible}">
                                     <!-- Vertical Guide Line -->
                                     <Line Canvas.Left="{Binding HoverLineX}" StartPoint="0,10" EndPoint="0,168" Stroke="{DynamicResource Brush.BorderStrong}" StrokeThickness="1" StrokeDashArray="3,3" Opacity="0.9"/>
 
@@ -332,7 +332,7 @@
             </Border>
 
             <!-- ── 5. TWO SIDE-BY-SIDE PROCESS DONUT ANALYTICS PANELS ──────────────────────── -->
-            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding ShowTopConsumers}">
+            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsApplicationUsageVisible}">
 
                 <!-- LEFT: Today's Process Network Traffic Donut Panel -->
                 <Border Grid.Column="0" Classes="AnalyticsSurface LiquidWaterCard" Padding="20">
@@ -469,7 +469,7 @@
             </Grid>
 
             <!-- ── 6. PREMIUM LIVE PROCESS TRAFFIC TABLE ─────────────────────────────────── -->
-            <Border Classes="AnalyticsSurface LiquidWaterCard" Padding="20" IsVisible="{Binding ShowLiveProcessTraffic}">
+            <Border Classes="AnalyticsSurface LiquidWaterCard" Padding="20" IsVisible="{Binding IsApplicationUsageVisible}">
                 <StackPanel Spacing="16">
                     <!-- Header with Title, Subtitle, and Live Badge -->
                     <Grid ColumnDefinitions="*,Auto">
@@ -488,7 +488,7 @@
                     </Grid>
 
                     <!-- Table Column Headers -->
-                    <Grid ColumnDefinitions="*,130,130,100" Margin="12,4,12,0">
+                    <Grid ColumnDefinitions="*,1.15*,1.15*,Auto" Margin="12,4,12,0">
                         <TextBlock Grid.Column="0" Text="PROCESS" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
                         <TextBlock Grid.Column="1" Text="DOWNLOAD" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
                         <TextBlock Grid.Column="2" Text="UPLOAD" Classes="Caption" FontWeight="Bold" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"/>
@@ -510,7 +510,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="models:ProcessNetworkUsage">
                                 <Border Classes="ProcessRow">
-                                    <Grid ColumnDefinitions="*,130,130,100" VerticalAlignment="Center">
+                                    <Grid ColumnDefinitions="*,1.15*,1.15*,Auto" VerticalAlignment="Center">
                                         <!-- 1. Process Column: [Icon] Application Name & Live Subtitle -->
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                                             <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource Brush.SurfaceElevated}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center">

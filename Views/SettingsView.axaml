@@ -70,19 +70,7 @@
                             </Grid>
                         </Button>
 
-                        <!-- 4. Network -->
-                        <Button Command="{Binding SelectCategoryCommand}"
-                                CommandParameter="{x:Static vm:SettingsCategory.Network}"
-                                Classes="SidebarItem"
-                                Classes.active="{Binding IsNetworkSelected}">
-                            <Grid ColumnDefinitions="24,*">
-                                <TextBlock Grid.Column="0" Text="🌐" FontSize="14" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="1" Text="Network" Classes="Body" FontWeight="Medium"
-                                           Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center" Margin="4,0,0,0"/>
-                            </Grid>
-                        </Button>
-
-                        <!-- 5. Data -->
+                        <!-- 4. Data -->
                         <Button Command="{Binding SelectCategoryCommand}"
                                 CommandParameter="{x:Static vm:SettingsCategory.Data}"
                                 Classes="SidebarItem"
@@ -213,42 +201,60 @@
                                 <TextBlock Text="DASHBOARD WIDGETS" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
 
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                    <TextBlock Text="Summary cards" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Summary cards" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                        <TextBlock Text="Show live download, upload, and today usage cards" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    </StackPanel>
                                     <CheckBox Grid.Column="1" IsChecked="{Binding ShowSummaryCards}" VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <Border Height="1" Background="{DynamicResource Brush.BorderSubtle}"/>
 
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                    <TextBlock Text="Network usage chart" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Network usage chart" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                        <TextBlock Text="Show the live network throughput graph" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    </StackPanel>
                                     <CheckBox Grid.Column="1" IsChecked="{Binding ShowNetworkChart}" VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <Border Height="1" Background="{DynamicResource Brush.BorderSubtle}"/>
 
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                    <TextBlock Text="Top data consumers" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Top data consumers" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                        <TextBlock Text="Show today's and this month's busiest applications" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    </StackPanel>
                                     <CheckBox Grid.Column="1" IsChecked="{Binding ShowTopConsumers}" VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <Border Height="1" Background="{DynamicResource Brush.BorderSubtle}"/>
 
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                    <TextBlock Text="Live process traffic" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Live process traffic" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                        <TextBlock Text="Show real-time application network activity" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    </StackPanel>
                                     <CheckBox Grid.Column="1" IsChecked="{Binding ShowLiveProcessTraffic}" VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <Border Height="1" Background="{DynamicResource Brush.BorderSubtle}"/>
 
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                    <TextBlock Text="Application usage" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Application usage" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                        <TextBlock Text="Show application-level usage panels and activity" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    </StackPanel>
                                     <CheckBox Grid.Column="1" IsChecked="{Binding ShowApplicationUsage}" VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <Border Height="1" Background="{DynamicResource Brush.BorderSubtle}"/>
 
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                    <TextBlock Text="Network information" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Network information" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                        <TextBlock Text="Show the active network name in the dashboard header" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    </StackPanel>
                                     <CheckBox Grid.Column="1" IsChecked="{Binding ShowNetworkInfo}" VerticalAlignment="Center"/>
                                 </Grid>
                             </StackPanel>
@@ -260,14 +266,20 @@
                                 <TextBlock Text="PREFERENCES" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
 
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                    <TextBlock Text="Default dashboard period" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Default dashboard period" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                        <TextBlock Text="Choose the time range loaded when Dashboard opens" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    </StackPanel>
                                     <ComboBox Grid.Column="1" ItemsSource="{Binding PeriodOptions}" SelectedItem="{Binding DefaultDashboardPeriod}" MinWidth="160"/>
                                 </Grid>
 
                                 <Border Height="1" Background="{DynamicResource Brush.BorderSubtle}"/>
 
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                    <TextBlock Text="Card layout" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Card layout" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                        <TextBlock Text="Adjust the spacing between dashboard sections" Classes="Caption" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    </StackPanel>
                                     <ComboBox Grid.Column="1" ItemsSource="{Binding LayoutOptions}" SelectedItem="{Binding CardLayout}" MinWidth="180"/>
                                 </Grid>
                             </StackPanel>
@@ -282,13 +294,6 @@
                         <Border Classes="AnalyticsSurface" Padding="20">
                             <StackPanel Spacing="16">
                                 <TextBlock Text="CHART RENDERING" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
-
-                                <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                    <TextBlock Text="Chart animations" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
-                                    <CheckBox Grid.Column="1" IsChecked="{Binding EnableChartAnimations}" VerticalAlignment="Center"/>
-                                </Grid>
-
-                                <Border Height="1" Background="{DynamicResource Brush.BorderSubtle}"/>
 
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                                     <TextBlock Text="Smooth graph rendering" Classes="Body" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
@@ -327,7 +332,7 @@
                     <!-- ══════════════════════════════════════════════════════════════ -->
                     <!-- 4. NETWORK CATEGORY                                            -->
                     <!-- ══════════════════════════════════════════════════════════════ -->
-                    <StackPanel Spacing="16" IsVisible="{Binding IsNetworkSelected}">
+                    <StackPanel Spacing="16" IsVisible="False">
                         <!-- Card: MONITORING ENGINE -->
                         <Border Classes="AnalyticsSurface" Padding="20">
                             <StackPanel Spacing="16">

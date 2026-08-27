@@ -642,10 +642,10 @@
                         <ItemsControl ItemsSource="{Binding NetworkSessions}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:HistoricalSessionViewModel">
-                                    <Border Margin="0,0,0,12" Padding="18,16" CornerRadius="10"
+                                    <Border Margin="0,0,0,10" Padding="16,12" CornerRadius="10"
                                             Background="{DynamicResource Brush.SurfaceElevated}"
                                             BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
-                                        <StackPanel Spacing="14">
+                                        <StackPanel Spacing="10">
                                             <!-- Top Row: Identity Dot + Network Name + Subtitle on Left, 3 Metrics on Right -->
                                             <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                                                 <!-- Network Identity -->
@@ -668,7 +668,7 @@
                                                 </StackPanel>
 
                                                 <!-- 3 Metric Columns: Download, Upload, Total -->
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="24" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" HorizontalAlignment="Right" VerticalAlignment="Center">
                                                     <StackPanel Spacing="2" HorizontalAlignment="Right">
                                                         <TextBlock Text="↓ DOWNLOAD" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.Download}" HorizontalAlignment="Right"/>
                                                         <TextBlock Text="{Binding DownloadedText}" Classes="Body" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Download}" HorizontalAlignment="Right"/>
@@ -687,12 +687,12 @@
                                             </Grid>
 
                                             <!-- Relative Total Usage Bar with Cyan -> Violet Gradient -->
-                                            <Grid Height="6">
+                                            <Grid Height="5">
                                                 <Border Background="{DynamicResource Brush.Surface}" CornerRadius="3" Height="6"/>
                                                 <ProgressBar Value="{Binding RelativeUsagePercent}"
                                                              Minimum="0" Maximum="100"
-                                                             Height="6"
-                                                             CornerRadius="3"
+                                                             Height="5"
+                                                             CornerRadius="2.5"
                                                              Foreground="{DynamicResource Brush.DownloadBarGradient}"
                                                              Background="Transparent"/>
                                             </Grid>
