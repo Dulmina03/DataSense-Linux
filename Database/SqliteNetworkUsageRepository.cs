@@ -488,10 +488,15 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
+        // A closed session overlaps [start,end] when: StartTime <= end AND EndTime >= start.
+        // An open session (EndTime IS NULL) is included ONLY when it started within [start,end].
+        // This prevents multi-day "never-closed" sessions from being attributed to every
+        // subsequent day they happen to still be open.
         string sql = @"
             SELECT COALESCE(SUM(BytesDownloaded), 0), COALESCE(SUM(BytesUploaded), 0)
             FROM NetworkSessions
-            WHERE ((StartTime <= @End AND EndTime >= @Start) OR (StartTime <= @End AND EndTime IS NULL))";
+            WHERE (StartTime <= @End AND EndTime >= @Start)
+               OR (EndTime IS NULL AND StartTime >= @Start AND StartTime <= @End)";
 
         if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
         {
@@ -687,16 +692,46 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         await command.ExecuteNonQueryAsync();
     }
 
+    /// <summary>
+    /// Closes any sessions that have EndTime = NULL and were started before <paramref name="cutoff"/>.
+    /// EndTime is set to StartTime (last-seen time) so the session byte totals stay intact but
+    /// the session is no longer treated as "active" or "open" by any date-range query.
+    /// This repairs sessions that were orphaned by a crash or force-quit.
+    /// </summary>
+    public async Task CloseOrphanedSessionsAsync(DateTime cutoff)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        // Set EndTime = StartTime for orphaned sessions.
+        // We use StartTime rather than the current clock so the session's date attribution
+        // remains correct (it belongs to the day it started, not today).
+        const string sql = @"
+            UPDATE NetworkSessions
+            SET EndTime = StartTime
+            WHERE EndTime IS NULL
+              AND StartTime < @Cutoff;";
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@Cutoff", cutoff.ToUniversalTime().ToString("o"));
+        await command.ExecuteNonQueryAsync();
+    }
+
     public async Task<IEnumerable<NetworkSession>> GetSessionsAsync(DateTime start, DateTime end, string? interfaceName = null, string? networkName = null)
     {
         var results = new List<NetworkSession>();
         using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
+        // Same predicate as GetSessionsSummaryAsync: open sessions are only included
+        // for the period in which they started, preventing stale sessions from
+        // polluting later time ranges.
         string sql = @"
             SELECT Id, NetworkName, InterfaceName, ConnectionType, StartTime, EndTime, BytesDownloaded, BytesUploaded
             FROM NetworkSessions
-            WHERE ((StartTime <= @End AND EndTime >= @Start) OR (StartTime <= @End AND EndTime IS NULL))";
+            WHERE (StartTime <= @End AND EndTime >= @Start)
+               OR (EndTime IS NULL AND StartTime >= @Start AND StartTime <= @End)";
 
         if (!string.IsNullOrEmpty(interfaceName))
             sql += " AND InterfaceName = @InterfaceName";

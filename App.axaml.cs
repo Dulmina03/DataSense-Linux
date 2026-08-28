@@ -51,6 +51,9 @@ public partial class App : Application
             try
             {
                 await repository.InitializeAsync();
+                // Close sessions that were orphaned by a crash/force-quit in previous runs.
+                // Cutoff = today 00:00 UTC so currently-running sessions are not touched.
+                await repository.CloseOrphanedSessionsAsync(DateTime.UtcNow.Date);
                 await repository.PurgeOldRecordsAsync(TimeSpan.FromDays(30));
                 if (themeService != null)
                 {

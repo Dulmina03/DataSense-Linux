@@ -49,6 +49,11 @@ public interface INetworkUsageRepository
     Task UpdateSessionAsync(NetworkSession session);
     Task<IEnumerable<NetworkSession>> GetSessionsAsync(DateTime start, DateTime end, string? interfaceName = null, string? networkName = null);
     Task<(long BytesDownloaded, long BytesUploaded)> GetSessionsSummaryAsync(DateTime start, DateTime end, string? interfaceName = null);
+    /// <summary>
+    /// Closes any sessions that have EndTime = NULL and were started before <paramref name="cutoff"/>.
+    /// This handles the case where the app was killed without properly finalizing sessions.
+    /// </summary>
+    Task CloseOrphanedSessionsAsync(DateTime cutoff);
 
     // Speed Tests
     Task SaveSpeedTestAsync(SpeedTestRecord record);
