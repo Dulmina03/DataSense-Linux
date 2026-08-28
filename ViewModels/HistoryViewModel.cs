@@ -38,8 +38,32 @@ public class HistoricalSessionViewModel : ObservableObject
     public string NetworkName { get; init; } = string.Empty;
     public string InterfaceName { get; init; } = string.Empty;
     public string ConnectionType { get; init; } = string.Empty;
-    public DateTime StartTime { get; init; }
-    public DateTime? EndTime { get; init; }
+    private DateTime _startTime;
+    public DateTime StartTime
+    {
+        get => _startTime;
+        set
+        {
+            if (SetProperty(ref _startTime, value))
+            {
+                OnPropertyChanged(nameof(TimeRangeText));
+            }
+        }
+    }
+
+    private DateTime? _endTime;
+    public DateTime? EndTime
+    {
+        get => _endTime;
+        set
+        {
+            if (SetProperty(ref _endTime, value))
+            {
+                OnPropertyChanged(nameof(TimeRangeText));
+                OnPropertyChanged(nameof(IsActive));
+            }
+        }
+    }
 
     private long _bytesDownloaded;
     public long BytesDownloaded
@@ -100,6 +124,8 @@ public class HistoricalSessionViewModel : ObservableObject
 
     public void UpdateFrom(HistoricalSessionViewModel other)
     {
+        StartTime = other.StartTime;
+        EndTime = other.EndTime;
         BytesDownloaded = other.BytesDownloaded;
         BytesUploaded = other.BytesUploaded;
         DisplayIndex = other.DisplayIndex;
@@ -618,7 +644,11 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                     HasHistoricalGraphData = false;
                     Applications.Clear();
                     FilteredApplications.Clear();
+                    NetworkSessions.Clear();
+                    FilteredNetworkSessions.Clear();
                     HasApplications = false;
+                    HasNetworkSessions = false;
+                    HasNetworkUsage = false;
                 });
             }
             ErrorMessage = null;

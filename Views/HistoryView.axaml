@@ -639,7 +639,7 @@
                         <TextBlock Text="{Binding NetworkUsageSectionTitle}" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
 
                         <!-- Network Usage Items List -->
-                        <ItemsControl ItemsSource="{Binding NetworkSessions}">
+                        <ItemsControl ItemsSource="{Binding FilteredNetworkSessions}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:HistoricalSessionViewModel">
                                     <Border Margin="0,0,0,10" Padding="16,12" CornerRadius="10"

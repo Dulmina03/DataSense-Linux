@@ -1468,4 +1468,146 @@ public class HistoryViewModelTests : IDisposable
         Assert.False(vm.HasNetworkSessions);
         Assert.True(vm.IsEmpty);
     }
+
+    [Fact]
+    public async Task NetworkUsage_PeriodSwitching_RecalculatesTotalsAndUpdatesUIBoundState()
+    {
+        var now = DateTime.UtcNow;
+        var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+
+        // Pick dates carefully within month:
+        // Today: 1 session (1.2 GB = 1_000_000_000 + 200_000_000)
+        // 3 days ago: 2 sessions on Dialog 4G (Duplicate test: 1.0 GB + 2.0 GB = 3.0 GB) and 1 session on Home Wi-Fi (800 MB)
+        // 15 days ago (in current month, outside 7 days): 1 session on Dialog 4G (4.0 GB)
+        // Previous month: 1 session on Dialog 4G (10.0 GB)
+
+        DateTime threeDaysAgo = today.AddDays(-3);
+        DateTime fifteenDaysAgo = today.Day > 15 ? today.AddDays(-15) : today.AddDays(-(today.Day - 1));
+        DateTime prevMonth = today.AddMonths(-1);
+
+        // Today: Dialog 4G = 1.2 GB
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Dialog 4G",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(2),
+            EndTime = today.AddHours(4),
+            BytesDownloaded = 1_000_000_000,
+            BytesUploaded = 200_000_000 // 1.2 GB
+        });
+
+        // 3 days ago: Dialog 4G session 1 = 1.0 GB
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Dialog 4G",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = threeDaysAgo.AddHours(1),
+            EndTime = threeDaysAgo.AddHours(2),
+            BytesDownloaded = 800_000_000,
+            BytesUploaded = 200_000_000 // 1.0 GB
+        });
+
+        // 3 days ago: Dialog 4G session 2 = 2.0 GB (Duplicate network on same day)
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Dialog 4G",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = threeDaysAgo.AddHours(3),
+            EndTime = threeDaysAgo.AddHours(5),
+            BytesDownloaded = 1_600_000_000,
+            BytesUploaded = 400_000_000 // 2.0 GB
+        });
+
+        // 3 days ago: Home Wi-Fi = 800 MB
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Home Wi-Fi",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = threeDaysAgo.AddHours(6),
+            EndTime = threeDaysAgo.AddHours(8),
+            BytesDownloaded = 600_000_000,
+            BytesUploaded = 200_000_000 // 800 MB
+        });
+
+        if (fifteenDaysAgo < today.AddDays(-6))
+        {
+            // 15 days ago (outside 7 days, inside current month): Dialog 4G = 4.0 GB
+            await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+            {
+                NetworkName = "Dialog 4G",
+                InterfaceName = "wlo1",
+                ConnectionType = "Wi-Fi",
+                StartTime = fifteenDaysAgo.AddHours(2),
+                EndTime = fifteenDaysAgo.AddHours(5),
+                BytesDownloaded = 3_500_000_000,
+                BytesUploaded = 500_000_000 // 4.0 GB
+            });
+        }
+
+        // Previous month: Dialog 4G = 10.0 GB
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Dialog 4G",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = prevMonth.AddHours(2),
+            EndTime = prevMonth.AddHours(5),
+            BytesDownloaded = 8_000_000_000,
+            BytesUploaded = 2_000_000_000 // 10.0 GB
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        // 1. Select TODAY
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.Single(vm.FilteredNetworkSessions);
+        var todayDialog = vm.FilteredNetworkSessions.First();
+        Assert.Equal("Dialog 4G", todayDialog.DisplayName);
+        Assert.Equal(1_200_000_000, todayDialog.TotalBytes);
+
+        // 2. Switch to 7 DAYS
+        vm.SelectLast7Days();
+        await vm.LoadAsync(showLoading: false);
+
+        // 7 Days should combine today (1.2 GB) + 3 days ago (3.0 GB) = 4.2 GB for Dialog 4G, and Home Wi-Fi = 800 MB
+        Assert.Equal(2, vm.FilteredNetworkSessions.Count);
+        var sevenDayDialog = vm.FilteredNetworkSessions.First(s => s.DisplayName == "Dialog 4G");
+        Assert.Equal(4_200_000_000, sevenDayDialog.TotalBytes);
+
+        var sevenDayWifi = vm.FilteredNetworkSessions.First(s => s.DisplayName == "Home Wi-Fi");
+        Assert.Equal(800_000_000, sevenDayWifi.TotalBytes);
+
+        // 3. Switch to THIS MONTH
+        vm.SelectMonth();
+        await vm.LoadAsync(showLoading: false);
+
+        var monthDialog = vm.FilteredNetworkSessions.First(s => s.DisplayName == "Dialog 4G");
+        // Monthly total for Dialog 4G should be >= 4.2 GB (Today + 3 Days Ago) and exclude previous month (10.0 GB)
+        Assert.True(monthDialog.TotalBytes >= 4_200_000_000);
+        Assert.True(monthDialog.TotalBytes < 14_000_000_000);
+
+        // 4. Switch back to TODAY (Round-trip test)
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.Single(vm.FilteredNetworkSessions);
+        var todayBackDialog = vm.FilteredNetworkSessions.First();
+        Assert.Equal("Dialog 4G", todayBackDialog.DisplayName);
+        Assert.Equal(1_200_000_000, todayBackDialog.TotalBytes);
+
+        // Verify period switching produced different totals for different periods
+        Assert.NotEqual(todayDialog.TotalBytes, sevenDayDialog.TotalBytes);
+    }
 }
