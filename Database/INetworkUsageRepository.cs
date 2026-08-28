@@ -48,6 +48,7 @@ public interface INetworkUsageRepository
     Task SaveSessionAsync(NetworkSession session);
     Task UpdateSessionAsync(NetworkSession session);
     Task<IEnumerable<NetworkSession>> GetSessionsAsync(DateTime start, DateTime end, string? interfaceName = null, string? networkName = null);
+    Task<(long BytesDownloaded, long BytesUploaded)> GetSessionsSummaryAsync(DateTime start, DateTime end, string? interfaceName = null);
 
     // Speed Tests
     Task SaveSpeedTestAsync(SpeedTestRecord record);

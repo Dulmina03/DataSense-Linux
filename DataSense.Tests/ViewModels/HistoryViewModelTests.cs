@@ -1177,22 +1177,22 @@ public class HistoryViewModelTests : IDisposable
         Assert.True(vm.HasNetworkUsage);
         Assert.Equal(2, vm.NetworkUsageItems.Count);
 
-        // Sum of network usage MUST equal total period usage (10,000,000)
+        // Sum of network usage MUST equal exact sum of recorded sessions
         long totalNetDl = vm.NetworkUsageItems.Sum(n => n.BytesDownloaded);
         long totalNetUl = vm.NetworkUsageItems.Sum(n => n.BytesUploaded);
-        Assert.Equal(8_000_000, totalNetDl);
-        Assert.Equal(2_000_000, totalNetUl);
-        Assert.Equal(10_000_000, totalNetDl + totalNetUl);
+        Assert.Equal(1_000_000, totalNetDl);
+        Assert.Equal(1_000_000, totalNetUl);
+        Assert.Equal(2_000_000, totalNetDl + totalNetUl);
 
         var slt = vm.NetworkUsageItems.FirstOrDefault(n => n.NetworkName == "SLT Fiber");
         var dialog = vm.NetworkUsageItems.FirstOrDefault(n => n.NetworkName == "Dialog 4G");
         Assert.NotNull(slt);
         Assert.NotNull(dialog);
 
-        // SLT Fiber had 75% share -> 6.0M dl + 1.5M ul = 7.5M
-        Assert.Equal(7_500_000, slt.TotalBytes);
-        // Dialog 4G had 25% share -> 2.0M dl + 0.5M ul = 2.5M
-        Assert.Equal(2_500_000, dialog.TotalBytes);
+        // SLT Fiber: 750k dl + 750k ul = 1.5M total
+        Assert.Equal(1_500_000, slt.TotalBytes);
+        // Dialog 4G: 250k dl + 250k ul = 500k total
+        Assert.Equal(500_000, dialog.TotalBytes);
     }
 
     [Fact]
@@ -1609,5 +1609,91 @@ public class HistoryViewModelTests : IDisposable
 
         // Verify period switching produced different totals for different periods
         Assert.NotEqual(todayDialog.TotalBytes, sevenDayDialog.TotalBytes);
+    }
+
+    [Fact]
+    public async Task NetworkUsage_RealRepositoryQueryAndAggregation_MatchesDatabaseRecordsStrictly()
+    {
+        var now = DateTime.UtcNow;
+        var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+
+        // Save multiple real-world-style session records for 2 distinct networks
+        // Network 1: "UoM.Wireless" (3 sessions today: 500MB, 700MB, 300MB = 1.5 GB total download)
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "UoM.Wireless",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(1),
+            EndTime = today.AddHours(2),
+            BytesDownloaded = 500_000_000,
+            BytesUploaded = 50_000_000
+        });
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "UoM.Wireless",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(3),
+            EndTime = today.AddHours(4),
+            BytesDownloaded = 700_000_000,
+            BytesUploaded = 70_000_000
+        });
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "UoM.Wireless",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(5),
+            EndTime = today.AddHours(6),
+            BytesDownloaded = 300_000_000,
+            BytesUploaded = 30_000_000
+        });
+
+        // Network 2: "Ethernet" (2 sessions today: 200MB, 100MB = 300 MB total download)
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Ethernet",
+            InterfaceName = "eno1",
+            ConnectionType = "Ethernet",
+            StartTime = today.AddHours(2),
+            EndTime = today.AddHours(3),
+            BytesDownloaded = 200_000_000,
+            BytesUploaded = 20_000_000
+        });
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Ethernet",
+            InterfaceName = "eno1",
+            ConnectionType = "Ethernet",
+            StartTime = today.AddHours(7),
+            EndTime = today.AddHours(8),
+            BytesDownloaded = 100_000_000,
+            BytesUploaded = 10_000_000
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        // Verify exactly 2 rows produced (one per unique network)
+        Assert.Equal(2, vm.FilteredNetworkSessions.Count);
+
+        var uomNet = vm.FilteredNetworkSessions.First(s => s.DisplayName == "UoM.Wireless");
+        Assert.Equal(1_500_000_000, uomNet.BytesDownloaded); // Exactly 500M + 700M + 300M
+        Assert.Equal(150_000_000, uomNet.BytesUploaded);     // Exactly 50M + 70M + 30M
+        Assert.Equal(1_650_000_000, uomNet.TotalBytes);
+
+        var ethNet = vm.FilteredNetworkSessions.First(s => s.DisplayName == "Ethernet");
+        Assert.Equal(300_000_000, ethNet.BytesDownloaded); // Exactly 200M + 100M
+        Assert.Equal(30_000_000, ethNet.BytesUploaded);    // Exactly 20M + 10M
+        Assert.Equal(330_000_000, ethNet.TotalBytes);
     }
 }

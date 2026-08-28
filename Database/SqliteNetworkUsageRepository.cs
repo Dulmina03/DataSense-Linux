@@ -483,9 +483,42 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         return names;
     }
 
+    public async Task<(long BytesDownloaded, long BytesUploaded)> GetSessionsSummaryAsync(DateTime start, DateTime end, string? interfaceName = null)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT COALESCE(SUM(BytesDownloaded), 0), COALESCE(SUM(BytesUploaded), 0)
+            FROM NetworkSessions
+            WHERE ((StartTime <= @End AND EndTime >= @Start) OR (StartTime <= @End AND EndTime IS NULL))";
+
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
+        {
+            sql += " AND InterfaceName = @InterfaceName";
+        }
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        command.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
+        {
+            command.Parameters.AddWithValue("@InterfaceName", interfaceName);
+        }
+
+        using var reader = await command.ExecuteReaderAsync();
+        if (await reader.ReadAsync())
+        {
+            return (reader.GetInt64(0), reader.GetInt64(1));
+        }
+
+        return (0L, 0L);
+    }
+
     /// <summary>
     /// Returns today's downloaded and uploaded bytes (UTC calendar day).
-    /// Prioritizes ProcessUsageRecords aggregation if available, falling back to GetDailyUsageAsync.
+    /// Prioritizes NetworkSessions as the single authoritative source of truth.
     /// </summary>
     public async Task<(long BytesDownloaded, long BytesUploaded)> GetTodaySummaryAsync(string? interfaceName = null)
     {
@@ -493,32 +526,28 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         var start  = DateTime.SpecifyKind(utcNow.Date, DateTimeKind.Utc);
         var end    = start.AddDays(1).AddTicks(-1);
 
-        if (string.IsNullOrEmpty(interfaceName) || interfaceName == "All")
+        var (sDl, sUl) = await GetSessionsSummaryAsync(start, end, interfaceName);
+        if (sDl > 0 || sUl > 0)
         {
-            var procHourly = await GetAllProcessesHourlyUsageAsync(start);
-            long pDl = 0;
-            long pUl = 0;
-            foreach (var h in procHourly)
-            {
-                pDl += h.BytesDownloaded;
-                pUl += h.BytesUploaded;
-            }
-
-            if (pDl > 0 || pUl > 0)
-            {
-                return (pDl, pUl);
-            }
+            return (sDl, sUl);
         }
 
         var daily = await GetDailyUsageAsync(start, end, interfaceName);
         var row   = daily.FirstOrDefault();
+        if (row != null && (row.BytesDownloaded > 0 || row.BytesUploaded > 0))
+        {
+            return (row.BytesDownloaded, row.BytesUploaded);
+        }
 
-        return row is null ? (0L, 0L) : (row.BytesDownloaded, row.BytesUploaded);
+        var procHourly = await GetAllProcessesHourlyUsageAsync(start);
+        long pDl = procHourly.Sum(h => h.BytesDownloaded);
+        long pUl = procHourly.Sum(h => h.BytesUploaded);
+        return (pDl, pUl);
     }
 
     /// <summary>
     /// Returns the current UTC calendar month's downloaded and uploaded bytes.
-    /// Prioritizes ProcessUsageRecords aggregation if available, falling back to GetDailyUsageAsync.
+    /// Prioritizes NetworkSessions as the single authoritative source of truth.
     /// </summary>
     public async Task<(long BytesDownloaded, long BytesUploaded)> GetMonthSummaryAsync(string? interfaceName = null)
     {
@@ -526,29 +555,24 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         var monthStart = new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var monthEnd   = monthStart.AddMonths(1).AddTicks(-1);
 
-        if (string.IsNullOrEmpty(interfaceName) || interfaceName == "All")
+        var (sDl, sUl) = await GetSessionsSummaryAsync(monthStart, monthEnd, interfaceName);
+        if (sDl > 0 || sUl > 0)
         {
-            var procDaily = await GetAllProcessesDailyUsageAsync(monthStart, monthEnd);
-            long pDl = 0;
-            long pUl = 0;
-            foreach (var d in procDaily)
-            {
-                pDl += d.BytesDownloaded;
-                pUl += d.BytesUploaded;
-            }
-
-            if (pDl > 0 || pUl > 0)
-            {
-                return (pDl, pUl);
-            }
+            return (sDl, sUl);
         }
 
-        var daily  = await GetDailyUsageAsync(monthStart, monthEnd, interfaceName);
-        long dl    = 0;
-        long ul    = 0;
-        foreach (var d in daily) { dl += d.BytesDownloaded; ul += d.BytesUploaded; }
+        var daily = await GetDailyUsageAsync(monthStart, monthEnd, interfaceName);
+        long dl = daily.Sum(d => d.BytesDownloaded);
+        long ul = daily.Sum(d => d.BytesUploaded);
+        if (dl > 0 || ul > 0)
+        {
+            return (dl, ul);
+        }
 
-        return (dl, ul);
+        var procDaily = await GetAllProcessesDailyUsageAsync(monthStart, monthEnd);
+        long pDl = procDaily.Sum(d => d.BytesDownloaded);
+        long pUl = procDaily.Sum(d => d.BytesUploaded);
+        return (pDl, pUl);
     }
 
     /// <summary>

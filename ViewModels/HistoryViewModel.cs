@@ -741,17 +741,28 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             if (version != _loadVersion) return;
 
             // 5. Compute Totals & Averages
-            long totalDl = totalAppUsage > 0
-                ? totalAppDl
-                : (SelectedPeriod == HistoryPeriodType.Today
-                    ? hourlyList.Sum(h => h.BytesDownloaded)
-                    : dailyList.Sum(d => d.BytesDownloaded));
+            long totalDl = 0;
+            long totalUl = 0;
 
-            long totalUl = totalAppUsage > 0
-                ? totalAppUl
-                : (SelectedPeriod == HistoryPeriodType.Today
-                    ? hourlyList.Sum(h => h.BytesUploaded)
-                    : dailyList.Sum(d => d.BytesUploaded));
+            if (sessions.Count > 0)
+            {
+                totalDl = sessions.Sum(s => s.BytesDownloaded);
+                totalUl = sessions.Sum(s => s.BytesUploaded);
+            }
+            else
+            {
+                var (sDl, sUl) = await _repository.GetSessionsSummaryAsync(start, end, ifaceFilter);
+                if (sDl > 0 || sUl > 0)
+                {
+                    totalDl = sDl;
+                    totalUl = sUl;
+                }
+                else
+                {
+                    totalDl = totalAppUsage > 0 ? totalAppDl : (SelectedPeriod == HistoryPeriodType.Today ? hourlyList.Sum(h => h.BytesDownloaded) : dailyList.Sum(d => d.BytesDownloaded));
+                    totalUl = totalAppUsage > 0 ? totalAppUl : (SelectedPeriod == HistoryPeriodType.Today ? hourlyList.Sum(h => h.BytesUploaded) : dailyList.Sum(d => d.BytesUploaded));
+                }
+            }
 
             long totalUsage = totalDl + totalUl;
 
@@ -856,41 +867,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                     BytesUploaded = totalUl
                 });
             }
-            else if (networkGrouped.Count == 1 && totalUsage > 0)
-            {
-                // Single network session: ensure exact match with period total
-                networkGrouped[0].BytesDownloaded = totalDl;
-                networkGrouped[0].BytesUploaded = totalUl;
-            }
-            else if (networkGrouped.Count > 1 && totalUsage > 0)
-            {
-                // Multiple network sessions: apportion proportionally so sum equals totalUsage
-                long rawSessionTotal = networkGrouped.Sum(m => m.TotalBytes);
-                if (rawSessionTotal > 0)
-                {
-                    long dlRunning = 0;
-                    long ulRunning = 0;
-                    for (int i = 0; i < networkGrouped.Count; i++)
-                    {
-                        var item = networkGrouped[i];
-                        if (i == networkGrouped.Count - 1)
-                        {
-                            item.BytesDownloaded = Math.Max(0, totalDl - dlRunning);
-                            item.BytesUploaded = Math.Max(0, totalUl - ulRunning);
-                        }
-                        else
-                        {
-                            double ratio = (double)item.TotalBytes / rawSessionTotal;
-                            long itemDl = (long)Math.Round(ratio * totalDl);
-                            long itemUl = (long)Math.Round(ratio * totalUl);
-                            item.BytesDownloaded = itemDl;
-                            item.BytesUploaded = itemUl;
-                            dlRunning += itemDl;
-                            ulRunning += itemUl;
-                        }
-                    }
-                }
-            }
+
 
             long maxNetworkTotal = networkGrouped.Count > 0 ? networkGrouped.Max(m => m.TotalBytes) : 0;
             for (int i = 0; i < networkGrouped.Count; i++)

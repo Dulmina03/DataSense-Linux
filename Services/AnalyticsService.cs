@@ -39,6 +39,11 @@ public class AnalyticsService : IAnalyticsService
     public async Task<AnalyticsSummary> GetSummaryAsync(AnalyticsPeriod period)
     {
         var (start, end) = GetRange(period);
+        var (sDl, sUl) = await _repository.GetSessionsSummaryAsync(start, end);
+
+        long totalDl = sDl;
+        long totalUl = sUl;
+
         var procDaily = (await _repository.GetAllProcessesDailyUsageAsync(start, end)).ToList();
         List<DailyUsageRecord> daily;
         if (procDaily.Count > 0)
@@ -50,8 +55,11 @@ public class AnalyticsService : IAnalyticsService
             daily = (await _repository.GetDailyUsageAsync(start, end)).ToList();
         }
 
-        long totalDl = daily.Sum(d => d.BytesDownloaded);
-        long totalUl = daily.Sum(d => d.BytesUploaded);
+        if (totalDl == 0 && totalUl == 0)
+        {
+            totalDl = daily.Sum(d => d.BytesDownloaded);
+            totalUl = daily.Sum(d => d.BytesUploaded);
+        }
 
         var activeDays = daily.Where(d => d.TotalBytes > 0).ToList();
         long avgDaily = activeDays.Count > 0 ? (long)activeDays.Average(d => d.TotalBytes) : 0;
