@@ -217,6 +217,7 @@ public class SettingsViewModelTests
         vm.EnableChartAnimations = false;
         vm.EnableNetworkMonitoring = false;
         vm.NotificationSound = true;
+        vm.EnableNotifications = false;
         vm.ShowTrayIcon = false;
         vm.CardLayout = "Compact Grid";
         await vm.SaveSettingsAsync();
@@ -227,6 +228,7 @@ public class SettingsViewModelTests
         Assert.False(vm2.EnableChartAnimations);
         Assert.False(vm2.EnableNetworkMonitoring);
         Assert.True(vm2.NotificationSound);
+        Assert.False(vm2.EnableNotifications);
         Assert.False(vm2.ShowTrayIcon);
         Assert.Equal("Compact Grid", vm2.CardLayout);
     }

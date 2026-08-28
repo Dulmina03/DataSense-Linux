@@ -1253,4 +1253,219 @@ public class HistoryViewModelTests : IDisposable
         Assert.Equal(historyVm.TotalUploadedText, ByteFormatter.FormatBytes(dashMonthUl));
         Assert.Equal(historyVm.TotalUsageText, ByteFormatter.FormatBytes(dashMonthDl + dashMonthUl));
     }
+
+    [Fact]
+    public async Task NetworkUsage_DuplicateNetwork_AggregatesIntoSingleEntry()
+    {
+        var now = DateTime.UtcNow;
+        var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+
+        // Given: 3 sessions on WiFi-A today (100MB, 200MB, 300MB)
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "WiFi-A",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(2),
+            EndTime = today.AddHours(3),
+            BytesDownloaded = 80_000_000,
+            BytesUploaded = 20_000_000 // 100 MB
+        });
+
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "WiFi-A",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(4),
+            EndTime = today.AddHours(5),
+            BytesDownloaded = 150_000_000,
+            BytesUploaded = 50_000_000 // 200 MB
+        });
+
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "WiFi-A",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(6),
+            EndTime = today.AddHours(7),
+            BytesDownloaded = 250_000_000,
+            BytesUploaded = 50_000_000 // 300 MB
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        // Expected: Exactly one result for WiFi-A with total = 600 MB
+        Assert.Single(vm.NetworkSessions);
+        var item = vm.NetworkSessions.First();
+        Assert.Equal("WiFi-A", item.DisplayName);
+        Assert.Equal(480_000_000, item.BytesDownloaded);
+        Assert.Equal(120_000_000, item.BytesUploaded);
+        Assert.Equal(600_000_000, item.TotalBytes);
+    }
+
+    [Fact]
+    public async Task NetworkUsage_MultipleNetworks_GroupsAndSortsByTotalUsage()
+    {
+        var now = DateTime.UtcNow;
+        var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+
+        // Given: WiFi-A = 600 MB, WiFi-B = 400 MB, WiFi-A = 100 MB
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "WiFi-A",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(1),
+            EndTime = today.AddHours(2),
+            BytesDownloaded = 500_000_000,
+            BytesUploaded = 100_000_000 // 600 MB
+        });
+
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "WiFi-B",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(3),
+            EndTime = today.AddHours(4),
+            BytesDownloaded = 300_000_000,
+            BytesUploaded = 100_000_000 // 400 MB
+        });
+
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "WiFi-A",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(5),
+            EndTime = today.AddHours(6),
+            BytesDownloaded = 80_000_000,
+            BytesUploaded = 20_000_000 // 100 MB
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        // Expected: WiFi-A = 700 MB, WiFi-B = 400 MB
+        Assert.Equal(2, vm.NetworkSessions.Count);
+
+        var first = vm.NetworkSessions[0];
+        Assert.Equal("WiFi-A", first.DisplayName);
+        Assert.Equal(700_000_000, first.TotalBytes);
+
+        var second = vm.NetworkSessions[1];
+        Assert.Equal("WiFi-B", second.DisplayName);
+        Assert.Equal(400_000_000, second.TotalBytes);
+    }
+
+    [Fact]
+    public async Task NetworkUsage_PeriodFiltering_ExcludesRecordsOutsideSelectedPeriod()
+    {
+        var now = DateTime.UtcNow;
+        var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+        var threeDaysAgo = today.AddDays(-3);
+        var twoMonthsAgo = today.AddMonths(-2);
+
+        // Session Today
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Today-Net",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = today.AddHours(2),
+            EndTime = today.AddHours(3),
+            BytesDownloaded = 100_000_000,
+            BytesUploaded = 20_000_000
+        });
+
+        // Session 3 Days Ago
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Recent-Net",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = threeDaysAgo.AddHours(2),
+            EndTime = threeDaysAgo.AddHours(3),
+            BytesDownloaded = 200_000_000,
+            BytesUploaded = 30_000_000
+        });
+
+        // Session 2 Months Ago
+        await _dbContext.Repository.SaveSessionAsync(new NetworkSession
+        {
+            NetworkName = "Old-Net",
+            InterfaceName = "wlo1",
+            ConnectionType = "Wi-Fi",
+            StartTime = twoMonthsAgo.AddHours(2),
+            EndTime = twoMonthsAgo.AddHours(3),
+            BytesDownloaded = 500_000_000,
+            BytesUploaded = 50_000_000
+        });
+
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        // 1. Today View
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+        Assert.Single(vm.NetworkSessions);
+        Assert.Equal("Today-Net", vm.NetworkSessions.First().DisplayName);
+
+        // 2. 7 Days View
+        vm.SelectLast7Days();
+        await vm.LoadAsync(showLoading: false);
+        Assert.Equal(2, vm.NetworkSessions.Count);
+        Assert.Contains(vm.NetworkSessions, s => s.DisplayName == "Today-Net");
+        Assert.Contains(vm.NetworkSessions, s => s.DisplayName == "Recent-Net");
+        Assert.DoesNotContain(vm.NetworkSessions, s => s.DisplayName == "Old-Net");
+
+        // 3. Month View
+        vm.SelectMonth();
+        await vm.LoadAsync(showLoading: false);
+        Assert.Contains(vm.NetworkSessions, s => s.DisplayName == "Today-Net");
+        Assert.DoesNotContain(vm.NetworkSessions, s => s.DisplayName == "Old-Net");
+    }
+
+    [Fact]
+    public async Task NetworkUsage_EmptyData_DisplaysEmptyStateCorrectly()
+    {
+        var vm = new HistoryViewModel(
+            _dbContext.Repository,
+            _historicalService,
+            _appAnalyticsService,
+            _iconService,
+            _colorProvider,
+            _monitorWorker);
+
+        vm.SelectToday();
+        await vm.LoadAsync(showLoading: false);
+
+        Assert.Empty(vm.NetworkSessions);
+        Assert.False(vm.HasNetworkSessions);
+        Assert.True(vm.IsEmpty);
+    }
 }

@@ -59,6 +59,13 @@
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
         <Setter Property="FontWeight" Value="Bold" />
     </Style>
+    <Style Selector="ComboBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Brush.LiquidGlass.SurfaceSelected}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    </Style>
+    <Style Selector="ComboBox:focus-visible /template/ Border#Background">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+    </Style>
 
     <!-- TextBox / SearchBox -->
     <Style Selector="TextBox">
@@ -126,8 +133,8 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
     </Style>
     <Style Selector="CheckBox:checked:pointerover /template/ Border#NormalRectangle">
-        <Setter Property="Background" Value="{DynamicResource Brush.AccentHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentBright}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
     </Style>
     <Style Selector="CheckBox:checked:pressed /template/ Border#NormalRectangle">
         <Setter Property="Background" Value="{DynamicResource Brush.AccentDeep}" />
@@ -144,6 +151,9 @@
     <Style Selector="CheckBox:indeterminate /template/ Rectangle#IndeterminateGlyph">
         <Setter Property="Fill" Value="{DynamicResource Brush.TextOnAccent}" />
         <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="CheckBox:focus-visible /template/ Border#NormalRectangle">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
     </Style>
 
     <!-- ProgressBar Styling -->

@@ -337,6 +337,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
             bool detectNetworkChanges = DetectNetworkChanges;
             bool notificationSound = NotificationSound;
             bool notifyWhileMinimized = NotifyWhileMinimized;
+            bool enableNotifications = EnableNotifications;
             bool showTrayIcon = ShowTrayIcon;
             bool showLiveSpeedInTray = ShowLiveSpeedInTray;
             string cardLayout = CardLayout;
@@ -377,6 +378,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
                 detectNetworkChanges = await ReadBoolSettingAsync("DetectNetworkChanges", detectNetworkChanges);
                 notificationSound = await ReadBoolSettingAsync("NotificationSound", notificationSound);
                 notifyWhileMinimized = await ReadBoolSettingAsync("NotifyWhileMinimized", notifyWhileMinimized);
+                enableNotifications = await ReadBoolSettingAsync("EnableDesktopNotifications", enableNotifications);
                 showTrayIcon = await ReadBoolSettingAsync("ShowTrayIcon", showTrayIcon);
                 showLiveSpeedInTray = await ReadBoolSettingAsync("ShowLiveSpeedInTray", showLiveSpeedInTray);
                 cardLayout = await ReadStringSettingAsync("CardLayout", cardLayout);
@@ -429,6 +431,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
                 DetectNetworkChanges = detectNetworkChanges;
                 NotificationSound = notificationSound;
                 NotifyWhileMinimized = notifyWhileMinimized;
+                EnableNotifications = enableNotifications;
                 ShowTrayIcon = showTrayIcon;
                 ShowLiveSpeedInTray = showLiveSpeedInTray;
                 CardLayout = cardLayout;

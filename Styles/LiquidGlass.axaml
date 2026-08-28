@@ -341,7 +341,7 @@
     </Style>
 
     <Style Selector="Button.WaterDropSegment:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="BoxShadow" Value="0 0 0 2px {DynamicResource Brush.Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
     </Style>
 
 </Styles>

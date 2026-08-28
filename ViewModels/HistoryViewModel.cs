@@ -93,7 +93,9 @@ public class HistoricalSessionViewModel : ObservableObject
     public double RelativeUsagePercent { get => _relativeUsagePercent; set => SetProperty(ref _relativeUsagePercent, value); }
 
     public string TimeRangeText => EndTime.HasValue
-        ? $"{StartTime:HH:mm} — {EndTime.Value:HH:mm}"
+        ? (StartTime.Date == EndTime.Value.Date
+            ? $"{StartTime:HH:mm} — {EndTime.Value:HH:mm}"
+            : $"{StartTime:MMM dd} — {EndTime.Value:MMM dd}")
         : $"{StartTime:HH:mm} — Live";
 
     public void UpdateFrom(HistoricalSessionViewModel other)
@@ -948,25 +950,73 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
                 NetworkSessions.Clear();
                 MonthlyNetworkSummaries.Clear();
-                long totalSessionUsage = sessions.Sum(s => Math.Max(0, s.TotalBytes));
-                foreach (var session in sessions)
+
+                var groupedSessionList = sessions
+                    .GroupBy(s => _identityService.GetCanonicalKey(s.NetworkName, s.InterfaceName))
+                    .Select(g =>
+                    {
+                        var firstValid = g.FirstOrDefault(x => _identityService.IsValidNetworkName(x.NetworkName)) ?? g.First();
+                        string displayName = _identityService.NormalizeNetworkName(firstValid.NetworkName, firstValid.InterfaceName);
+                        long dl = g.Sum(x => x.BytesDownloaded);
+                        long ul = g.Sum(x => x.BytesUploaded);
+                        long total = dl + ul;
+                        var minStart = g.Min(x => x.StartTime);
+                        bool hasActive = g.Any(x => !x.EndTime.HasValue);
+                        DateTime? maxEnd = hasActive ? null : g.Max(x => x.EndTime);
+
+                        return new
+                        {
+                            FirstSession = firstValid,
+                            DisplayName = displayName,
+                            BytesDownloaded = dl,
+                            BytesUploaded = ul,
+                            TotalBytes = total,
+                            StartTime = minStart,
+                            EndTime = maxEnd
+                        };
+                    })
+                    .OrderByDescending(g => g.TotalBytes)
+                    .ToList();
+
+                long maxGroupUsage = groupedSessionList.Count > 0 ? groupedSessionList.Max(g => Math.Max(0, g.TotalBytes)) : 0;
+
+                foreach (var group in groupedSessionList)
                 {
-                    string displayName = _identityService.NormalizeNetworkName(session.NetworkName, session.InterfaceName);
                     NetworkSessions.Add(new HistoricalSessionViewModel
                     {
-                        Id = session.Id,
-                        NetworkName = displayName,
-                        InterfaceName = session.InterfaceName,
-                        ConnectionType = session.ConnectionType,
-                        StartTime = session.StartTime,
-                        EndTime = session.EndTime,
-                        BytesDownloaded = session.BytesDownloaded,
-                        BytesUploaded = session.BytesUploaded,
+                        Id = group.FirstSession.Id,
+                        NetworkName = group.DisplayName,
+                        InterfaceName = group.FirstSession.InterfaceName,
+                        ConnectionType = group.FirstSession.ConnectionType,
+                        StartTime = group.StartTime,
+                        EndTime = group.EndTime,
+                        BytesDownloaded = group.BytesDownloaded,
+                        BytesUploaded = group.BytesUploaded,
                         DisplayIndex = NetworkSessions.Count,
-                        RelativeUsagePercent = totalSessionUsage > 0
-                            ? Math.Max((double)Math.Max(0, session.TotalBytes) / totalSessionUsage * 100.0, session.TotalBytes > 0 ? 1.5 : 0.0)
+                        RelativeUsagePercent = maxGroupUsage > 0
+                            ? Math.Max((double)Math.Max(0, group.TotalBytes) / maxGroupUsage * 100.0, group.TotalBytes > 0 ? 1.5 : 0.0)
                             : 0.0
                     });
+                }
+
+                if (NetworkSessions.Count == 0 && networkGrouped.Count > 0)
+                {
+                    foreach (var item in networkGrouped)
+                    {
+                        NetworkSessions.Add(new HistoricalSessionViewModel
+                        {
+                            Id = 0,
+                            NetworkName = item.NetworkName,
+                            InterfaceName = item.InterfaceName,
+                            ConnectionType = item.ConnectionType,
+                            StartTime = DateTime.UtcNow,
+                            EndTime = null,
+                            BytesDownloaded = item.BytesDownloaded,
+                            BytesUploaded = item.BytesUploaded,
+                            DisplayIndex = NetworkSessions.Count,
+                            RelativeUsagePercent = item.RelativeUsagePercent
+                        });
+                    }
                 }
 
                 foreach (var item in networkGrouped)
