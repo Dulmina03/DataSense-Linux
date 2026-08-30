@@ -179,6 +179,19 @@ public class ApplicationAnalyticsPart3Tests
         Assert.Equal(typeof(string), parms[0].ParameterType);
     }
 
+    [Fact]
+    public void MainWindowViewModel_ToggleSidebarCommand_TogglesIsSidebarExpanded()
+    {
+        var vm = new DataSense.ViewModels.MainWindowViewModel();
+        Assert.True(vm.IsSidebarExpanded);
+
+        vm.ToggleSidebarCommand.Execute(null);
+        Assert.False(vm.IsSidebarExpanded);
+
+        vm.ToggleSidebarCommand.Execute(null);
+        Assert.True(vm.IsSidebarExpanded);
+    }
+
     // ── 10. Missing process metadata ──────────────────────────────────────────
     [Fact]
     public async Task GetApplicationProfileAsync_MissingExecPath_ProfileReturnedWithEmpty()

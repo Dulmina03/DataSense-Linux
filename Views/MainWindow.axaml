@@ -16,72 +16,89 @@
     <Grid ColumnDefinitions="Auto,*">
 
         <!-- SIDEBAR (Navigation Rail) -->
-        <Border Grid.Column="0" Width="260" Background="{DynamicResource Brush.NavigationBackground}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0"
+                Background="{DynamicResource Brush.NavigationBackground}"
+                BorderBrush="{DynamicResource Brush.Border}"
+                BorderThickness="0,0,1,0"
+                Classes.sidebar-expanded="{Binding IsSidebarExpanded}"
+                Classes.sidebar-collapsed="{Binding !IsSidebarExpanded}">
+            <Border.Styles>
+                <Style Selector="Border.sidebar-expanded">
+                    <Setter Property="Width" Value="260" />
+                </Style>
+                <Style Selector="Border.sidebar-collapsed">
+                    <Setter Property="Width" Value="68" />
+                </Style>
+            </Border.Styles>
+
             <Grid RowDefinitions="Auto,*,Auto">
 
-                <!-- BRANDING AREA -->
-                <StackPanel Grid.Row="0" Margin="{DynamicResource Padding.Large}" Spacing="{DynamicResource Spacing.SM}">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0" CornerRadius="{DynamicResource Radius.Medium}" ClipToBounds="True" Width="32" Height="32" Margin="0,0,12,0" VerticalAlignment="Center">
-                            <Image Source="avares://DataSense/Assets/datasense.png" Stretch="UniformToFill"/>
-                        </Border>
-                        <TextBlock Grid.Column="1" Text="DataSense" Classes="SectionTitle" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center" />
-                    </Grid>
-                    <TextBlock Text="Ubuntu Desktop Analytics" Classes="Caption" />
-                </StackPanel>
+                <!-- BRANDING AREA & TOGGLE BUTTON -->
+                <Grid Grid.Row="0" Margin="14,16,14,12" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                    <Border Grid.Column="0" CornerRadius="{DynamicResource Radius.Medium}" ClipToBounds="True" Width="32" Height="32" VerticalAlignment="Center">
+                        <Image Source="avares://DataSense/Assets/datasense.png" Stretch="UniformToFill"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" IsVisible="{Binding IsSidebarExpanded}">
+                        <TextBlock Text="DataSense" Classes="SectionTitle" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                        <TextBlock Text="Ubuntu Desktop Analytics" Classes="Caption"/>
+                    </StackPanel>
+                    <Button Grid.Column="2" Command="{Binding ToggleSidebarCommand}" Classes="Icon" Width="32" Height="32" Padding="0" ToolTip.Tip="Toggle Sidebar" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <TextBlock Text="☰" FontSize="16" Foreground="{DynamicResource Brush.TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
+                </Grid>
 
                 <!-- NAVIGATION ITEMS -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Spacing="{DynamicResource Spacing.XS}" Margin="{DynamicResource Padding.Medium}">
+                    <StackPanel Spacing="{DynamicResource Spacing.XS}" Margin="8,4">
 
-                        <Button Classes="SidebarItem" Classes.active="{Binding IsDashboardActive}" Command="{Binding NavigateToDashboardCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}">
-                                <TextBlock Text="📊" Width="16" />
-                                <TextBlock Text="Dashboard" />
+                        <Button Classes="SidebarItem" Classes.active="{Binding IsDashboardActive}" Command="{Binding NavigateToDashboardCommand}" ToolTip.Tip="Dashboard">
+                            <StackPanel Orientation="Horizontal" Spacing="14" HorizontalAlignment="Left">
+                                <TextBlock Text="📊" FontSize="16" Width="20" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Dashboard" IsVisible="{Binding IsSidebarExpanded}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button Classes="SidebarItem" Classes.active="{Binding IsHistoryActive}" Command="{Binding NavigateToHistoryCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}">
-                                <TextBlock Text="📜" Width="16" />
-                                <TextBlock Text="History Log" />
+                        <Button Classes="SidebarItem" Classes.active="{Binding IsHistoryActive}" Command="{Binding NavigateToHistoryCommand}" ToolTip.Tip="History Log">
+                            <StackPanel Orientation="Horizontal" Spacing="14" HorizontalAlignment="Left">
+                                <TextBlock Text="📜" FontSize="16" Width="20" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="History Log" IsVisible="{Binding IsSidebarExpanded}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button Classes="SidebarItem" Classes.active="{Binding IsSpeedTestActive}" Command="{Binding NavigateToSpeedTestCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}">
-                                <TextBlock Text="🚀" Width="16" />
-                                <TextBlock Text="Speed Test" />
+                        <Button Classes="SidebarItem" Classes.active="{Binding IsSpeedTestActive}" Command="{Binding NavigateToSpeedTestCommand}" ToolTip.Tip="Speed Test">
+                            <StackPanel Orientation="Horizontal" Spacing="14" HorizontalAlignment="Left">
+                                <TextBlock Text="🚀" FontSize="16" Width="20" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Speed Test" IsVisible="{Binding IsSidebarExpanded}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
 
-                        <Button Classes="SidebarItem" Classes.active="{Binding IsExportActive}" Command="{Binding NavigateToExportCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}">
-                                <TextBlock Text="📤" Width="16" />
-                                <TextBlock Text="Export &amp; Reports" />
+                        <Button Classes="SidebarItem" Classes.active="{Binding IsExportActive}" Command="{Binding NavigateToExportCommand}" ToolTip.Tip="Export &amp; Reports">
+                            <StackPanel Orientation="Horizontal" Spacing="14" HorizontalAlignment="Left">
+                                <TextBlock Text="📤" FontSize="16" Width="20" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Export &amp; Reports" IsVisible="{Binding IsSidebarExpanded}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button Classes="SidebarItem" Classes.active="{Binding IsEventCenterActive}" Command="{Binding NavigateToEventCenterCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}">
-                                <TextBlock Text="🔔" Width="16" />
-                                <TextBlock Text="Event Center" />
+                        <Button Classes="SidebarItem" Classes.active="{Binding IsEventCenterActive}" Command="{Binding NavigateToEventCenterCommand}" ToolTip.Tip="Event Center">
+                            <StackPanel Orientation="Horizontal" Spacing="14" HorizontalAlignment="Left">
+                                <TextBlock Text="🔔" FontSize="16" Width="20" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Event Center" IsVisible="{Binding IsSidebarExpanded}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button Classes="SidebarItem" Classes.active="{Binding IsSettingsActive}" Command="{Binding NavigateToSettingsCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}">
-                                <TextBlock Text="⚙️" Width="16" />
-                                <TextBlock Text="Settings" />
+                        <Button Classes="SidebarItem" Classes.active="{Binding IsSettingsActive}" Command="{Binding NavigateToSettingsCommand}" ToolTip.Tip="Settings">
+                            <StackPanel Orientation="Horizontal" Spacing="14" HorizontalAlignment="Left">
+                                <TextBlock Text="⚙️" FontSize="16" Width="20" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Settings" IsVisible="{Binding IsSidebarExpanded}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button Classes="SidebarItem" Classes.active="{Binding IsAboutActive}" Command="{Binding NavigateToAboutCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Spacing.MD}">
-                                <TextBlock Text="ℹ️" Width="16" />
-                                <TextBlock Text="About" />
+                        <Button Classes="SidebarItem" Classes.active="{Binding IsAboutActive}" Command="{Binding NavigateToAboutCommand}" ToolTip.Tip="About">
+                            <StackPanel Orientation="Horizontal" Spacing="14" HorizontalAlignment="Left">
+                                <TextBlock Text="ℹ️" FontSize="16" Width="20" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="About" IsVisible="{Binding IsSidebarExpanded}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
                 </ScrollViewer>
 
                 <!-- FOOTER -->
-                <StackPanel Grid.Row="2" Spacing="{DynamicResource Spacing.XS}" Margin="{DynamicResource Padding.Medium}">
+                <StackPanel Grid.Row="2" Spacing="{DynamicResource Spacing.XS}" Margin="8,8" IsVisible="{Binding IsSidebarExpanded}">
                     <TextBlock Text="v1.0.0-Beta" Classes="Caption" Margin="12,8,12,0" Foreground="{DynamicResource Brush.TextDisabled}"/>
                 </StackPanel>
             </Grid>

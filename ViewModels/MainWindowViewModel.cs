@@ -61,6 +61,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSidebarExpanded = true;
 
+    [RelayCommand]
+    private void ToggleSidebar()
+    {
+        IsSidebarExpanded = !IsSidebarExpanded;
+    }
+
     public MainWindowViewModel()
     {
         // Default to Dashboard
