@@ -141,4 +141,53 @@ public class AnalyticsConsistencyTests
         Assert.Equal(40 * mb, todayUl);
         Assert.Equal(190 * mb, todayDl + todayUl);
     }
+
+    [Fact]
+    public async Task TodayProcessAggregation_UsesTodayBytes_NotLifetimeAllTimeBytes()
+    {
+        using var context = await TestDatabaseFactory.CreateAsync();
+        var (start, end) = GetUtcTodayRange();
+        long mb = 1024 * 1024;
+
+        // Seed lifetime record for process from 10 days ago (50 GB)
+        var pastRecord = new ProcessUsageRecord
+        {
+            ProcessName = "language_server",
+            Pid = 1234,
+            StartTimeTicks = start.AddDays(-10).Ticks,
+            BytesDownloaded = 50000 * mb,
+            BytesUploaded = 7000 * mb,
+            ExecutablePath = "/usr/bin/language_server",
+            UserName = "user",
+            DataSource = "Nethogs",
+            Timestamp = start.AddDays(-10)
+        };
+        await context.Repository.SaveProcessUsageAsync(pastRecord);
+
+        // Seed today record for process (50 MB)
+        var todayRecord = new ProcessUsageRecord
+        {
+            ProcessName = "language_server",
+            Pid = 1234,
+            StartTimeTicks = start.AddHours(1).Ticks,
+            BytesDownloaded = 40 * mb,
+            BytesUploaded = 10 * mb,
+            ExecutablePath = "/usr/bin/language_server",
+            UserName = "user",
+            DataSource = "Nethogs",
+            Timestamp = start.AddHours(1)
+        };
+        await context.Repository.SaveProcessUsageAsync(todayRecord);
+
+        var appAnalyticsSvc = new DataSense.Services.ApplicationAnalyticsService(context.Repository, new DataSense.Services.LinuxProcessResolver());
+        var profiles = (await appAnalyticsSvc.GetApplicationProfilesAsync(forceRefresh: true)).ToList();
+        var profile = profiles.FirstOrDefault(p => p.ProcessName == "language_server" && p.TodayBytes > 0);
+
+        Assert.NotNull(profile);
+        Assert.Equal(50 * mb, profile.TodayBytes);
+        Assert.Equal(40 * mb, profile.TodayDownloadBytes);
+        Assert.Equal(10 * mb, profile.TodayUploadBytes);
+        // Lifetime bytes (57 GB) must not leak into TodayBytes
+        Assert.True(profile.TodayBytes < 100 * mb);
+    }
 }

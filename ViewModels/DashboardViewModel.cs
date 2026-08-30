@@ -1554,13 +1554,16 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
             // ── Top Processes for TODAY ─────────────────────────────────────────
             var todayTopGrouped = allProfiles
+                .Where(p => p.TodayBytes > 0 || p.TodayDownloadBytes > 0 || p.TodayUploadBytes > 0)
                 .GroupBy(p => p.ProcessName.Trim().ToLowerInvariant())
                 .Select(g =>
                 {
                     var first = g.First();
-                    long todayDl = g.Sum(x => x.TodayDownloadBytes > 0 ? x.TodayDownloadBytes : x.DownloadBytes);
-                    long todayUl = g.Sum(x => x.TodayUploadBytes > 0 ? x.TodayUploadBytes : x.UploadBytes);
-                    long todayTotal = g.Sum(x => x.TodayBytes > 0 ? x.TodayBytes : (todayDl + todayUl));
+                    long todayDl = g.Sum(x => x.TodayDownloadBytes);
+                    long todayUl = g.Sum(x => x.TodayUploadBytes);
+                    long todayTotal = g.Sum(x => x.TodayBytes);
+                    if (todayTotal == 0) todayTotal = todayDl + todayUl;
+
                     return new ApplicationHistoricalProfile
                     {
                         ProcessName = first.ProcessName,
@@ -1570,7 +1573,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                         DataSource = first.DataSource,
                         DownloadBytes = todayDl,
                         UploadBytes = todayUl,
-                        TodayBytes = todayTotal > 0 ? todayTotal : (todayDl + todayUl),
+                        TodayBytes = todayTotal,
                         TodayDownloadBytes = todayDl,
                         TodayUploadBytes = todayUl,
                         YesterdayBytes = g.Sum(x => x.YesterdayBytes),
