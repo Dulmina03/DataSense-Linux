@@ -82,6 +82,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _todayDownloadedText   = "—";
     [ObservableProperty] private string _todayUploadedText     = "—";
     [ObservableProperty] private string _todayTotalText        = "—";
+    [ObservableProperty] private string _todayProcessTotalText = "—";
     [ObservableProperty] private string _todayVsYesterdayText  = "—";   // e.g. "+12%" / "-5%"
     [ObservableProperty] private string _todayDeltaColor       = "Muted"; // green / red / neutral
     [ObservableProperty] private bool   _hasTodayDelta         = false;
@@ -92,9 +93,10 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     // ── This month summary properties ───────────────────────────────────────
 
-    [ObservableProperty] private string _monthDownloadedText = "—";
-    [ObservableProperty] private string _monthUploadedText   = "—";
-    [ObservableProperty] private string _monthTotalText      = "—";
+    [ObservableProperty] private string _monthDownloadedText   = "—";
+    [ObservableProperty] private string _monthUploadedText     = "—";
+    [ObservableProperty] private string _monthTotalText        = "—";
+    [ObservableProperty] private string _monthProcessTotalText  = "—";
 
     // ── Insights row ────────────────────────────────────────────────────────
 
@@ -358,6 +360,13 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _hasLiveProcessTraffic = false;
     [ObservableProperty] private string _liveTotalDownloadedText = "0 B";
     [ObservableProperty] private string _liveTotalUploadedText = "0 B";
+
+    private long _todayBaseDl = 0;
+    private long _todayBaseUl = 0;
+    private long _liveAccumulatedDl = 0;
+    private long _liveAccumulatedUl = 0;
+    private long _lastIfaceRx = 0;
+    private long _lastIfaceTx = 0;
     [ObservableProperty] private string _liveTotalUsageText = "0 B";
     [ObservableProperty] private string _downloadHeavyProcessText = "—";
     [ObservableProperty] private string _uploadHeavyProcessText = "—";
@@ -891,18 +900,28 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
                 SyncProfileCollection(TopProcesses, liveGrouped);
                 HasTopProcesses = TopProcesses.Count > 0;
-
-                if (!HasTopMonthProcesses || TopMonthProcesses.Count == 0 || TopMonthProcesses.All(p => p.DataSource == "Live Telemetry"))
-                {
-                    SyncProfileCollection(TopMonthProcesses, liveGrouped);
-                    HasTopMonthProcesses = TopMonthProcesses.Count > 0;
-                }
             }
         });
     }
 
     private void OnNetworkUsageUpdated(NetworkUsage usage)
     {
+        if (_lastIfaceRx > 0 && usage.BytesReceived > _lastIfaceRx)
+        {
+            _liveAccumulatedDl += (usage.BytesReceived - _lastIfaceRx);
+        }
+        _lastIfaceRx = usage.BytesReceived;
+
+        if (_lastIfaceTx > 0 && usage.BytesSent > _lastIfaceTx)
+        {
+            _liveAccumulatedUl += (usage.BytesSent - _lastIfaceTx);
+        }
+        _lastIfaceTx = usage.BytesSent;
+
+        long liveDl = Math.Max(_todayBaseDl, _todayBaseDl + _liveAccumulatedDl);
+        long liveUl = Math.Max(_todayBaseUl, _todayBaseUl + _liveAccumulatedUl);
+        long liveTotal = liveDl + liveUl;
+
         Dispatcher.UIThread.Post(() =>
         {
             UpdateLiveValues(
@@ -916,6 +935,13 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 usage.DownloadSpeed,
                 usage.UploadSpeed,
                 usage.InterfaceName);
+
+            if (liveTotal > 0)
+            {
+                TodayDownloadedText = ByteFormatter.FormatBytes(liveDl);
+                TodayUploadedText   = ByteFormatter.FormatBytes(liveUl);
+                TodayTotalText      = ByteFormatter.FormatBytes(liveTotal);
+            }
         });
 
         // Auto-refresh analytics when the UTC calendar date has rolled over midnight
@@ -923,13 +949,14 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         if (utcToday != _lastAnalyticsDate && _lastAnalyticsDate != DateTime.MinValue)
             _ = LoadAnalyticsAsync();
 
-        // Query connection details and analytics every 5 seconds (5 ticks)
+        // Refresh today data usage metrics and charts in real-time on every tick
+        _ = LoadAnalyticsAsync(showLoading: false);
+
         _tickCount++;
         if (_tickCount >= 5)
         {
             _tickCount = 0;
             _ = LoadConnectionDetailsAsync(usage.InterfaceName);
-            _ = LoadAnalyticsAsync(showLoading: false);
         }
     }
 
@@ -1316,6 +1343,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
             // ── 3. Month summary ─────────────────────────────────────────────
             var (monthDl, monthUl) = await _repository.GetMonthSummaryAsync();
+            monthDl = Math.Max(monthDl, todayDl);
+            monthUl = Math.Max(monthUl, todayUl);
             long monthTotal        = monthDl + monthUl;
 
             // Ratio (guard: avoid division by zero)
@@ -1360,6 +1389,11 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             // ── 7. Post all UI updates atomically on the UI thread ────────────
             Dispatcher.UIThread.Post(() =>
             {
+                _todayBaseDl = todayDl;
+                _todayBaseUl = todayUl;
+                _liveAccumulatedDl = 0;
+                _liveAccumulatedUl = 0;
+
                 // Today
                 TodayDownloadedText  = ByteFormatter.FormatBytes(todayDl);
                 TodayUploadedText    = ByteFormatter.FormatBytes(todayUl);
@@ -1720,6 +1754,12 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 System.Diagnostics.Debug.WriteLine($"App intelligence failed: {ex.Message}");
             }
 
+            long totalTodayProcBytes = topProcessesList.Sum(p => p.TodayBytes);
+            long totalMonthProcBytes = topMonthProcessesList.Sum(p => p.ThirtyDayTotalBytes);
+
+            string todayProcText = ByteFormatter.FormatBytes(totalTodayProcBytes);
+            string monthProcText = ByteFormatter.FormatBytes(totalMonthProcBytes);
+
             Dispatcher.UIThread.Post(() =>
             {
                 SyncProfileCollection(TopProcesses, topProcessesList);
@@ -1727,6 +1767,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
                 SyncProfileCollection(TopMonthProcesses, topMonthProcessesList);
                 HasTopMonthProcesses = TopMonthProcesses.Count > 0;
+
+                TodayProcessTotalText = todayProcText;
+                MonthProcessTotalText = monthProcText;
 
                 TopAppInsightText = insight;
                 

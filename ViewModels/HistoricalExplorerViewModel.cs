@@ -55,10 +55,11 @@ public partial class SpikeRowViewModel : ObservableObject
     public string Description    { get; set; } = string.Empty;
 }
 
-public partial class HistoricalExplorerViewModel : ViewModelBase
+public partial class HistoricalExplorerViewModel : ViewModelBase, IDisposable
 {
     private readonly IHistoricalAnalyticsService _historicalService;
     private readonly INetworkUsageRepository     _repository;
+    private readonly INetworkMonitorWorker       _networkMonitorWorker;
     private bool _initialising = true;
 
     // ── Filter State ─────────────────────────────────────────────────────────
@@ -113,11 +114,20 @@ public partial class HistoricalExplorerViewModel : ViewModelBase
 
     public HistoricalExplorerViewModel(
         IHistoricalAnalyticsService historicalService,
-        INetworkUsageRepository     repository)
+        INetworkUsageRepository     repository,
+        INetworkMonitorWorker       networkMonitorWorker)
     {
-        _historicalService = historicalService ?? throw new ArgumentNullException(nameof(historicalService));
-        _repository        = repository        ?? throw new ArgumentNullException(nameof(repository));
-        _initialising      = false;
+        _historicalService   = historicalService   ?? throw new ArgumentNullException(nameof(historicalService));
+        _repository          = repository          ?? throw new ArgumentNullException(nameof(repository));
+        _networkMonitorWorker = networkMonitorWorker ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
+        _initialising        = false;
+
+        _networkMonitorWorker.NetworkUsageUpdated += OnNetworkUsageUpdated;
+        _ = LoadAsync();
+    }
+
+    private void OnNetworkUsageUpdated(NetworkUsage usage)
+    {
         _ = LoadAsync();
     }
 
@@ -390,5 +400,10 @@ public partial class HistoricalExplorerViewModel : ViewModelBase
             UploadBarY        = ChartMaxHeight - ((double)h.BytesUploaded / max * ChartMaxHeight),
             LabelY            = ChartMaxHeight + 4
         }).ToList();
+    }
+
+    public void Dispose()
+    {
+        _networkMonitorWorker.NetworkUsageUpdated -= OnNetworkUsageUpdated;
     }
 }

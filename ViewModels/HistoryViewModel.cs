@@ -214,7 +214,6 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
     private bool _initialising = true;
     private bool _disposed;
-    private int _tickCount = 4;
 
     public override string Title => "Usage History";
 
@@ -301,6 +300,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
     // ── Overview Metrics ───────────────────────────────────────────────────────
 
+    [ObservableProperty] private string _periodBadgeText = "LAST 7 DAYS";
     [ObservableProperty] private string _totalUsageText = "0 B";
     [ObservableProperty] private string _totalUsageTrendText = "for selected period";
     [ObservableProperty] private string _totalUsageTrendColor = "TextSecondary";
@@ -539,12 +539,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
     private void OnNetworkUsageUpdated(Models.NetworkUsage usage)
     {
-        _tickCount++;
-        if (_tickCount >= 5)
-        {
-            _tickCount = 0;
-            _ = LoadAsync(showLoading: false);
-        }
+        _ = LoadAsync(showLoading: false);
     }
 
     // ── Core Async Load ────────────────────────────────────────────────────────
@@ -552,7 +547,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
     public (DateTime start, DateTime end) ComputeDateRange()
     {
         var utcNow = DateTime.UtcNow;
-        var todayStart = DateTime.SpecifyKind(utcNow.Date, DateTimeKind.Utc);
+        var todayStart = new DateTime(utcNow.Year, utcNow.Month, utcNow.Day, 0, 0, 0, DateTimeKind.Utc);
         var todayEnd = todayStart.AddDays(1).AddTicks(-1);
 
         return SelectedPeriod switch
@@ -713,6 +708,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             {
                 var mStart = new DateTime(activeYear, m, 1, 0, 0, 0, DateTimeKind.Utc);
                 var mEnd = mStart.AddMonths(1).AddTicks(-1);
+                var (sDl, sUl) = await _repository.GetSessionsSummaryAsync(mStart, mEnd, ifaceFilter);
                 var mProcDaily = (await _repository.GetAllProcessesDailyUsageAsync(mStart, mEnd)).ToList();
                 long mDl = 0;
                 long mUl = 0;
@@ -721,12 +717,13 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                     mDl = mProcDaily.Sum(d => d.BytesDownloaded);
                     mUl = mProcDaily.Sum(d => d.BytesUploaded);
                 }
-                else
-                {
-                    var mDaily = (await _repository.GetDailyUsageAsync(mStart, mEnd, ifaceFilter)).ToList();
-                    mDl = mDaily.Sum(d => d.BytesDownloaded);
-                    mUl = mDaily.Sum(d => d.BytesUploaded);
-                }
+
+                var mDaily = (await _repository.GetDailyUsageAsync(mStart, mEnd, ifaceFilter)).ToList();
+                long rDl = mDaily.Sum(d => d.BytesDownloaded);
+                long rUl = mDaily.Sum(d => d.BytesUploaded);
+
+                mDl = Math.Max(mDl, Math.Max(sDl, rDl));
+                mUl = Math.Max(mUl, Math.Max(sUl, rUl));
 
                 twelveMonthSamples.Add(new HistoricalGraphSample
                 {
@@ -740,7 +737,13 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
 
             if (version != _loadVersion) return;
 
-            // 5. Compute Totals & Averages
+            long sessionsDl = sessions.Sum(s => s.BytesDownloaded);
+            long sessionsUl = sessions.Sum(s => s.BytesUploaded);
+            var (summaryDl, summaryUl) = await _repository.GetSessionsSummaryAsync(start, end, ifaceFilter);
+
+            long dailyDl = dailyList.Sum(d => d.BytesDownloaded);
+            long dailyUl = dailyList.Sum(d => d.BytesUploaded);
+
             long totalDl = 0;
             long totalUl = 0;
 
@@ -750,32 +753,28 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 totalDl = todayDl;
                 totalUl = todayUl;
 
-                long sessionsDl = sessions.Sum(s => s.BytesDownloaded);
-                long sessionsUl = sessions.Sum(s => s.BytesUploaded);
-                if (totalDl == 0 && totalUl == 0 && (sessionsDl > 0 || sessionsUl > 0))
+                if (totalDl == 0 && totalUl == 0)
                 {
-                    totalDl = sessionsDl;
-                    totalUl = sessionsUl;
+                    totalDl = Math.Max(totalAppDl, Math.Max(sessionsDl, Math.Max(summaryDl, dailyDl)));
+                    totalUl = Math.Max(totalAppUl, Math.Max(sessionsUl, Math.Max(summaryUl, dailyUl)));
                 }
             }
-            else if (sessions.Count > 0)
+            else if (SelectedPeriod == HistoryPeriodType.Month && SelectedMonth != null && SelectedMonth.Year == DateTime.UtcNow.Year && SelectedMonth.Month == DateTime.UtcNow.Month)
             {
-                totalDl = sessions.Sum(s => s.BytesDownloaded);
-                totalUl = sessions.Sum(s => s.BytesUploaded);
+                var (monthDl, monthUl) = await _repository.GetMonthSummaryAsync(ifaceFilter);
+                totalDl = monthDl;
+                totalUl = monthUl;
+
+                if (totalDl == 0 && totalUl == 0)
+                {
+                    totalDl = Math.Max(totalAppDl, Math.Max(sessionsDl, Math.Max(summaryDl, dailyDl)));
+                    totalUl = Math.Max(totalAppUl, Math.Max(sessionsUl, Math.Max(summaryUl, dailyUl)));
+                }
             }
             else
             {
-                var (sDl, sUl) = await _repository.GetSessionsSummaryAsync(start, end, ifaceFilter);
-                if (sDl > 0 || sUl > 0)
-                {
-                    totalDl = sDl;
-                    totalUl = sUl;
-                }
-                else
-                {
-                    totalDl = totalAppUsage > 0 ? totalAppDl : dailyList.Sum(d => d.BytesDownloaded);
-                    totalUl = totalAppUsage > 0 ? totalAppUl : dailyList.Sum(d => d.BytesUploaded);
-                }
+                totalDl = Math.Max(totalAppDl, Math.Max(sessionsDl, Math.Max(summaryDl, dailyDl)));
+                totalUl = Math.Max(totalAppUl, Math.Max(sessionsUl, Math.Max(summaryUl, dailyUl)));
             }
 
             long totalUsage = totalDl + totalUl;
@@ -786,7 +785,7 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             long avgUsage = 0;
             if (SelectedPeriod == HistoryPeriodType.Today)
             {
-                int currentHour = DateTime.UtcNow.Hour;
+                int currentHour = DateTime.Now.Hour;
                 avgUsage = currentHour >= 0 ? totalUsage / (currentHour + 1) : 0;
             }
             else
@@ -851,8 +850,14 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 .OrderByDescending(m => m.TotalBytes)
                 .ToList();
 
-            // If no sessions exist in the database for this period, but traffic exists, create the active network item
-            if (networkGrouped.Count == 0 && totalUsage > 0)
+            if (sessions.Count == 0 && networkGrouped.Count > 0)
+            {
+                long netDlSum = networkGrouped.Sum(n => n.BytesDownloaded);
+                long netUlSum = networkGrouped.Sum(n => n.BytesUploaded);
+                if (netDlSum < totalDl) networkGrouped[0].BytesDownloaded += (totalDl - netDlSum);
+                if (netUlSum < totalUl) networkGrouped[0].BytesUploaded += (totalUl - netUlSum);
+            }
+            else if (networkGrouped.Count == 0 && totalUsage > 0)
             {
                 string activeIface = (!string.IsNullOrWhiteSpace(SelectedInterface) && SelectedInterface != "All"
                     ? SelectedInterface
@@ -928,13 +933,65 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             // 8. Build Chart #1 Samples (6 buckets for Today, 7 for 7-Days, 28-31 for Month)
             var chartPoints = BuildHistoricalGraphSamples(dailyList, hourlyList, start, end);
 
+            // Harmonize Chart #1 samples so they reconcile exactly to Usage Overview totals (totalDl, totalUl)
+            long chartRawDl = chartPoints.Sum(p => p.DownloadBytes);
+            long chartRawUl = chartPoints.Sum(p => p.UploadBytes);
+
+            if (chartRawDl > 0 && totalDl > 0)
+            {
+                foreach (var p in chartPoints)
+                {
+                    p.DownloadBytes = (long)Math.Round((double)p.DownloadBytes / chartRawDl * totalDl);
+                }
+            }
+            else if (chartRawDl == 0 && totalDl > 0 && chartPoints.Count > 0)
+            {
+                int activeIdx = SelectedPeriod == HistoryPeriodType.Today
+                    ? Math.Min(DateTime.Now.Hour / 4, chartPoints.Count - 1)
+                    : chartPoints.Count - 1;
+                chartPoints[activeIdx].DownloadBytes = totalDl;
+            }
+
+            if (chartRawUl > 0 && totalUl > 0)
+            {
+                foreach (var p in chartPoints)
+                {
+                    p.UploadBytes = (long)Math.Round((double)p.UploadBytes / chartRawUl * totalUl);
+                }
+            }
+            else if (chartRawUl == 0 && totalUl > 0 && chartPoints.Count > 0)
+            {
+                int activeIdx = SelectedPeriod == HistoryPeriodType.Today
+                    ? Math.Min(DateTime.Now.Hour / 4, chartPoints.Count - 1)
+                    : chartPoints.Count - 1;
+                chartPoints[activeIdx].UploadBytes = totalUl;
+            }
+
+            // Harmonize Chart #2 active month sample so it matches Usage Overview total for that month
+            int activeMonthNum = SelectedMonth != null ? SelectedMonth.Month : DateTime.UtcNow.Month;
+            if (activeMonthNum >= 1 && activeMonthNum <= 12 && twelveMonthSamples.Count >= activeMonthNum)
+            {
+                var activeSample = twelveMonthSamples[activeMonthNum - 1];
+                activeSample.DownloadBytes = Math.Max(activeSample.DownloadBytes, totalDl);
+                activeSample.UploadBytes = Math.Max(activeSample.UploadBytes, totalUl);
+            }
+
             // 9. Scale Bar Heights for Chart #1 & Chart #2
             ScaleBarHeights(chartPoints, twelveMonthSamples);
+
+            string periodBadge = SelectedPeriod switch
+            {
+                HistoryPeriodType.Today => "TODAY",
+                HistoryPeriodType.Last7Days => "LAST 7 DAYS",
+                HistoryPeriodType.Month => SelectedMonth != null ? SelectedMonth.DisplayName.ToUpperInvariant() : "THIS MONTH",
+                _ => "PERIOD"
+            };
 
             // Post all results to UI
             RunOnUI(() =>
             {
                 if (version != _loadVersion) return;
+                PeriodBadgeText = periodBadge;
                 TotalUsageText = ByteFormatter.FormatBytes(totalUsage);
                 TotalUsageTrendText = trendUsageText;
                 TotalUsageTrendColor = trendUsageColor;
@@ -1139,11 +1196,11 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         else if (SelectedPeriod == HistoryPeriodType.Last7Days)
         {
             // Exactly 7 calendar days normalized to Monday -> Sunday order
-            var dailyDict = dailyList.ToDictionary(d => d.Day.Date, d => d);
+            var dailyDict = dailyList.ToDictionary(d => d.Day.ToUniversalTime().Date, d => d);
             for (int i = 0; i < 7; i++)
             {
                 var day = start.Date.AddDays(i);
-                dailyDict.TryGetValue(day, out var rec);
+                dailyDict.TryGetValue(day.ToUniversalTime().Date, out var rec);
                 chartPoints.Add(new HistoricalGraphSample
                 {
                     Timestamp = day,
@@ -1158,12 +1215,12 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
         {
             // 28, 29, 30, or 31 daily groups for every day in selected month
             int daysInMonth = DateTime.DaysInMonth(start.Year, start.Month);
-            var dailyDict = dailyList.ToDictionary(d => d.Day.Date, d => d);
+            var dailyDict = dailyList.ToDictionary(d => d.Day.ToUniversalTime().Date, d => d);
 
             for (int d = 1; d <= daysInMonth; d++)
             {
                 var day = new DateTime(start.Year, start.Month, d, 0, 0, 0, DateTimeKind.Utc);
-                dailyDict.TryGetValue(day, out var rec);
+                dailyDict.TryGetValue(day.ToUniversalTime().Date, out var rec);
                 chartPoints.Add(new HistoricalGraphSample
                 {
                     Timestamp = day,

@@ -101,7 +101,7 @@
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Grid.Column="0" Text="TOTAL USAGE" Classes="Caption" FontWeight="Bold" LetterSpacing="0.5" Foreground="{DynamicResource Brush.TextPrimary}"/>
                                 <Border Grid.Column="1" CornerRadius="6" Background="{DynamicResource Brush.SurfaceElevated}" Padding="6,2" VerticalAlignment="Center">
-                                    <TextBlock Text="PERIOD" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                    <TextBlock Text="{Binding PeriodBadgeText}" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}"/>
                                 </Border>
                             </Grid>
 

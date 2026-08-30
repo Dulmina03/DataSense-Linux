@@ -20,6 +20,7 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
     private readonly IApplicationIntelligenceService _appIntelligenceService;
     private readonly IProcessNetworkIntelligenceService _processNetworkIntelligenceService;
     private readonly IApplicationSessionService _applicationSessionService;
+    private readonly INetworkMonitorWorker _networkMonitorWorker;
     
     private bool _disposed;
     
@@ -30,15 +31,18 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
         ProcessNetworkMonitorWorker processMonitorWorker,
         IApplicationIntelligenceService appIntelligenceService,
         IProcessNetworkIntelligenceService processNetworkIntelligenceService,
-        IApplicationSessionService applicationSessionService)
+        IApplicationSessionService applicationSessionService,
+        INetworkMonitorWorker networkMonitorWorker)
     {
         _applicationAnalyticsService = applicationAnalyticsService ?? throw new ArgumentNullException(nameof(applicationAnalyticsService));
         _processMonitorWorker        = processMonitorWorker        ?? throw new ArgumentNullException(nameof(processMonitorWorker));
         _appIntelligenceService      = appIntelligenceService      ?? throw new ArgumentNullException(nameof(appIntelligenceService));
         _processNetworkIntelligenceService = processNetworkIntelligenceService ?? throw new ArgumentNullException(nameof(processNetworkIntelligenceService));
         _applicationSessionService   = applicationSessionService   ?? throw new ArgumentNullException(nameof(applicationSessionService));
+        _networkMonitorWorker        = networkMonitorWorker        ?? throw new ArgumentNullException(nameof(networkMonitorWorker));
 
         _processMonitorWorker.LiveTrafficUpdated += OnLiveTrafficUpdated;
+        _networkMonitorWorker.NetworkUsageUpdated += OnNetworkUsageUpdated;
     }
 
     public void Initialize(string processName)
@@ -716,6 +720,17 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
             }
         });
     }
+    private void OnNetworkUsageUpdated(Models.NetworkUsage usage)
+    {
+        if (IsDetailActive && SelectedProcess != null)
+        {
+            _ = LoadDetailAnalyticsAsync(SelectedProcess.ProcessName, SelectedProcess.Pid, SelectedProcess.StartTime.Ticks, showLoading: false);
+        }
+        else
+        {
+            _ = LoadMasterAnalyticsAsync(showLoading: false);
+        }
+    }
 
     private static List<DailyChartBarViewModel> BuildChartItems(List<ApplicationUsageTimelinePoint> daily, double chartWidth)
     {
@@ -814,6 +829,7 @@ public partial class ApplicationAnalyticsViewModel : ViewModelBase, IDisposable
             if (disposing)
             {
                 _processMonitorWorker.LiveTrafficUpdated -= OnLiveTrafficUpdated;
+                _networkMonitorWorker.NetworkUsageUpdated -= OnNetworkUsageUpdated;
             }
             _disposed = true;
         }

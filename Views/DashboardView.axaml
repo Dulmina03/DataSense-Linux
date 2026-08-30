@@ -377,7 +377,7 @@
                             <Border Width="116" Height="116" CornerRadius="100" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" BoxShadow="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000">
                                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="2">
                                     <TextBlock Text="TODAY" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="{Binding TodayTotalText}" Classes="MetricSmall" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{Binding TodayProcessTotalText}" Classes="MetricSmall" FontWeight="Bold" HorizontalAlignment="Center"/>
                                  </StackPanel>
                             </Border>
                         </Grid>
@@ -443,7 +443,7 @@
                             <Border Width="116" Height="116" CornerRadius="100" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" BoxShadow="inset 0 1 0 0 #20FFFFFF, 0 4 16 0 #20000000">
                                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="2">
                                     <TextBlock Text="THIS MONTH" Classes="Caption" FontWeight="Bold" Foreground="{DynamicResource Brush.TextSecondary}" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="{Binding MonthTotalText}" Classes="MetricSmall" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{Binding MonthProcessTotalText}" Classes="MetricSmall" FontWeight="Bold" HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
                         </Grid>

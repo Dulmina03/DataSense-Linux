@@ -261,7 +261,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         using var command = connection.CreateCommand();
         command.CommandText = insertSql;
 
-        command.Parameters.AddWithValue("@Timestamp", usage.Timestamp.ToString("o"));
+        command.Parameters.AddWithValue("@Timestamp", usage.Timestamp.ToUniversalTime().ToString("o"));
         command.Parameters.AddWithValue("@InterfaceName", usage.InterfaceName);
         command.Parameters.AddWithValue("@DownloadSpeed", usage.DownloadSpeed);
         command.Parameters.AddWithValue("@UploadSpeed", usage.UploadSpeed);
@@ -294,8 +294,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         using var command = connection.CreateCommand();
         command.CommandText = querySql;
 
-        command.Parameters.AddWithValue("@Start", start.ToString("o"));
-        command.Parameters.AddWithValue("@End", end.ToString("o"));
+        command.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        command.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
         if (!string.IsNullOrEmpty(interfaceName))
         {
             command.Parameters.AddWithValue("@InterfaceName", interfaceName);
@@ -340,8 +340,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         }
         using var countCmd = connection.CreateCommand();
         countCmd.CommandText = countSql;
-        countCmd.Parameters.AddWithValue("@Start", start.ToString("o"));
-        countCmd.Parameters.AddWithValue("@End", end.ToString("o"));
+        countCmd.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        countCmd.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
         if (!string.IsNullOrEmpty(interfaceName))
         {
             countCmd.Parameters.AddWithValue("@InterfaceName", interfaceName);
@@ -360,8 +360,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         pageSql += " ORDER BY Timestamp ASC LIMIT @PageSize OFFSET @Offset;";
         using var pageCmd = connection.CreateCommand();
         pageCmd.CommandText = pageSql;
-        pageCmd.Parameters.AddWithValue("@Start", start.ToString("o"));
-        pageCmd.Parameters.AddWithValue("@End", end.ToString("o"));
+        pageCmd.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        pageCmd.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
         if (!string.IsNullOrEmpty(interfaceName))
         {
             pageCmd.Parameters.AddWithValue("@InterfaceName", interfaceName);
@@ -435,8 +435,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
-        cmd.Parameters.AddWithValue("@End",   end.ToString("o"));
+        cmd.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        cmd.Parameters.AddWithValue("@End",   end.ToUniversalTime().ToString("o"));
         if (!string.IsNullOrEmpty(interfaceName))
             cmd.Parameters.AddWithValue("@InterfaceName", interfaceName);
 
@@ -611,8 +611,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@Start", dayStart.ToString("o"));
-        cmd.Parameters.AddWithValue("@End",   dayEnd.ToString("o"));
+        cmd.Parameters.AddWithValue("@Start", dayStart.ToUniversalTime().ToString("o"));
+        cmd.Parameters.AddWithValue("@End",   dayEnd.ToUniversalTime().ToString("o"));
         if (!string.IsNullOrEmpty(interfaceName))
             cmd.Parameters.AddWithValue("@InterfaceName", interfaceName);
 
@@ -655,8 +655,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         command.Parameters.AddWithValue("@NetworkName", session.NetworkName);
         command.Parameters.AddWithValue("@InterfaceName", session.InterfaceName);
         command.Parameters.AddWithValue("@ConnectionType", session.ConnectionType);
-        command.Parameters.AddWithValue("@StartTime", session.StartTime.ToString("o"));
-        command.Parameters.AddWithValue("@EndTime", session.EndTime.HasValue ? session.EndTime.Value.ToString("o") : DBNull.Value);
+        command.Parameters.AddWithValue("@StartTime", session.StartTime.ToUniversalTime().ToString("o"));
+        command.Parameters.AddWithValue("@EndTime", session.EndTime.HasValue ? session.EndTime.Value.ToUniversalTime().ToString("o") : DBNull.Value);
         command.Parameters.AddWithValue("@BytesDownloaded", session.BytesDownloaded);
         command.Parameters.AddWithValue("@BytesUploaded", session.BytesUploaded);
 
@@ -682,7 +682,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         using var command = connection.CreateCommand();
         command.CommandText = sql;
         command.Parameters.AddWithValue("@Id", session.Id);
-        command.Parameters.AddWithValue("@EndTime", session.EndTime.HasValue ? session.EndTime.Value.ToString("o") : DBNull.Value);
+        command.Parameters.AddWithValue("@EndTime", session.EndTime.HasValue ? session.EndTime.Value.ToUniversalTime().ToString("o") : DBNull.Value);
         command.Parameters.AddWithValue("@BytesDownloaded", session.BytesDownloaded);
         command.Parameters.AddWithValue("@BytesUploaded", session.BytesUploaded);
 
@@ -738,8 +738,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var command = connection.CreateCommand();
         command.CommandText = sql;
-        command.Parameters.AddWithValue("@Start", start.ToString("o"));
-        command.Parameters.AddWithValue("@End", end.ToString("o"));
+        command.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        command.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
         if (!string.IsNullOrEmpty(interfaceName))
             command.Parameters.AddWithValue("@InterfaceName", interfaceName);
         if (!string.IsNullOrEmpty(networkName))
@@ -780,7 +780,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var command = connection.CreateCommand();
         command.CommandText = sql;
-        command.Parameters.AddWithValue("@Timestamp", record.Timestamp.ToString("o"));
+        command.Parameters.AddWithValue("@Timestamp", record.Timestamp.ToUniversalTime().ToString("o"));
         command.Parameters.AddWithValue("@DownloadSpeedMbps", record.DownloadSpeedMbps);
         command.Parameters.AddWithValue("@UploadSpeedMbps", record.UploadSpeedMbps);
         command.Parameters.AddWithValue("@PingMs", record.PingMs);
@@ -868,7 +868,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var command = connection.CreateCommand();
         command.CommandText = sql;
-        command.Parameters.AddWithValue("@Timestamp", record.Timestamp.ToString("o"));
+        command.Parameters.AddWithValue("@Timestamp", record.Timestamp.ToUniversalTime().ToString("o"));
         command.Parameters.AddWithValue("@ProcessName", record.ProcessName);
         command.Parameters.AddWithValue("@BytesDownloaded", record.BytesDownloaded);
         command.Parameters.AddWithValue("@BytesUploaded", record.BytesUploaded);
@@ -933,7 +933,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         foreach (var record in recordList)
         {
-            pTimestamp.Value   = record.Timestamp.ToString("o");
+            pTimestamp.Value   = record.Timestamp.ToUniversalTime().ToString("o");
             pProcess.Value     = record.ProcessName;
             pDownloaded.Value  = record.BytesDownloaded;
             pUploaded.Value    = record.BytesUploaded;
@@ -970,8 +970,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@Start", dayStart.ToString("o"));
-        cmd.Parameters.AddWithValue("@End", dayEnd.ToString("o"));
+        cmd.Parameters.AddWithValue("@Start", dayStart.ToUniversalTime().ToString("o"));
+        cmd.Parameters.AddWithValue("@End", dayEnd.ToUniversalTime().ToString("o"));
         cmd.Parameters.AddWithValue("@ProcessName", processName);
 
         using var reader = await cmd.ExecuteReaderAsync();
@@ -1005,8 +1005,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
-        cmd.Parameters.AddWithValue("@End", end.ToString("o"));
+        cmd.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        cmd.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
         cmd.Parameters.AddWithValue("@ProcessName", processName);
 
         using var reader = await cmd.ExecuteReaderAsync();
@@ -1042,8 +1042,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@Start", dayStart.ToString("o"));
-        cmd.Parameters.AddWithValue("@End", dayEnd.ToString("o"));
+        cmd.Parameters.AddWithValue("@Start", dayStart.ToUniversalTime().ToString("o"));
+        cmd.Parameters.AddWithValue("@End", dayEnd.ToUniversalTime().ToString("o"));
 
         using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync())
@@ -1076,8 +1076,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
-        cmd.Parameters.AddWithValue("@End", end.ToString("o"));
+        cmd.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        cmd.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
 
         using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync())
@@ -1117,8 +1117,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
-        cmd.Parameters.AddWithValue("@End", end.ToString("o"));
+        cmd.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        cmd.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
         cmd.Parameters.AddWithValue("@Limit", limit);
 
         using var reader = await cmd.ExecuteReaderAsync();
@@ -1194,8 +1194,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         using var command = connection.CreateCommand();
         command.CommandText = sql;
         command.Parameters.AddWithValue("@NetworkName", networkName);
-        command.Parameters.AddWithValue("@Start", start.ToString("o"));
-        command.Parameters.AddWithValue("@End", end.ToString("o"));
+        command.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        command.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
 
         using var reader = await command.ExecuteReaderAsync();
         if (await reader.ReadAsync())
@@ -1240,8 +1240,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         using var command = connection.CreateCommand();
         command.CommandText = sql;
         command.Parameters.AddWithValue("@NetworkName", networkName);
-        command.Parameters.AddWithValue("@Start", start.ToString("o"));
-        command.Parameters.AddWithValue("@End", end.ToString("o"));
+        command.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        command.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
 
         using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
@@ -1292,8 +1292,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         using var command = connection.CreateCommand();
         command.CommandText = sql;
         command.Parameters.AddWithValue("@NetworkName", networkName);
-        command.Parameters.AddWithValue("@Start", dayStart.ToString("o"));
-        command.Parameters.AddWithValue("@End", dayEnd.ToString("o"));
+        command.Parameters.AddWithValue("@Start", dayStart.ToUniversalTime().ToString("o"));
+        command.Parameters.AddWithValue("@End", dayEnd.ToUniversalTime().ToString("o"));
 
         using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
@@ -1454,8 +1454,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
-        cmd.Parameters.AddWithValue("@End", end.ToString("o"));
+        cmd.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        cmd.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
 
         using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync())
@@ -1501,8 +1501,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@Start", dayStart.ToString("o"));
-        cmd.Parameters.AddWithValue("@End", dayEnd.ToString("o"));
+        cmd.Parameters.AddWithValue("@Start", dayStart.ToUniversalTime().ToString("o"));
+        cmd.Parameters.AddWithValue("@End", dayEnd.ToUniversalTime().ToString("o"));
         cmd.Parameters.AddWithValue("@ProcessName", processName);
         cmd.Parameters.AddWithValue("@Pid", pid);
         cmd.Parameters.AddWithValue("@StartTimeTicks", startTimeTicks);
@@ -1541,8 +1541,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@Start", start.ToString("o"));
-        cmd.Parameters.AddWithValue("@End", end.ToString("o"));
+        cmd.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
+        cmd.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
         cmd.Parameters.AddWithValue("@ProcessName", processName);
         cmd.Parameters.AddWithValue("@Pid", pid);
         cmd.Parameters.AddWithValue("@StartTimeTicks", startTimeTicks);
