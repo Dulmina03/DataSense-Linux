@@ -190,8 +190,10 @@
                                     Background="{DynamicResource Brush.GradientAccent}"
                                     MinWidth="200" Height="50" CornerRadius="25"
                                     HorizontalAlignment="Center"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center"
                                     Cursor="Hand">
-                                <TextBlock Text="{Binding ActionButtonText}" FontSize="14" FontWeight="Bold" LetterSpacing="1.2" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ActionButtonText}" FontSize="14" FontWeight="Bold" LetterSpacing="1.2" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
                             </Button>
 
                             <!-- Status Text -->

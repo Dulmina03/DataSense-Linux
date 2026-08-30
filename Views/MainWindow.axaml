@@ -7,6 +7,7 @@
         x:Class="DataSense.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="DataSense"
+        Icon="avares://DataSense/Assets/datasense.ico"
         MinWidth="1024"
         MinHeight="600"
         WindowStartupLocation="CenterScreen"
@@ -21,8 +22,8 @@
                 <!-- BRANDING AREA -->
                 <StackPanel Grid.Row="0" Margin="{DynamicResource Padding.Large}" Spacing="{DynamicResource Spacing.SM}">
                     <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0" Background="{DynamicResource Brush.Accent}" CornerRadius="{DynamicResource Radius.Small}" Width="24" Height="24" Margin="0,0,12,0">
-                            <TextBlock Text="▶" Foreground="#FFFFFF" Classes="Caption" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Grid.Column="0" CornerRadius="{DynamicResource Radius.Medium}" ClipToBounds="True" Width="32" Height="32" Margin="0,0,12,0" VerticalAlignment="Center">
+                            <Image Source="avares://DataSense/Assets/datasense.png" Stretch="UniformToFill"/>
                         </Border>
                         <TextBlock Grid.Column="1" Text="DataSense" Classes="SectionTitle" Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center" />
                     </Grid>
