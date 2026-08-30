@@ -170,15 +170,9 @@ public sealed class TopBarSpeedMeterService : ITopBarSpeedMeterService
     {
         try
         {
-            if (!_enabled)
-            {
-                if (File.Exists(_contractPath)) File.Delete(_contractPath);
-                return;
-            }
-
             var payload = new
             {
-                enabled = true,
+                enabled = _enabled,
                 download = Math.Max(0, _monitor.DownloadSpeed),
                 upload = Math.Max(0, _monitor.UploadSpeed),
                 totalDownloaded = Math.Max(0, _monitor.TotalBytesDownloaded),
@@ -240,6 +234,9 @@ public sealed class TopBarSpeedMeterService : ITopBarSpeedMeterService
         if (!_started) return;
         _monitor.NetworkUsageUpdated -= OnNetworkUsageUpdated;
         _started = false;
-        try { if (File.Exists(_contractPath)) File.Delete(_contractPath); } catch { }
+        if (_enabled)
+        {
+            try { if (File.Exists(_contractPath)) File.Delete(_contractPath); } catch { }
+        }
     }
 }

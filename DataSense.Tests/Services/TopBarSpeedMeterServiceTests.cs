@@ -42,7 +42,7 @@ public class TopBarSpeedMeterServiceTests
     }
 
     [Fact]
-    public async Task RefreshConfiguration_Disabled_RemovesContractAndDisablesExtension()
+    public async Task RefreshConfiguration_Disabled_WritesDisabledContractAndDisablesExtension()
     {
         using var context = await TestDatabaseFactory.CreateAsync();
         var contractPath = GetContractPath();
@@ -56,9 +56,12 @@ public class TopBarSpeedMeterServiceTests
 
         await service.RefreshConfigurationAsync();
 
-        Assert.False(File.Exists(contractPath));
+        Assert.True(File.Exists(contractPath));
+        using var document = JsonDocument.Parse(await File.ReadAllTextAsync(contractPath));
+        Assert.False(document.RootElement.GetProperty("enabled").GetBoolean());
         controller.Verify(c => c.SetEnabledAsync(false), Times.Once);
         service.Dispose();
+        Assert.True(File.Exists(contractPath));
     }
 
     [Fact]

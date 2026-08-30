@@ -232,4 +232,27 @@ public class SettingsViewModelTests
         Assert.False(vm2.ShowTrayIcon);
         Assert.Equal("Compact Grid", vm2.CardLayout);
     }
+
+    [Fact]
+    public async Task SpeedMeterSettingChange_PersistsAndRefreshesContract()
+    {
+        using var context = await TestDatabaseFactory.CreateAsync();
+        var forecastMock = new Mock<IForecastService>();
+        forecastMock.Setup(f => f.GetBudgetAsync()).ReturnsAsync(new DataBudget());
+        var meter = new Mock<ITopBarSpeedMeterService>();
+        meter.Setup(m => m.RefreshConfigurationAsync()).ReturnsAsync(true);
+
+        var vm = new SettingsViewModel(forecastMock.Object, repository: context.Repository, topBarSpeedMeterService: meter.Object);
+        await vm.LoadSettingsAsync();
+
+        vm.ShowMeterDownload = false;
+        vm.MeterUnits = "MB/s";
+        vm.MeterColorMode = "Separate colors";
+        await Task.Delay(500);
+
+        Assert.Equal("False", await context.Repository.GetSettingAsync("ShowMeterDownload"));
+        Assert.Equal("MB/s", await context.Repository.GetSettingAsync("MeterUnits"));
+        Assert.Equal("Separate colors", await context.Repository.GetSettingAsync("MeterColorMode"));
+        meter.Verify(m => m.RefreshConfigurationAsync(), Times.AtLeastOnce);
+    }
 }

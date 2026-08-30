@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -35,6 +36,29 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
     private readonly IThemeService _themeService;
     private readonly ITopBarSpeedMeterService? _topBarSpeedMeterService;
     private CancellationTokenSource? _saveStatusCancellation;
+    private CancellationTokenSource? _meterSyncCancellation;
+    private bool _meterSyncSuspended = true;
+
+    private static readonly HashSet<string> MeterSettingProperties = new()
+    {
+        nameof(ShowNetworkSpeedMeter),
+        nameof(ShowMeterDownload),
+        nameof(ShowMeterUpload),
+        nameof(ShowMeterIcons),
+        nameof(MeterCompactMode),
+        nameof(MeterShowDetailsOnHover),
+        nameof(MeterUnits),
+        nameof(MeterPrecision),
+        nameof(MeterRefreshRate),
+        nameof(MeterColorMode),
+        nameof(MeterSingleColor),
+        nameof(MeterDownloadColor),
+        nameof(MeterUploadColor),
+        nameof(MeterSize),
+        nameof(MeterFontWeight),
+        nameof(MeterPosition),
+        nameof(MeterClickAction)
+    };
 
     public override string Title => "Settings";
 
@@ -227,6 +251,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         _topBarSpeedMeterService = topBarSpeedMeterService;
 
         _selectedTheme = _themeService.CurrentTheme;
+        PropertyChanged += OnSettingsPropertyChanged;
 
         _ = LoadSettingsAsync();
     }
@@ -311,6 +336,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
 
     public async Task LoadSettingsAsync()
     {
+        _meterSyncSuspended = true;
         try
         {
             string appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DataSense");
@@ -468,6 +494,10 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
             });
         }
         catch { }
+        finally
+        {
+            _meterSyncSuspended = false;
+        }
     }
 
     private long _todayUsageBytes = 0;
@@ -588,23 +618,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
                 await _repository.SaveSettingAsync("ShowTrayIcon", ShowTrayIcon.ToString());
                 await _repository.SaveSettingAsync("ShowLiveSpeedInTray", ShowLiveSpeedInTray.ToString());
                 await _repository.SaveSettingAsync("CardLayout", CardLayout);
-                await _repository.SaveSettingAsync("ShowNetworkSpeedMeter", ShowNetworkSpeedMeter.ToString());
-                await _repository.SaveSettingAsync("ShowMeterDownload", ShowMeterDownload.ToString());
-                await _repository.SaveSettingAsync("ShowMeterUpload", ShowMeterUpload.ToString());
-                await _repository.SaveSettingAsync("ShowMeterIcons", ShowMeterIcons.ToString());
-                await _repository.SaveSettingAsync("MeterCompactMode", MeterCompactMode.ToString());
-                await _repository.SaveSettingAsync("MeterShowDetailsOnHover", MeterShowDetailsOnHover.ToString());
-                await _repository.SaveSettingAsync("MeterUnits", MeterUnits);
-                await _repository.SaveSettingAsync("MeterPrecision", MeterPrecision);
-                await _repository.SaveSettingAsync("MeterRefreshRate", MeterRefreshRate);
-                await _repository.SaveSettingAsync("MeterColorMode", MeterColorMode);
-                await _repository.SaveSettingAsync("MeterSingleColor", MeterSingleColor);
-                await _repository.SaveSettingAsync("MeterDownloadColor", MeterDownloadColor);
-                await _repository.SaveSettingAsync("MeterUploadColor", MeterUploadColor);
-                await _repository.SaveSettingAsync("MeterSize", MeterSize);
-                await _repository.SaveSettingAsync("MeterFontWeight", MeterFontWeight);
-                await _repository.SaveSettingAsync("MeterPosition", MeterPosition);
-                await _repository.SaveSettingAsync("MeterClickAction", MeterClickAction);
+                await PersistMeterSettingsAsync();
             }
 
             var extensionSynchronized = true;
@@ -648,8 +662,68 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_meterSyncSuspended || e.PropertyName is null)
+            return;
+        if (!MeterSettingProperties.Contains(e.PropertyName))
+            return;
+        RequestMeterSync();
+    }
+
+    private void RequestMeterSync()
+    {
+        if (_repository == null && _topBarSpeedMeterService == null)
+            return;
+
+        _meterSyncCancellation?.Cancel();
+        _meterSyncCancellation?.Dispose();
+        _meterSyncCancellation = new CancellationTokenSource();
+        var token = _meterSyncCancellation.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(200, token);
+                if (_repository != null)
+                    await PersistMeterSettingsAsync();
+                if (_topBarSpeedMeterService != null)
+                    await _topBarSpeedMeterService.RefreshConfigurationAsync();
+            }
+            catch (OperationCanceledException) { }
+        }, token);
+    }
+
+    private async Task PersistMeterSettingsAsync()
+    {
+        if (_repository == null)
+            return;
+
+        await _repository.SaveSettingAsync("ShowNetworkSpeedMeter", ShowNetworkSpeedMeter.ToString());
+        await _repository.SaveSettingAsync("ShowMeterDownload", ShowMeterDownload.ToString());
+        await _repository.SaveSettingAsync("ShowMeterUpload", ShowMeterUpload.ToString());
+        await _repository.SaveSettingAsync("ShowMeterIcons", ShowMeterIcons.ToString());
+        await _repository.SaveSettingAsync("MeterCompactMode", MeterCompactMode.ToString());
+        await _repository.SaveSettingAsync("MeterShowDetailsOnHover", MeterShowDetailsOnHover.ToString());
+        await _repository.SaveSettingAsync("MeterUnits", MeterUnits);
+        await _repository.SaveSettingAsync("MeterPrecision", MeterPrecision);
+        await _repository.SaveSettingAsync("MeterRefreshRate", MeterRefreshRate);
+        await _repository.SaveSettingAsync("MeterColorMode", MeterColorMode);
+        await _repository.SaveSettingAsync("MeterSingleColor", MeterSingleColor);
+        await _repository.SaveSettingAsync("MeterDownloadColor", MeterDownloadColor);
+        await _repository.SaveSettingAsync("MeterUploadColor", MeterUploadColor);
+        await _repository.SaveSettingAsync("MeterSize", MeterSize);
+        await _repository.SaveSettingAsync("MeterFontWeight", MeterFontWeight);
+        await _repository.SaveSettingAsync("MeterPosition", MeterPosition);
+        await _repository.SaveSettingAsync("MeterClickAction", MeterClickAction);
+    }
+
     public void Dispose()
     {
+        PropertyChanged -= OnSettingsPropertyChanged;
+        _meterSyncCancellation?.Cancel();
+        _meterSyncCancellation?.Dispose();
+        _meterSyncCancellation = null;
         _saveStatusCancellation?.Cancel();
         _saveStatusCancellation?.Dispose();
         _saveStatusCancellation = null;
