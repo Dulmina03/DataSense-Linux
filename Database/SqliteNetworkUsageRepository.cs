@@ -489,14 +489,11 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         await connection.OpenAsync();
 
         // A closed session overlaps [start,end] when: StartTime <= end AND EndTime >= start.
-        // An open session (EndTime IS NULL) is included ONLY when it started within [start,end].
-        // This prevents multi-day "never-closed" sessions from being attributed to every
-        // subsequent day they happen to still be open.
+        // An open session (EndTime IS NULL) is included when it started on or before end.
         string sql = @"
             SELECT COALESCE(SUM(BytesDownloaded), 0), COALESCE(SUM(BytesUploaded), 0)
             FROM NetworkSessions
-            WHERE (StartTime <= @End AND EndTime >= @Start)
-               OR (EndTime IS NULL AND StartTime >= @Start AND StartTime <= @End)";
+            WHERE (StartTime <= @End AND (EndTime >= @Start OR EndTime IS NULL))";
 
         if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
         {
@@ -522,8 +519,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
     }
 
     /// <summary>
-    /// Returns today's downloaded and uploaded bytes (UTC calendar day).
-    /// Prioritizes NetworkSessions as the single authoritative source of truth.
+    /// Returns today's downloaded and uploaded bytes (local calendar day converted to UTC).
+    /// Combines NetworkSessions and continuous NetworkUsageRecords samples so Today updates in real time.
     /// </summary>
     public async Task<(long BytesDownloaded, long BytesUploaded)> GetTodaySummaryAsync(string? interfaceName = null)
     {
@@ -532,16 +529,18 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         var end    = start.AddDays(1).AddTicks(-1);
 
         var (sDl, sUl) = await GetSessionsSummaryAsync(start, end, interfaceName);
-        if (sDl > 0 || sUl > 0)
-        {
-            return (sDl, sUl);
-        }
 
         var daily = await GetDailyUsageAsync(start, end, interfaceName);
         var row   = daily.FirstOrDefault();
-        if (row != null && (row.BytesDownloaded > 0 || row.BytesUploaded > 0))
+        long rDl  = row?.BytesDownloaded ?? 0;
+        long rUl  = row?.BytesUploaded ?? 0;
+
+        long dl = Math.Max(sDl, rDl);
+        long ul = Math.Max(sUl, rUl);
+
+        if (dl > 0 || ul > 0)
         {
-            return (row.BytesDownloaded, row.BytesUploaded);
+            return (dl, ul);
         }
 
         var procHourly = await GetAllProcessesHourlyUsageAsync(start);
@@ -552,7 +551,6 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
     /// <summary>
     /// Returns the current UTC calendar month's downloaded and uploaded bytes.
-    /// Prioritizes NetworkSessions as the single authoritative source of truth.
     /// </summary>
     public async Task<(long BytesDownloaded, long BytesUploaded)> GetMonthSummaryAsync(string? interfaceName = null)
     {
@@ -561,14 +559,13 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         var monthEnd   = monthStart.AddMonths(1).AddTicks(-1);
 
         var (sDl, sUl) = await GetSessionsSummaryAsync(monthStart, monthEnd, interfaceName);
-        if (sDl > 0 || sUl > 0)
-        {
-            return (sDl, sUl);
-        }
-
         var daily = await GetDailyUsageAsync(monthStart, monthEnd, interfaceName);
-        long dl = daily.Sum(d => d.BytesDownloaded);
-        long ul = daily.Sum(d => d.BytesUploaded);
+        long rDl = daily.Sum(d => d.BytesDownloaded);
+        long rUl = daily.Sum(d => d.BytesUploaded);
+
+        long dl = Math.Max(sDl, rDl);
+        long ul = Math.Max(sUl, rUl);
+
         if (dl > 0 || ul > 0)
         {
             return (dl, ul);
@@ -730,8 +727,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         string sql = @"
             SELECT Id, NetworkName, InterfaceName, ConnectionType, StartTime, EndTime, BytesDownloaded, BytesUploaded
             FROM NetworkSessions
-            WHERE (StartTime <= @End AND EndTime >= @Start)
-               OR (EndTime IS NULL AND StartTime >= @Start AND StartTime <= @End)";
+            WHERE (StartTime <= @End AND (EndTime >= @Start OR EndTime IS NULL))";
 
         if (!string.IsNullOrEmpty(interfaceName))
             sql += " AND InterfaceName = @InterfaceName";

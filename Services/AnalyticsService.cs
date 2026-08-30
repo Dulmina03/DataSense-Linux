@@ -20,17 +20,15 @@ public class AnalyticsService : IAnalyticsService
 
     private static (DateTime start, DateTime end) GetRange(AnalyticsPeriod period)
     {
-        var utcNow = DateTime.UtcNow;
+        var localNow = DateTime.Now;
         return period switch
         {
-            AnalyticsPeriod.Today      => (utcNow.Date, utcNow.Date.AddDays(1).AddTicks(-1)),
-            AnalyticsPeriod.Last7Days  => (utcNow.Date.AddDays(-6), utcNow.Date.AddDays(1).AddTicks(-1)),
-            AnalyticsPeriod.Last30Days => (utcNow.Date.AddDays(-29), utcNow.Date.AddDays(1).AddTicks(-1)),
-            AnalyticsPeriod.ThisMonth  => (new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc),
-                                           utcNow.Date.AddDays(1).AddTicks(-1)),
-            AnalyticsPeriod.AllTime    => (new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                                           utcNow.Date.AddDays(1).AddTicks(-1)),
-            _                         => (utcNow.Date.AddDays(-6), utcNow.Date.AddDays(1).AddTicks(-1))
+            AnalyticsPeriod.Today      => Helpers.DateRangeHelper.GetLocalTodayRange(),
+            AnalyticsPeriod.Last7Days  => (Helpers.DateRangeHelper.GetLocalDayRange(localNow.Date.AddDays(-6)).startUtc, Helpers.DateRangeHelper.GetLocalTodayRange().endUtc),
+            AnalyticsPeriod.Last30Days => (Helpers.DateRangeHelper.GetLocalDayRange(localNow.Date.AddDays(-29)).startUtc, Helpers.DateRangeHelper.GetLocalTodayRange().endUtc),
+            AnalyticsPeriod.ThisMonth  => Helpers.DateRangeHelper.GetLocalMonthRange(localNow.Year, localNow.Month),
+            AnalyticsPeriod.AllTime    => (new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc), Helpers.DateRangeHelper.GetLocalTodayRange().endUtc),
+            _                         => Helpers.DateRangeHelper.GetLocalTodayRange()
         };
     }
 

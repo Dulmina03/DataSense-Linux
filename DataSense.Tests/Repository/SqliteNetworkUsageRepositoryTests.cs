@@ -55,6 +55,44 @@ public class SqliteNetworkUsageRepositoryTests
     }
 
     [Fact]
+    public async Task GetTodaySummaryAsync_CombinesSessionsAndUsageRecords_ReturnsMax()
+    {
+        using var context = await TestDatabaseFactory.CreateAsync();
+        string iface = "eth0";
+        DateTime todayUtc = DateTime.UtcNow.Date.AddHours(2);
+
+        // Seed continuous usage records for today (100MB rx delta, 50MB tx delta)
+        long mb = 1024 * 1024;
+        await TestDataBuilder.SeedCumulativeUsageAsync(
+            context.Repository,
+            iface,
+            todayUtc,
+            TimeSpan.FromMinutes(10),
+            (50 * mb, 10 * mb),
+            (150 * mb, 60 * mb)
+        );
+
+        // Seed a closed session for today with smaller values (20MB rx, 5MB tx)
+        var session = new DataSense.Models.NetworkSession
+        {
+            InterfaceName = iface,
+            ConnectionType = "Ethernet",
+            NetworkName = "Ethernet",
+            StartTime = todayUtc.AddMinutes(-5),
+            EndTime = todayUtc.AddMinutes(5),
+            BytesDownloaded = 20 * mb,
+            BytesUploaded = 5 * mb
+        };
+        await context.Repository.SaveSessionAsync(session);
+
+        var (downloaded, uploaded) = await context.Repository.GetTodaySummaryAsync(iface);
+
+        // Should return the max between session and usage records (100MB rx, 50MB tx)
+        Assert.Equal(100 * mb, downloaded);
+        Assert.Equal(50 * mb, uploaded);
+    }
+
+    [Fact]
     public async Task GetDailyUsageAsync_AggregatesPerDayCorrectly()
     {
         using var context = await TestDatabaseFactory.CreateAsync();

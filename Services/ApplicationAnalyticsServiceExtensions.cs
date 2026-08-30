@@ -125,6 +125,8 @@ public partial class ApplicationAnalyticsService
                 UserName          = item.UserName,
                 DataSource        = item.DataSource,
                 TodayBytes        = todayBytes,
+                TodayDownloadBytes = today?.BytesDownloaded ?? 0,
+                TodayUploadBytes   = today?.BytesUploaded ?? 0,
                 YesterdayBytes    = yestBytes,
                 SevenDayTotalBytes  = w7Total,
                 SevenDayAverageBytes  = activeDays > 0 ? (double?)w7Total / Math.Min(activeDays, 7) : null,

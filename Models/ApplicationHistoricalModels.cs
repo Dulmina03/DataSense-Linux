@@ -230,6 +230,12 @@ public class ApplicationHistoricalProfile : ObservableObject
     /// <summary>Bytes today (UTC calendar day). 0 if no today records.</summary>
     public long TodayBytes { get; set; }
 
+    /// <summary>Download bytes today.</summary>
+    public long TodayDownloadBytes { get; set; }
+
+    /// <summary>Upload bytes today.</summary>
+    public long TodayUploadBytes { get; set; }
+
     /// <summary>Bytes yesterday (UTC calendar day). 0 if no yesterday records.</summary>
     public long YesterdayBytes { get; set; }
 
@@ -315,6 +321,8 @@ public class ApplicationHistoricalProfile : ObservableObject
         RelativeUsagePercent = other.RelativeUsagePercent;
         DisplayIndex = other.DisplayIndex;
         TodayBytes = other.TodayBytes;
+        TodayDownloadBytes = other.TodayDownloadBytes;
+        TodayUploadBytes = other.TodayUploadBytes;
         YesterdayBytes = other.YesterdayBytes;
         SevenDayTotalBytes = other.SevenDayTotalBytes;
         ThirtyDayTotalBytes = other.ThirtyDayTotalBytes;

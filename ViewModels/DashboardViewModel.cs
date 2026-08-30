@@ -1549,8 +1549,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 if (showLoading) IsPeriodAnalyticsLoading = false;
             });
 
-            // Load Top Processes (Historical Profiles)
-            var allProfiles = (await _applicationAnalyticsService.GetApplicationProfilesAsync()).ToList();
+            // Load Top Processes (Historical Profiles) with forceRefresh to bypass TTL cache
+            var allProfiles = (await _applicationAnalyticsService.GetApplicationProfilesAsync(forceRefresh: true)).ToList();
 
             // ── Top Processes for TODAY ─────────────────────────────────────────
             var todayTopGrouped = allProfiles
@@ -1558,10 +1558,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 .Select(g =>
                 {
                     var first = g.First();
-                    long todayTotal = g.Sum(x => x.TodayBytes);
-                    long allTimeTotal = g.Sum(x => x.TotalBytes);
-                    long todayDl = g.Sum(x => todayTotal > 0 && allTimeTotal > 0 ? (long)(x.DownloadBytes * ((double)x.TodayBytes / allTimeTotal)) : 0);
-                    long todayUl = todayTotal - todayDl;
+                    long todayDl = g.Sum(x => x.TodayDownloadBytes > 0 ? x.TodayDownloadBytes : x.DownloadBytes);
+                    long todayUl = g.Sum(x => x.TodayUploadBytes > 0 ? x.TodayUploadBytes : x.UploadBytes);
+                    long todayTotal = g.Sum(x => x.TodayBytes > 0 ? x.TodayBytes : (todayDl + todayUl));
                     return new ApplicationHistoricalProfile
                     {
                         ProcessName = first.ProcessName,
@@ -1569,9 +1568,11 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                         ExecutablePath = first.ExecutablePath,
                         UserName = first.UserName,
                         DataSource = first.DataSource,
-                        DownloadBytes = todayDl > 0 ? todayDl : todayTotal,
-                        UploadBytes = todayUl >= 0 ? todayUl : 0,
-                        TodayBytes = todayTotal,
+                        DownloadBytes = todayDl,
+                        UploadBytes = todayUl,
+                        TodayBytes = todayTotal > 0 ? todayTotal : (todayDl + todayUl),
+                        TodayDownloadBytes = todayDl,
+                        TodayUploadBytes = todayUl,
                         YesterdayBytes = g.Sum(x => x.YesterdayBytes),
                         SevenDayTotalBytes = g.Sum(x => x.SevenDayTotalBytes),
                         ThirtyDayTotalBytes = g.Sum(x => x.ThirtyDayTotalBytes),
@@ -1631,10 +1632,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 .Select(g =>
                 {
                     var first = g.First();
+                    long monthDl = g.Sum(x => x.DownloadBytes);
+                    long monthUl = g.Sum(x => x.UploadBytes);
                     long monthTotal = g.Sum(x => x.ThirtyDayTotalBytes > 0 ? x.ThirtyDayTotalBytes : x.TodayBytes);
-                    long allTimeTotal = g.Sum(x => x.TotalBytes);
-                    long monthDl = g.Sum(x => monthTotal > 0 && allTimeTotal > 0 ? (long)(x.DownloadBytes * ((double)monthTotal / allTimeTotal)) : 0);
-                    long monthUl = monthTotal - monthDl;
                     return new ApplicationHistoricalProfile
                     {
                         ProcessName = first.ProcessName,
@@ -1642,12 +1642,12 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                         ExecutablePath = first.ExecutablePath,
                         UserName = first.UserName,
                         DataSource = first.DataSource,
-                        DownloadBytes = monthDl > 0 ? monthDl : monthTotal,
-                        UploadBytes = monthUl >= 0 ? monthUl : 0,
+                        DownloadBytes = monthDl,
+                        UploadBytes = monthUl,
                         TodayBytes = g.Sum(x => x.TodayBytes),
                         YesterdayBytes = g.Sum(x => x.YesterdayBytes),
                         SevenDayTotalBytes = g.Sum(x => x.SevenDayTotalBytes),
-                        ThirtyDayTotalBytes = monthTotal,
+                        ThirtyDayTotalBytes = monthTotal > 0 ? monthTotal : (monthDl + monthUl),
                         ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessName, first.ExecutablePath),
                         ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessName, first.ExecutablePath)
                     };

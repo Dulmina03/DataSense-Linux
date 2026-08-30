@@ -744,7 +744,21 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
             long totalDl = 0;
             long totalUl = 0;
 
-            if (sessions.Count > 0)
+            if (SelectedPeriod == HistoryPeriodType.Today)
+            {
+                var (todayDl, todayUl) = await _repository.GetTodaySummaryAsync(ifaceFilter);
+                totalDl = todayDl;
+                totalUl = todayUl;
+
+                long sessionsDl = sessions.Sum(s => s.BytesDownloaded);
+                long sessionsUl = sessions.Sum(s => s.BytesUploaded);
+                if (totalDl == 0 && totalUl == 0 && (sessionsDl > 0 || sessionsUl > 0))
+                {
+                    totalDl = sessionsDl;
+                    totalUl = sessionsUl;
+                }
+            }
+            else if (sessions.Count > 0)
             {
                 totalDl = sessions.Sum(s => s.BytesDownloaded);
                 totalUl = sessions.Sum(s => s.BytesUploaded);
@@ -759,8 +773,8 @@ public partial class HistoryViewModel : ViewModelBase, IDisposable
                 }
                 else
                 {
-                    totalDl = totalAppUsage > 0 ? totalAppDl : (SelectedPeriod == HistoryPeriodType.Today ? hourlyList.Sum(h => h.BytesDownloaded) : dailyList.Sum(d => d.BytesDownloaded));
-                    totalUl = totalAppUsage > 0 ? totalAppUl : (SelectedPeriod == HistoryPeriodType.Today ? hourlyList.Sum(h => h.BytesUploaded) : dailyList.Sum(d => d.BytesUploaded));
+                    totalDl = totalAppUsage > 0 ? totalAppDl : dailyList.Sum(d => d.BytesDownloaded);
+                    totalUl = totalAppUsage > 0 ? totalAppUl : dailyList.Sum(d => d.BytesUploaded);
                 }
             }
 

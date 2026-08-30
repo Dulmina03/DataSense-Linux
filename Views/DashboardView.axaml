@@ -390,7 +390,7 @@
                                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
                                             <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Converter={x:Static conv:ProcessIndexGradientBrushConverter.Instance}}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                             <TextBlock Grid.Column="1" Text="{Binding EffectiveDisplayName}" Classes="Body" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding TotalBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="BodySecondary" Margin="10,0" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding TodayBytes, Converter={x:Static conv:ByteFormatConverter.Instance}}" Classes="BodySecondary" Margin="10,0" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="3" Text="{Binding PercentageOfTotal, StringFormat='{}{0:F1}%'}" Classes="Body" FontWeight="SemiBold" VerticalAlignment="Center" Width="44" TextAlignment="Right"/>
                                         </Grid>
                                     </Border>
