@@ -36,22 +36,61 @@ public class NetworkPersistenceService : INetworkPersistenceService, IDisposable
         _isStarted = false;
     }
 
+    private readonly object _deltaLock = new();
+    private long _accumulatedDownloadDelta;
+    private long _accumulatedUploadDelta;
+
     private void OnNetworkUsageUpdated(NetworkUsage usage)
     {
         if (usage == null || string.IsNullOrEmpty(usage.InterfaceName) || usage.InterfaceName == "None")
             return;
 
-        DateTime now = DateTime.UtcNow;
-        if (now - _lastPersistedTimestamp >= _persistInterval)
+        long saveDlDelta;
+        long saveUlDelta;
+        bool shouldPersist = false;
+
+        lock (_deltaLock)
         {
-            _lastPersistedTimestamp = now;
+            _accumulatedDownloadDelta += usage.DownloadDelta;
+            _accumulatedUploadDelta += usage.UploadDelta;
+
+            DateTime now = DateTime.UtcNow;
+            if (now - _lastPersistedTimestamp >= _persistInterval)
+            {
+                _lastPersistedTimestamp = now;
+                saveDlDelta = _accumulatedDownloadDelta;
+                saveUlDelta = _accumulatedUploadDelta;
+                _accumulatedDownloadDelta = 0;
+                _accumulatedUploadDelta = 0;
+                shouldPersist = true;
+            }
+            else
+            {
+                saveDlDelta = 0;
+                saveUlDelta = 0;
+            }
+        }
+
+        if (shouldPersist)
+        {
+            var usageToSave = new NetworkUsage
+            {
+                InterfaceName = usage.InterfaceName,
+                BytesReceived = usage.BytesReceived,
+                BytesSent = usage.BytesSent,
+                DownloadDelta = saveDlDelta,
+                UploadDelta = saveUlDelta,
+                DownloadSpeed = usage.DownloadSpeed,
+                UploadSpeed = usage.UploadSpeed,
+                Timestamp = usage.Timestamp
+            };
 
             // Fire-and-forget async save on background thread without blocking telemetry loop or UI thread
             Task.Run(async () =>
             {
                 try
                 {
-                    await _repository.SaveUsageAsync(usage);
+                    await _repository.SaveUsageAsync(usageToSave);
                 }
                 catch (Exception ex)
                 {

@@ -178,6 +178,8 @@ public class LinuxNetworkMonitorService : INetworkMonitorService
         var currentTimestamp = DateTime.UtcNow;
         double downloadSpeed = 0;
         double uploadSpeed = 0;
+        long rxDelta = 0;
+        long txDelta = 0;
 
         if (_lastMeasurements.TryGetValue(interfaceName, out var last))
         {
@@ -186,12 +188,25 @@ public class LinuxNetworkMonitorService : INetworkMonitorService
             // Enforce realistic sample interval (0 < timeDiff <= 10.0)
             if (timeDiff > 0 && timeDiff <= 10.0)
             {
-                long rxDelta = currentBytesReceived - last.BytesReceived;
-                long txDelta = currentBytesSent - last.BytesSent;
+                if (currentBytesReceived >= last.BytesReceived)
+                {
+                    rxDelta = currentBytesReceived - last.BytesReceived;
+                }
+                else
+                {
+                    // Interface counter reset (e.g. restart / reload)
+                    rxDelta = Math.Max(0, currentBytesReceived);
+                }
 
-                // Handle counters wrapping or resetting safely
-                if (rxDelta < 0) rxDelta = 0;
-                if (txDelta < 0) txDelta = 0;
+                if (currentBytesSent >= last.BytesSent)
+                {
+                    txDelta = currentBytesSent - last.BytesSent;
+                }
+                else
+                {
+                    // Interface counter reset
+                    txDelta = Math.Max(0, currentBytesSent);
+                }
 
                 downloadSpeed = rxDelta / timeDiff;
                 uploadSpeed = txDelta / timeDiff;
@@ -216,6 +231,8 @@ public class LinuxNetworkMonitorService : INetworkMonitorService
             InterfaceName = interfaceName,
             BytesReceived = currentBytesReceived,
             BytesSent = currentBytesSent,
+            DownloadDelta = rxDelta,
+            UploadDelta = txDelta,
             DownloadSpeed = downloadSpeed,
             UploadSpeed = uploadSpeed,
             Timestamp = currentTimestamp

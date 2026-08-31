@@ -366,6 +366,7 @@
                                                 <MultiBinding Converter="{x:Static conv:DonutArcPathConverter.Instance}">
                                                     <Binding />
                                                     <Binding Path="((vm:DashboardViewModel)DataContext).TopProcesses" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                                    <Binding Path="PercentageOfTotal" />
                                                 </MultiBinding>
                                             </Path.Data>
                                         </Path>
@@ -432,6 +433,7 @@
                                                 <MultiBinding Converter="{x:Static conv:DonutArcPathConverter.Instance}">
                                                     <Binding />
                                                     <Binding Path="((vm:DashboardViewModel)DataContext).TopMonthProcesses" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                                    <Binding Path="PercentageOfTotal" />
                                                 </MultiBinding>
                                             </Path.Data>
                                         </Path>

@@ -16,8 +16,11 @@ public static class TestDataBuilder
         params (long rx, long tx)[] cumulativePoints)
     {
         DateTime current = startTime;
-        foreach (var (rx, tx) in cumulativePoints)
+        for (int i = 0; i < cumulativePoints.Length; i++)
         {
+            var (rx, tx) = cumulativePoints[i];
+            long dlDelta = i > 0 ? Math.Max(0, rx - cumulativePoints[i - 1].rx) : 0;
+            long ulDelta = i > 0 ? Math.Max(0, tx - cumulativePoints[i - 1].tx) : 0;
             await repo.SaveUsageAsync(new NetworkUsage
             {
                 Timestamp = current,
@@ -25,7 +28,9 @@ public static class TestDataBuilder
                 DownloadSpeed = 1.0,
                 UploadSpeed = 0.5,
                 BytesReceived = rx,
-                BytesSent = tx
+                BytesSent = tx,
+                DownloadDelta = dlDelta,
+                UploadDelta = ulDelta
             });
             current = current.Add(step);
         }

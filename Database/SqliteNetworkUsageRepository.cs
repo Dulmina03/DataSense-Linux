@@ -57,7 +57,9 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
                 DownloadSpeed REAL NOT NULL,
                 UploadSpeed REAL NOT NULL,
                 BytesReceived INTEGER NOT NULL,
-                BytesSent INTEGER NOT NULL
+                BytesSent INTEGER NOT NULL,
+                DownloadDelta INTEGER NOT NULL DEFAULT 0,
+                UploadDelta INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE INDEX IF NOT EXISTS IX_NetworkUsageRecords_Timestamp 
@@ -142,6 +144,23 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         {
             using var alterCmd = connection.CreateCommand();
             alterCmd.CommandText = "ALTER TABLE SpeedTestRecords ADD COLUMN ConnectionType TEXT NOT NULL DEFAULT 'Unknown';";
+            await alterCmd.ExecuteNonQueryAsync();
+        }
+        catch (SqliteException) { /* Column already exists */ }
+
+        // Migration for NetworkUsageRecords deltas
+        try
+        {
+            using var alterCmd = connection.CreateCommand();
+            alterCmd.CommandText = "ALTER TABLE NetworkUsageRecords ADD COLUMN DownloadDelta INTEGER NOT NULL DEFAULT 0;";
+            await alterCmd.ExecuteNonQueryAsync();
+        }
+        catch (SqliteException) { /* Column already exists */ }
+
+        try
+        {
+            using var alterCmd = connection.CreateCommand();
+            alterCmd.CommandText = "ALTER TABLE NetworkUsageRecords ADD COLUMN UploadDelta INTEGER NOT NULL DEFAULT 0;";
             await alterCmd.ExecuteNonQueryAsync();
         }
         catch (SqliteException) { /* Column already exists */ }
@@ -253,9 +272,37 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
+        long dlDelta = usage.DownloadDelta;
+        long ulDelta = usage.UploadDelta;
+
+        // If delta was not pre-calculated (e.g. legacy caller or test), calculate against the last record for this interface
+        if (dlDelta == 0 && ulDelta == 0 && (usage.BytesReceived > 0 || usage.BytesSent > 0))
+        {
+            const string lastSql = @"
+                SELECT BytesReceived, BytesSent, Timestamp 
+                FROM NetworkUsageRecords 
+                WHERE InterfaceName = @InterfaceName 
+                ORDER BY Timestamp DESC, Id DESC LIMIT 1;";
+            using var lastCmd = connection.CreateCommand();
+            lastCmd.CommandText = lastSql;
+            lastCmd.Parameters.AddWithValue("@InterfaceName", usage.InterfaceName);
+            using var lastReader = await lastCmd.ExecuteReaderAsync();
+            if (await lastReader.ReadAsync())
+            {
+                long lastRx = lastReader.GetInt64(0);
+                long lastTx = lastReader.GetInt64(1);
+                var lastTime = DateTime.Parse(lastReader.GetString(2));
+                if ((usage.Timestamp - lastTime).TotalHours <= 2)
+                {
+                    dlDelta = usage.BytesReceived >= lastRx ? (usage.BytesReceived - lastRx) : Math.Max(0, usage.BytesReceived);
+                    ulDelta = usage.BytesSent >= lastTx ? (usage.BytesSent - lastTx) : Math.Max(0, usage.BytesSent);
+                }
+            }
+        }
+
         const string insertSql = @"
-            INSERT INTO NetworkUsageRecords (Timestamp, InterfaceName, DownloadSpeed, UploadSpeed, BytesReceived, BytesSent)
-            VALUES (@Timestamp, @InterfaceName, @DownloadSpeed, @UploadSpeed, @BytesReceived, @BytesSent);
+            INSERT INTO NetworkUsageRecords (Timestamp, InterfaceName, DownloadSpeed, UploadSpeed, BytesReceived, BytesSent, DownloadDelta, UploadDelta)
+            VALUES (@Timestamp, @InterfaceName, @DownloadSpeed, @UploadSpeed, @BytesReceived, @BytesSent, @DownloadDelta, @UploadDelta);
         ";
 
         using var command = connection.CreateCommand();
@@ -267,6 +314,8 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         command.Parameters.AddWithValue("@UploadSpeed", usage.UploadSpeed);
         command.Parameters.AddWithValue("@BytesReceived", usage.BytesReceived);
         command.Parameters.AddWithValue("@BytesSent", usage.BytesSent);
+        command.Parameters.AddWithValue("@DownloadDelta", dlDelta);
+        command.Parameters.AddWithValue("@UploadDelta", ulDelta);
 
         await command.ExecuteNonQueryAsync();
     }
@@ -279,12 +328,12 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         await connection.OpenAsync();
 
         string querySql = @"
-            SELECT Id, Timestamp, InterfaceName, DownloadSpeed, UploadSpeed, BytesReceived, BytesSent
+            SELECT Id, Timestamp, InterfaceName, DownloadSpeed, UploadSpeed, BytesReceived, BytesSent, DownloadDelta, UploadDelta
             FROM NetworkUsageRecords
             WHERE Timestamp >= @Start AND Timestamp <= @End
         ";
 
-        if (!string.IsNullOrEmpty(interfaceName))
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
         {
             querySql += " AND InterfaceName = @InterfaceName";
         }
@@ -296,7 +345,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         command.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
         command.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
-        if (!string.IsNullOrEmpty(interfaceName))
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
         {
             command.Parameters.AddWithValue("@InterfaceName", interfaceName);
         }
@@ -312,7 +361,9 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
                 DownloadSpeed = reader.GetDouble(3),
                 UploadSpeed = reader.GetDouble(4),
                 BytesReceived = reader.GetInt64(5),
-                BytesSent = reader.GetInt64(6)
+                BytesSent = reader.GetInt64(6),
+                DownloadDelta = reader.GetInt64(7),
+                UploadDelta = reader.GetInt64(8)
             });
         }
 
@@ -334,7 +385,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
 
         // Get total count for pagination
         string countSql = @"SELECT COUNT(*) FROM NetworkUsageRecords WHERE Timestamp >= @Start AND Timestamp <= @End";
-        if (!string.IsNullOrEmpty(interfaceName))
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
         {
             countSql += " AND InterfaceName = @InterfaceName";
         }
@@ -342,7 +393,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         countCmd.CommandText = countSql;
         countCmd.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
         countCmd.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
-        if (!string.IsNullOrEmpty(interfaceName))
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
         {
             countCmd.Parameters.AddWithValue("@InterfaceName", interfaceName);
         }
@@ -350,10 +401,10 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         totalCount = Convert.ToInt32(cnt);
 
         // Fetch the page
-        string pageSql = @"SELECT Id, Timestamp, InterfaceName, DownloadSpeed, UploadSpeed, BytesReceived, BytesSent
+        string pageSql = @"SELECT Id, Timestamp, InterfaceName, DownloadSpeed, UploadSpeed, BytesReceived, BytesSent, DownloadDelta, UploadDelta
                           FROM NetworkUsageRecords
                           WHERE Timestamp >= @Start AND Timestamp <= @End";
-        if (!string.IsNullOrEmpty(interfaceName))
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
         {
             pageSql += " AND InterfaceName = @InterfaceName";
         }
@@ -362,7 +413,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         pageCmd.CommandText = pageSql;
         pageCmd.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
         pageCmd.Parameters.AddWithValue("@End", end.ToUniversalTime().ToString("o"));
-        if (!string.IsNullOrEmpty(interfaceName))
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
         {
             pageCmd.Parameters.AddWithValue("@InterfaceName", interfaceName);
         }
@@ -379,7 +430,9 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
                 DownloadSpeed = reader.GetDouble(3),
                 UploadSpeed = reader.GetDouble(4),
                 BytesReceived = reader.GetInt64(5),
-                BytesSent = reader.GetInt64(6)
+                BytesSent = reader.GetInt64(6),
+                DownloadDelta = reader.GetInt64(7),
+                UploadDelta = reader.GetInt64(8)
             });
         }
 
@@ -403,9 +456,7 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
     }
 
     /// <summary>
-    /// Aggregates usage by day using MIN/MAX of cumulative counters.
-    /// Daily download = MAX(BytesReceived) - MIN(BytesReceived) for that UTC day.
-    /// Counter resets (where delta would be negative) are clamped to 0.
+    /// Aggregates usage by day from canonical delta streams and interface-scoped samples.
     /// Results are ordered by day descending (most recent first).
     /// </summary>
     public async Task<IEnumerable<DailyUsageRecord>> GetDailyUsageAsync(
@@ -421,6 +472,9 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
         string sql = @"
             SELECT
                 date(Timestamp) AS Day,
+                InterfaceName,
+                SUM(DownloadDelta)  AS SumDl,
+                SUM(UploadDelta)    AS SumUl,
                 MIN(BytesReceived)  AS MinRx,
                 MAX(BytesReceived)  AS MaxRx,
                 MIN(BytesSent)      AS MinTx,
@@ -428,30 +482,62 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             FROM NetworkUsageRecords
             WHERE Timestamp >= @Start AND Timestamp <= @End";
 
-        if (!string.IsNullOrEmpty(interfaceName))
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
             sql += " AND InterfaceName = @InterfaceName";
 
-        sql += " GROUP BY date(Timestamp) ORDER BY Day DESC;";
+        sql += " GROUP BY date(Timestamp), InterfaceName ORDER BY Day DESC;";
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
         cmd.Parameters.AddWithValue("@Start", start.ToUniversalTime().ToString("o"));
         cmd.Parameters.AddWithValue("@End",   end.ToUniversalTime().ToString("o"));
-        if (!string.IsNullOrEmpty(interfaceName))
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
             cmd.Parameters.AddWithValue("@InterfaceName", interfaceName);
 
-        using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            var day      = DateTime.Parse(reader.GetString(0));
-            long minRx   = reader.GetInt64(1);
-            long maxRx   = reader.GetInt64(2);
-            long minTx   = reader.GetInt64(3);
-            long maxTx   = reader.GetInt64(4);
+        var dayGroups = new Dictionary<string, List<(string Iface, long SumDl, long SumUl, long MinRx, long MaxRx, long MinTx, long MaxTx)>>();
 
-            // Clamp to 0 in case of counter resets
-            long dl = Math.Max(0, maxRx - minRx);
-            long ul = Math.Max(0, maxTx - minTx);
+        using (var reader = await cmd.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                string dayStr = reader.GetString(0);
+                string iface  = reader.GetString(1);
+                long sDl      = reader.GetInt64(2);
+                long sUl      = reader.GetInt64(3);
+                long minRx    = reader.GetInt64(4);
+                long maxRx    = reader.GetInt64(5);
+                long minTx    = reader.GetInt64(6);
+                long maxTx    = reader.GetInt64(7);
+
+                if (!dayGroups.TryGetValue(dayStr, out var list))
+                {
+                    list = new List<(string Iface, long SumDl, long SumUl, long MinRx, long MaxRx, long MinTx, long MaxTx)>();
+                    dayGroups[dayStr] = list;
+                }
+                list.Add((iface, sDl, sUl, minRx, maxRx, minTx, maxTx));
+            }
+        }
+
+        foreach (var kvp in dayGroups.OrderByDescending(k => k.Key))
+        {
+            var day = DateTime.Parse(kvp.Key);
+            var list = kvp.Value;
+            bool hasDelta = list.Any(r => r.SumDl > 0 || r.SumUl > 0);
+            long dl = 0;
+            long ul = 0;
+            if (hasDelta)
+            {
+                dl = list.Sum(r => r.SumDl);
+                ul = list.Sum(r => r.SumUl);
+            }
+            else
+            {
+                foreach (var r in list)
+                {
+                    dl += Math.Max(0, r.MaxRx - r.MinRx);
+                    ul += Math.Max(0, r.MaxTx - r.MinTx);
+                }
+            }
 
             results.Add(new DailyUsageRecord
             {
@@ -459,6 +545,12 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
                 BytesDownloaded = dl,
                 BytesUploaded   = ul,
             });
+        }
+
+        if (results.Count == 0 && (string.IsNullOrEmpty(interfaceName) || interfaceName == "All"))
+        {
+            var procDaily = (await GetAllProcessesDailyUsageAsync(start, end)).ToList();
+            if (procDaily.Count > 0) return procDaily;
         }
 
         return results;
@@ -519,84 +611,19 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
     }
 
     /// <summary>
-    /// Returns today's downloaded and uploaded bytes (local calendar day converted to UTC).
-    /// Combines NetworkSessions and continuous NetworkUsageRecords samples so Today updates in real time.
+    /// Authoritative helper for querying canonical usage totals within a specific UTC time boundary.
     /// </summary>
-    public async Task<(long BytesDownloaded, long BytesUploaded)> GetTodaySummaryAsync(string? interfaceName = null)
+    public async Task<(long BytesDownloaded, long BytesUploaded)> GetUsageRangeSummaryAsync(
+        DateTime startUtc, DateTime endUtc, string? interfaceName = null)
     {
-        var utcNow = DateTime.UtcNow;
-        var start  = DateTime.SpecifyKind(utcNow.Date, DateTimeKind.Utc);
-        var end    = start.AddDays(1).AddTicks(-1);
-
-        var (sDl, sUl) = await GetSessionsSummaryAsync(start, end, interfaceName);
-
-        var daily = await GetDailyUsageAsync(start, end, interfaceName);
-        var row   = daily.FirstOrDefault();
-        long rDl  = row?.BytesDownloaded ?? 0;
-        long rUl  = row?.BytesUploaded ?? 0;
-
-        long dl = Math.Max(sDl, rDl);
-        long ul = Math.Max(sUl, rUl);
-
-        if (dl > 0 || ul > 0)
-        {
-            return (dl, ul);
-        }
-
-        var procHourly = await GetAllProcessesHourlyUsageAsync(start);
-        long pDl = procHourly.Sum(h => h.BytesDownloaded);
-        long pUl = procHourly.Sum(h => h.BytesUploaded);
-        return (pDl, pUl);
-    }
-
-    /// <summary>
-    /// Returns the current UTC calendar month's downloaded and uploaded bytes.
-    /// </summary>
-    public async Task<(long BytesDownloaded, long BytesUploaded)> GetMonthSummaryAsync(string? interfaceName = null)
-    {
-        var utcNow     = DateTime.UtcNow;
-        var monthStart = new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-        var monthEnd   = monthStart.AddMonths(1).AddTicks(-1);
-
-        var (sDl, sUl) = await GetSessionsSummaryAsync(monthStart, monthEnd, interfaceName);
-        var daily = await GetDailyUsageAsync(monthStart, monthEnd, interfaceName);
-        long rDl = daily.Sum(d => d.BytesDownloaded);
-        long rUl = daily.Sum(d => d.BytesUploaded);
-
-        long dl = Math.Max(sDl, rDl);
-        long ul = Math.Max(sUl, rUl);
-
-        if (dl > 0 || ul > 0)
-        {
-            return (dl, ul);
-        }
-
-        var procDaily = await GetAllProcessesDailyUsageAsync(monthStart, monthEnd);
-        long pDl = procDaily.Sum(d => d.BytesDownloaded);
-        long pUl = procDaily.Sum(d => d.BytesUploaded);
-        return (pDl, pUl);
-    }
-
-    /// <summary>
-    /// Returns one <see cref="HourlyUsageRecord"/> per clock-hour for a single UTC calendar day.
-    /// Uses the same MAX–MIN clamping strategy as GetDailyUsageAsync.
-    /// Hours with no records are omitted (caller fills gaps for display if needed).
-    /// </summary>
-    public async Task<IEnumerable<HourlyUsageRecord>> GetHourlyUsageAsync(
-        DateTime day, string? interfaceName = null)
-    {
-        var results = new List<HourlyUsageRecord>();
-
-        // Clamp to UTC day boundaries
-        var dayStart = day.Date.ToUniversalTime();
-        var dayEnd   = dayStart.AddDays(1).AddTicks(-1);
-
         using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
         string sql = @"
-            SELECT
-                CAST(strftime('%H', Timestamp) AS INTEGER) AS Hour,
+            SELECT 
+                InterfaceName,
+                SUM(DownloadDelta) AS TotalDl,
+                SUM(UploadDelta)   AS TotalUl,
                 MIN(BytesReceived) AS MinRx,
                 MAX(BytesReceived) AS MaxRx,
                 MIN(BytesSent)     AS MinTx,
@@ -604,33 +631,210 @@ public class SqliteNetworkUsageRepository : INetworkUsageRepository
             FROM NetworkUsageRecords
             WHERE Timestamp >= @Start AND Timestamp <= @End";
 
-        if (!string.IsNullOrEmpty(interfaceName))
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
+        {
+            sql += " AND InterfaceName = @InterfaceName";
+        }
+
+        sql += " GROUP BY InterfaceName;";
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@Start", startUtc.ToUniversalTime().ToString("o"));
+        cmd.Parameters.AddWithValue("@End",   endUtc.ToUniversalTime().ToString("o"));
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
+        {
+            cmd.Parameters.AddWithValue("@InterfaceName", interfaceName);
+        }
+
+        long totalDl = 0;
+        long totalUl = 0;
+        bool hasDelta = false;
+
+        var ifaceRows = new List<(string Iface, long SumDl, long SumUl, long MinRx, long MaxRx, long MinTx, long MaxTx)>();
+
+        using (var reader = await cmd.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                string iface = reader.GetString(0);
+                long sDl = reader.GetInt64(1);
+                long sUl = reader.GetInt64(2);
+                long minRx = reader.GetInt64(3);
+                long maxRx = reader.GetInt64(4);
+                long minTx = reader.GetInt64(5);
+                long maxTx = reader.GetInt64(6);
+
+                if (sDl > 0 || sUl > 0)
+                {
+                    hasDelta = true;
+                }
+                ifaceRows.Add((iface, sDl, sUl, minRx, maxRx, minTx, maxTx));
+            }
+        }
+
+        if (hasDelta)
+        {
+            totalDl = ifaceRows.Sum(r => r.SumDl);
+            totalUl = ifaceRows.Sum(r => r.SumUl);
+        }
+        else
+        {
+            foreach (var r in ifaceRows)
+            {
+                totalDl += Math.Max(0, r.MaxRx - r.MinRx);
+                totalUl += Math.Max(0, r.MaxTx - r.MinTx);
+            }
+        }
+
+        return (totalDl, totalUl);
+    }
+
+    /// <summary>
+    /// Returns today's downloaded and uploaded bytes for the current local calendar day.
+    /// Derived strictly from canonical network telemetry with process fallback.
+    /// </summary>
+    public async Task<(long BytesDownloaded, long BytesUploaded)> GetTodaySummaryAsync(string? interfaceName = null)
+    {
+        var (startUtc, endUtc) = DateRangeHelper.GetLocalTodayRange();
+        var (dl, ul) = await GetUsageRangeSummaryAsync(startUtc, endUtc, interfaceName);
+        if (dl > 0 || ul > 0) return (dl, ul);
+
+        if (string.IsNullOrEmpty(interfaceName) || interfaceName == "All")
+        {
+            var procDaily = (await GetAllProcessesDailyUsageAsync(startUtc, endUtc)).ToList();
+            long pDl = procDaily.Sum(d => d.BytesDownloaded);
+            long pUl = procDaily.Sum(d => d.BytesUploaded);
+            if (pDl > 0 || pUl > 0) return (pDl, pUl);
+
+            var procHourly = (await GetAllProcessesHourlyUsageAsync(DateTime.UtcNow.Date)).ToList();
+            long hDl = procHourly.Sum(h => h.BytesDownloaded);
+            long hUl = procHourly.Sum(h => h.BytesUploaded);
+            if (hDl > 0 || hUl > 0) return (hDl, hUl);
+        }
+
+        return (0L, 0L);
+    }
+
+    /// <summary>
+    /// Returns the current local calendar month's downloaded and uploaded bytes.
+    /// Derived strictly from canonical network telemetry with process fallback.
+    /// </summary>
+    public async Task<(long BytesDownloaded, long BytesUploaded)> GetMonthSummaryAsync(string? interfaceName = null)
+    {
+        var now = DateTime.Now;
+        var (startUtc, endUtc) = DateRangeHelper.GetLocalMonthRange(now.Year, now.Month);
+        var (dl, ul) = await GetUsageRangeSummaryAsync(startUtc, endUtc, interfaceName);
+        if (dl > 0 || ul > 0) return (dl, ul);
+
+        if (string.IsNullOrEmpty(interfaceName) || interfaceName == "All")
+        {
+            var procDaily = (await GetAllProcessesDailyUsageAsync(startUtc, endUtc)).ToList();
+            long pDl = procDaily.Sum(d => d.BytesDownloaded);
+            long pUl = procDaily.Sum(d => d.BytesUploaded);
+            if (pDl > 0 || pUl > 0) return (pDl, pUl);
+        }
+
+        return (0L, 0L);
+    }
+
+    /// <summary>
+    /// Returns one <see cref="HourlyUsageRecord"/> per clock-hour for a given calendar day.
+    /// Aggregated strictly from canonical telemetry with process fallback.
+    /// </summary>
+    public async Task<IEnumerable<HourlyUsageRecord>> GetHourlyUsageAsync(
+        DateTime day, string? interfaceName = null)
+    {
+        var results = new List<HourlyUsageRecord>();
+
+        // Local day boundaries converted to UTC
+        var (dayStart, dayEnd) = DateRangeHelper.GetLocalDayRange(day);
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string sql = @"
+            SELECT
+                CAST(strftime('%H', Timestamp) AS INTEGER) AS Hour,
+                InterfaceName,
+                SUM(DownloadDelta) AS SumDl,
+                SUM(UploadDelta)   AS SumUl,
+                MIN(BytesReceived) AS MinRx,
+                MAX(BytesReceived) AS MaxRx,
+                MIN(BytesSent)     AS MinTx,
+                MAX(BytesSent)     AS MaxTx
+            FROM NetworkUsageRecords
+            WHERE Timestamp >= @Start AND Timestamp <= @End";
+
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
             sql += " AND InterfaceName = @InterfaceName";
 
-        sql += " GROUP BY Hour ORDER BY Hour ASC;";
+        sql += " GROUP BY Hour, InterfaceName ORDER BY Hour ASC;";
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
         cmd.Parameters.AddWithValue("@Start", dayStart.ToUniversalTime().ToString("o"));
         cmd.Parameters.AddWithValue("@End",   dayEnd.ToUniversalTime().ToString("o"));
-        if (!string.IsNullOrEmpty(interfaceName))
+        if (!string.IsNullOrEmpty(interfaceName) && interfaceName != "All")
             cmd.Parameters.AddWithValue("@InterfaceName", interfaceName);
 
-        using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
+        var hourGroups = new Dictionary<int, List<(string Iface, long SumDl, long SumUl, long MinRx, long MaxRx, long MinTx, long MaxTx)>>();
+
+        using (var reader = await cmd.ExecuteReaderAsync())
         {
-            int  hour  = reader.GetInt32(0);
-            long minRx = reader.GetInt64(1);
-            long maxRx = reader.GetInt64(2);
-            long minTx = reader.GetInt64(3);
-            long maxTx = reader.GetInt64(4);
+            while (await reader.ReadAsync())
+            {
+                int  hour  = reader.GetInt32(0);
+                string iface = reader.GetString(1);
+                long sDl = reader.GetInt64(2);
+                long sUl = reader.GetInt64(3);
+                long minRx = reader.GetInt64(4);
+                long maxRx = reader.GetInt64(5);
+                long minTx = reader.GetInt64(6);
+                long maxTx = reader.GetInt64(7);
+
+                if (!hourGroups.TryGetValue(hour, out var list))
+                {
+                    list = new List<(string Iface, long SumDl, long SumUl, long MinRx, long MaxRx, long MinTx, long MaxTx)>();
+                    hourGroups[hour] = list;
+                }
+                list.Add((iface, sDl, sUl, minRx, maxRx, minTx, maxTx));
+            }
+        }
+
+        foreach (var kvp in hourGroups.OrderBy(k => k.Key))
+        {
+            int hour = kvp.Key;
+            var list = kvp.Value;
+            bool hasDelta = list.Any(r => r.SumDl > 0 || r.SumUl > 0);
+            long dl = 0;
+            long ul = 0;
+            if (hasDelta)
+            {
+                dl = list.Sum(r => r.SumDl);
+                ul = list.Sum(r => r.SumUl);
+            }
+            else
+            {
+                foreach (var r in list)
+                {
+                    dl += Math.Max(0, r.MaxRx - r.MinRx);
+                    ul += Math.Max(0, r.MaxTx - r.MinTx);
+                }
+            }
 
             results.Add(new HourlyUsageRecord
             {
-                Hour            = hour,
-                BytesDownloaded = Math.Max(0, maxRx - minRx),
-                BytesUploaded   = Math.Max(0, maxTx - minTx),
+                Hour = hour,
+                BytesDownloaded = dl,
+                BytesUploaded = ul
             });
+        }
+
+        if (results.Count == 0 && (string.IsNullOrEmpty(interfaceName) || interfaceName == "All"))
+        {
+            var procHourly = (await GetAllProcessesHourlyUsageAsync(dayStart.Date)).ToList();
+            if (procHourly.Count > 0) return procHourly;
         }
 
         return results;

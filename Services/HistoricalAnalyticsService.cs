@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DataSense.Database;
+using DataSense.Helpers;
 using DataSense.Models;
 
 namespace DataSense.Services;
@@ -32,19 +33,8 @@ public class HistoricalAnalyticsService : IHistoricalAnalyticsService
         for (int i = 0; i < monthCount; i++)
         {
             var targetMonth = now.AddMonths(-i);
-            var start       = new DateTime(targetMonth.Year, targetMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-            var end         = start.AddMonths(1).AddTicks(-1);
-
-            var procDaily = (await _repository.GetAllProcessesDailyUsageAsync(start, end)).ToList();
-            List<DailyUsageRecord> daily;
-            if (procDaily.Count > 0)
-            {
-                daily = procDaily;
-            }
-            else
-            {
-                daily = (await _repository.GetDailyUsageAsync(start, end)).ToList();
-            }
+            var (mStart, mEnd) = DateRangeHelper.GetLocalMonthRange(targetMonth.Year, targetMonth.Month);
+            var daily = (await _repository.GetDailyUsageAsync(mStart, mEnd)).ToList();
 
             if (!daily.Any())
             {
@@ -80,18 +70,7 @@ public class HistoricalAnalyticsService : IHistoricalAnalyticsService
     public async Task<IList<DailyUsageRecord>> GetDailyBreakdownAsync(
         int year, int month, string? interfaceName = null)
     {
-        var start = new DateTime(year, month, 1,  0, 0, 0, DateTimeKind.Utc);
-        var end   = start.AddMonths(1).AddTicks(-1);
-
-        if (string.IsNullOrEmpty(interfaceName) || interfaceName == "All")
-        {
-            var procRows = (await _repository.GetAllProcessesDailyUsageAsync(start, end)).ToList();
-            if (procRows.Count > 0)
-            {
-                return procRows.OrderBy(d => d.Day).ToList();
-            }
-        }
-
+        var (start, end) = DateRangeHelper.GetLocalMonthRange(year, month);
         var rows  = await _repository.GetDailyUsageAsync(start, end, interfaceName);
         return rows.OrderBy(d => d.Day).ToList();
     }
@@ -103,16 +82,7 @@ public class HistoricalAnalyticsService : IHistoricalAnalyticsService
     public async Task<IList<HourlyUsageRecord>> GetHourlyBreakdownAsync(
         DateTime day, string? interfaceName = null)
     {
-        if (string.IsNullOrEmpty(interfaceName) || interfaceName == "All")
-        {
-            var procRows = (await _repository.GetAllProcessesHourlyUsageAsync(day.Date)).ToList();
-            if (procRows.Count > 0)
-            {
-                return procRows.OrderBy(h => h.Hour).ToList();
-            }
-        }
-
-        var rows = await _repository.GetHourlyUsageAsync(day.Date, interfaceName);
+        var rows = await _repository.GetHourlyUsageAsync(day, interfaceName);
         return rows.OrderBy(h => h.Hour).ToList();
     }
 
@@ -199,32 +169,18 @@ public class HistoricalAnalyticsService : IHistoricalAnalyticsService
         var prevEnd      = start.AddTicks(-1);
         var prevStart    = prevEnd - duration;
 
-        var currentProcTask  = _repository.GetAllProcessesDailyUsageAsync(start, end);
-        var previousProcTask = _repository.GetAllProcessesDailyUsageAsync(prevStart, prevEnd);
+        var currentDailyTask  = _repository.GetDailyUsageAsync(start, end);
+        var previousDailyTask = _repository.GetDailyUsageAsync(prevStart, prevEnd);
 
-        await Task.WhenAll(currentProcTask, previousProcTask);
+        await Task.WhenAll(currentDailyTask, previousDailyTask);
 
-        var currentProc  = currentProcTask.Result.ToList();
-        var previousProc = previousProcTask.Result.ToList();
+        var currentDaily  = currentDailyTask.Result.ToList();
+        var previousDaily = previousDailyTask.Result.ToList();
 
-        long curDl = currentProc.Sum(d => d.BytesDownloaded);
-        long curUl = currentProc.Sum(d => d.BytesUploaded);
-        long prevDl = previousProc.Sum(d => d.BytesDownloaded);
-        long prevUl = previousProc.Sum(d => d.BytesUploaded);
-
-        if (curDl == 0 && curUl == 0)
-        {
-            var curDaily = (await _repository.GetDailyUsageAsync(start, end)).ToList();
-            curDl = curDaily.Sum(d => d.BytesDownloaded);
-            curUl = curDaily.Sum(d => d.BytesUploaded);
-        }
-
-        if (prevDl == 0 && prevUl == 0)
-        {
-            var prevDaily = (await _repository.GetDailyUsageAsync(prevStart, prevEnd)).ToList();
-            prevDl = prevDaily.Sum(d => d.BytesDownloaded);
-            prevUl = prevDaily.Sum(d => d.BytesUploaded);
-        }
+        long curDl = currentDaily.Sum(d => d.BytesDownloaded);
+        long curUl = currentDaily.Sum(d => d.BytesUploaded);
+        long prevDl = previousDaily.Sum(d => d.BytesDownloaded);
+        long prevUl = previousDaily.Sum(d => d.BytesUploaded);
 
         return new PeriodComparisonResult
         {

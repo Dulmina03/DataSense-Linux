@@ -365,8 +365,6 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     private long _todayBaseUl = 0;
     private long _liveAccumulatedDl = 0;
     private long _liveAccumulatedUl = 0;
-    private long _lastIfaceRx = 0;
-    private long _lastIfaceTx = 0;
     [ObservableProperty] private string _liveTotalUsageText = "0 B";
     [ObservableProperty] private string _downloadHeavyProcessText = "—";
     [ObservableProperty] private string _uploadHeavyProcessText = "—";
@@ -745,7 +743,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     // Live monitoring
     // ────────────────────────────────────────────────────────────────────────
 
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (long DownloadBytes, long UploadBytes, DateTime LastSeen)> _liveProcessCumulativeBytes = new(StringComparer.OrdinalIgnoreCase);
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (long DownloadBytes, long UploadBytes, long LastRawDl, long LastRawUl, DateTime LastSeen)> _liveProcessCumulativeBytes = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<ApplicationHistoricalProfile> _todayDbTopProcesses = new();
+    private readonly List<ApplicationHistoricalProfile> _monthDbTopProcesses = new();
     private DateTime _lastLiveTrafficSample = DateTime.UtcNow;
 
     private void OnLiveTrafficUpdated(IEnumerable<ProcessNetworkUsage> currentBatch)
@@ -767,13 +767,32 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             long rawDl = g.Sum(x => x.DownloadBytes);
             long rawUl = g.Sum(x => x.UploadBytes);
 
-            long dlDelta = rawDl > 0 ? rawDl : (long)(dlRate * elapsedSec);
-            long ulDelta = rawUl > 0 ? rawUl : (long)(ulRate * elapsedSec);
-
             _liveProcessCumulativeBytes.AddOrUpdate(
                 key,
-                _ => (Math.Max(rawDl, dlDelta), Math.Max(rawUl, ulDelta), now),
-                (_, prev) => (prev.DownloadBytes + dlDelta, prev.UploadBytes + ulDelta, now));
+                _ =>
+                {
+                    long dlDelta = rawDl > 0 ? 0 : (long)(dlRate * elapsedSec);
+                    long ulDelta = rawUl > 0 ? 0 : (long)(ulRate * elapsedSec);
+                    return (dlDelta, ulDelta, rawDl, rawUl, now);
+                },
+                (_, prev) =>
+                {
+                    long dlDelta;
+                    long ulDelta;
+
+                    if (rawDl > 0 || rawUl > 0)
+                    {
+                        dlDelta = (prev.LastRawDl > 0 && rawDl >= prev.LastRawDl) ? (rawDl - prev.LastRawDl) : 0;
+                        ulDelta = (prev.LastRawUl > 0 && rawUl >= prev.LastRawUl) ? (rawUl - prev.LastRawUl) : 0;
+                    }
+                    else
+                    {
+                        dlDelta = (long)(dlRate * elapsedSec);
+                        ulDelta = (long)(ulRate * elapsedSec);
+                    }
+
+                    return (prev.DownloadBytes + dlDelta, prev.UploadBytes + ulDelta, rawDl, rawUl, now);
+                });
         }
 
         var active = processGroups
@@ -783,8 +802,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 string key = g.Key;
                 _liveProcessCumulativeBytes.TryGetValue(key, out var cumulative);
 
-                long dlBytes = Math.Max(g.Sum(x => x.DownloadBytes), cumulative.DownloadBytes);
-                long ulBytes = Math.Max(g.Sum(x => x.UploadBytes), cumulative.UploadBytes);
+                long dlBytes = cumulative.DownloadBytes;
+                long ulBytes = cumulative.UploadBytes;
 
                 return new ProcessNetworkUsage
                 {
@@ -862,61 +881,180 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             LiveTotalUploadedText = ByteFormatter.FormatBytes(totalUl);
             LiveTotalUsageText = ByteFormatter.FormatBytes(totalDl + totalUl);
 
-            if (LiveProcessTraffic.Count > 0 && (!HasTopProcesses || TopProcesses.Count == 0 || TopProcesses.All(p => p.DataSource == "Live Telemetry")))
-            {
-                var liveGrouped = LiveProcessTraffic
-                    .GroupBy(p => p.ProcessIdentifier.Trim().ToLowerInvariant())
-                    .Select(g =>
-                    {
-                        var first = g.First();
-                        long dl = g.Sum(x => x.DownloadBytes);
-                        long ul = g.Sum(x => x.UploadBytes);
-                        return new ApplicationHistoricalProfile
-                        {
-                            ProcessName = first.ProcessIdentifier,
-                            DownloadBytes = dl,
-                            UploadBytes = ul,
-                            TodayBytes = dl + ul,
-                            DataSource = "Live Telemetry",
-                            ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessIdentifier, first.ExecutablePath),
-                            ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessIdentifier, first.ExecutablePath)
-                        };
-                    })
-                    .Where(p => p.TodayBytes > 0)
-                    .OrderByDescending(p => p.TodayBytes)
-                    .Take(5)
-                    .ToList();
-
-                long totalBytes = liveGrouped.Sum(p => p.TodayBytes);
-                for (int i = 0; i < liveGrouped.Count; i++)
-                {
-                    var p = liveGrouped[i];
-                    if (totalBytes > 0)
-                    {
-                        p.PercentageOfTotal = (double)p.TodayBytes / totalBytes * 100.0;
-                    }
-                    p.DisplayIndex = i;
-                }
-
-                SyncProfileCollection(TopProcesses, liveGrouped);
-                HasTopProcesses = TopProcesses.Count > 0;
-            }
+            UpdateTopProcessesRealtime();
         });
+    }
+
+    private void UpdateTopProcessesRealtime()
+    {
+        // 1. Merge today's database baseline with in-memory live process traffic
+        var mergedToday = new Dictionary<string, ApplicationHistoricalProfile>(StringComparer.OrdinalIgnoreCase);
+
+        lock (_todayDbTopProcesses)
+        {
+            foreach (var p in _todayDbTopProcesses)
+            {
+                mergedToday[p.ProcessName.Trim().ToLowerInvariant()] = new ApplicationHistoricalProfile
+                {
+                    ProcessName = p.ProcessName,
+                    Pid = p.Pid,
+                    ExecutablePath = p.ExecutablePath,
+                    UserName = p.UserName,
+                    DataSource = p.DataSource,
+                    DownloadBytes = p.DownloadBytes,
+                    UploadBytes = p.UploadBytes,
+                    TodayBytes = p.TodayBytes,
+                    TodayDownloadBytes = p.TodayDownloadBytes,
+                    TodayUploadBytes = p.TodayUploadBytes,
+                    ApplicationDisplayName = p.ApplicationDisplayName,
+                    ApplicationIcon = p.ApplicationIcon
+                };
+            }
+        }
+
+        foreach (var live in LiveProcessTraffic)
+        {
+            string key = live.ProcessIdentifier.Trim().ToLowerInvariant();
+            if (mergedToday.TryGetValue(key, out var existing))
+            {
+                existing.DownloadBytes = Math.Max(existing.DownloadBytes, existing.DownloadBytes + live.DownloadBytes);
+                existing.UploadBytes = Math.Max(existing.UploadBytes, existing.UploadBytes + live.UploadBytes);
+                existing.TodayBytes = existing.DownloadBytes + existing.UploadBytes;
+                existing.TodayDownloadBytes = existing.DownloadBytes;
+                existing.TodayUploadBytes = existing.UploadBytes;
+            }
+            else
+            {
+                mergedToday[key] = new ApplicationHistoricalProfile
+                {
+                    ProcessName = live.ProcessIdentifier,
+                    Pid = live.Pid,
+                    ExecutablePath = live.ExecutablePath,
+                    UserName = live.User,
+                    DataSource = "Live Telemetry",
+                    DownloadBytes = live.DownloadBytes,
+                    UploadBytes = live.UploadBytes,
+                    TodayBytes = live.TotalBytes,
+                    TodayDownloadBytes = live.DownloadBytes,
+                    TodayUploadBytes = live.UploadBytes,
+                    ApplicationDisplayName = _appIconService.GetApplicationDisplayName(live.ProcessIdentifier, live.ExecutablePath),
+                    ApplicationIcon = _appIconService.GetApplicationIcon(live.ProcessIdentifier, live.ExecutablePath)
+                };
+            }
+        }
+
+        var topTodayList = mergedToday.Values
+            .Where(p => p.TodayBytes > 0)
+            .OrderByDescending(p => p.TodayBytes)
+            .Take(5)
+            .ToList();
+
+        long totalTodayProcessBytes = topTodayList.Sum(p => p.TodayBytes);
+        for (int i = 0; i < topTodayList.Count; i++)
+        {
+            var p = topTodayList[i];
+            p.PercentageOfTotal = totalTodayProcessBytes > 0 ? (double)p.TodayBytes / totalTodayProcessBytes * 100.0 : 0;
+            p.DisplayIndex = i;
+        }
+
+        // 2. Merge this month's database baseline with in-memory live process traffic
+        var mergedMonth = new Dictionary<string, ApplicationHistoricalProfile>(StringComparer.OrdinalIgnoreCase);
+
+        lock (_monthDbTopProcesses)
+        {
+            foreach (var p in _monthDbTopProcesses)
+            {
+                mergedMonth[p.ProcessName.Trim().ToLowerInvariant()] = new ApplicationHistoricalProfile
+                {
+                    ProcessName = p.ProcessName,
+                    Pid = p.Pid,
+                    ExecutablePath = p.ExecutablePath,
+                    UserName = p.UserName,
+                    DataSource = p.DataSource,
+                    DownloadBytes = p.DownloadBytes,
+                    UploadBytes = p.UploadBytes,
+                    TodayBytes = p.TodayBytes,
+                    ThirtyDayTotalBytes = p.ThirtyDayTotalBytes,
+                    ApplicationDisplayName = p.ApplicationDisplayName,
+                    ApplicationIcon = p.ApplicationIcon
+                };
+            }
+        }
+
+        foreach (var live in LiveProcessTraffic)
+        {
+            string key = live.ProcessIdentifier.Trim().ToLowerInvariant();
+            if (mergedMonth.TryGetValue(key, out var existing))
+            {
+                existing.DownloadBytes = Math.Max(existing.DownloadBytes, existing.DownloadBytes + live.DownloadBytes);
+                existing.UploadBytes = Math.Max(existing.UploadBytes, existing.UploadBytes + live.UploadBytes);
+                existing.ThirtyDayTotalBytes = existing.DownloadBytes + existing.UploadBytes;
+            }
+            else
+            {
+                mergedMonth[key] = new ApplicationHistoricalProfile
+                {
+                    ProcessName = live.ProcessIdentifier,
+                    Pid = live.Pid,
+                    ExecutablePath = live.ExecutablePath,
+                    UserName = live.User,
+                    DataSource = "Live Telemetry",
+                    DownloadBytes = live.DownloadBytes,
+                    UploadBytes = live.UploadBytes,
+                    ThirtyDayTotalBytes = live.TotalBytes,
+                    ApplicationDisplayName = _appIconService.GetApplicationDisplayName(live.ProcessIdentifier, live.ExecutablePath),
+                    ApplicationIcon = _appIconService.GetApplicationIcon(live.ProcessIdentifier, live.ExecutablePath)
+                };
+            }
+        }
+
+        var topMonthList = mergedMonth.Values
+            .Where(p => p.TotalBytes > 0)
+            .OrderByDescending(p => p.TotalBytes)
+            .Take(5)
+            .ToList();
+
+        if (topMonthList.Count == 0 && topTodayList.Count > 0)
+        {
+            topMonthList = topTodayList.Select(p => new ApplicationHistoricalProfile
+            {
+                ProcessName = p.ProcessName,
+                Pid = p.Pid,
+                ExecutablePath = p.ExecutablePath,
+                UserName = p.UserName,
+                DataSource = p.DataSource,
+                DownloadBytes = p.DownloadBytes,
+                UploadBytes = p.UploadBytes,
+                TodayBytes = p.TodayBytes,
+                ThirtyDayTotalBytes = p.TodayBytes,
+                ApplicationDisplayName = p.ApplicationDisplayName,
+                ApplicationIcon = p.ApplicationIcon
+            }).ToList();
+        }
+
+        long totalMonthProcessBytes = topMonthList.Sum(p => p.TotalBytes);
+        for (int i = 0; i < topMonthList.Count; i++)
+        {
+            var p = topMonthList[i];
+            p.PercentageOfTotal = totalMonthProcessBytes > 0 ? (double)p.TotalBytes / totalMonthProcessBytes * 100.0 : 0;
+            p.DisplayIndex = i;
+        }
+
+        SyncProfileCollection(TopProcesses, topTodayList);
+        HasTopProcesses = TopProcesses.Count > 0;
+        TodayProcessTotalText = ByteFormatter.FormatBytes(totalTodayProcessBytes);
+
+        SyncProfileCollection(TopMonthProcesses, topMonthList);
+        HasTopMonthProcesses = TopMonthProcesses.Count > 0;
+        MonthProcessTotalText = ByteFormatter.FormatBytes(totalMonthProcessBytes);
+
+        TopProcessesBaselineText = HasTopProcesses ? "" : "Collecting process usage baseline...";
     }
 
     private void OnNetworkUsageUpdated(NetworkUsage usage)
     {
-        if (_lastIfaceRx > 0 && usage.BytesReceived > _lastIfaceRx)
-        {
-            _liveAccumulatedDl += (usage.BytesReceived - _lastIfaceRx);
-        }
-        _lastIfaceRx = usage.BytesReceived;
-
-        if (_lastIfaceTx > 0 && usage.BytesSent > _lastIfaceTx)
-        {
-            _liveAccumulatedUl += (usage.BytesSent - _lastIfaceTx);
-        }
-        _lastIfaceTx = usage.BytesSent;
+        _liveAccumulatedDl += usage.DownloadDelta;
+        _liveAccumulatedUl += usage.UploadDelta;
 
         long liveDl = Math.Max(_todayBaseDl, _todayBaseDl + _liveAccumulatedDl);
         long liveUl = Math.Max(_todayBaseUl, _todayBaseUl + _liveAccumulatedUl);
@@ -929,7 +1067,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 usage.DownloadSpeed,
                 usage.UploadSpeed,
                 usage.BytesReceived,
-            usage.BytesSent);
+                usage.BytesSent);
 
             AddRealtimeTrafficSample(
                 usage.DownloadSpeed,
@@ -944,18 +1082,18 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             }
         });
 
-        // Auto-refresh analytics when the UTC calendar date has rolled over midnight
-        var utcToday = DateTime.UtcNow.Date;
-        if (utcToday != _lastAnalyticsDate && _lastAnalyticsDate != DateTime.MinValue)
+        // Auto-refresh analytics when the local calendar date has rolled over midnight
+        var today = DateTime.Today;
+        if (today != _lastAnalyticsDate && _lastAnalyticsDate != DateTime.MinValue)
+        {
             _ = LoadAnalyticsAsync();
-
-        // Refresh today data usage metrics and charts in real-time on every tick
-        _ = LoadAnalyticsAsync(showLoading: false);
+        }
 
         _tickCount++;
         if (_tickCount >= 5)
         {
             _tickCount = 0;
+            _ = LoadAnalyticsAsync(showLoading: false);
             _ = LoadConnectionDetailsAsync(usage.InterfaceName);
         }
     }
@@ -1306,27 +1444,15 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
         try
         {
-            var utcNow = DateTime.UtcNow;
-
             // ── 1. Today summary ─────────────────────────────────────────────
             var (todayDl, todayUl) = await _repository.GetTodaySummaryAsync();
             long todayTotal        = todayDl + todayUl;
 
             // ── 2. Yesterday summary ─────────────────────────────────────────
-            var yesterdayStart = DateTime.SpecifyKind(utcNow.Date.AddDays(-1), DateTimeKind.Utc);
-            var yesterdayEnd   = yesterdayStart.AddDays(1).AddTicks(-1);
-            var yesterdayProc  = (await _repository.GetAllProcessesDailyUsageAsync(yesterdayStart, yesterdayEnd)).FirstOrDefault();
-            long yesterdayTotal = 0;
-            if (yesterdayProc != null)
-            {
-                yesterdayTotal = yesterdayProc.TotalBytes;
-            }
-            else
-            {
-                var yesterdayDaily = (await _repository.GetDailyUsageAsync(yesterdayStart, yesterdayEnd)).FirstOrDefault();
-                yesterdayTotal = yesterdayDaily?.TotalBytes ?? 0;
-            }
-            bool hasYesterday   = yesterdayTotal > 0 || yesterdayProc != null;
+            var (yesterdayStart, yesterdayEnd) = DateRangeHelper.GetLocalDayRange(DateTime.Today.AddDays(-1));
+            var yesterdayDaily = (await _repository.GetDailyUsageAsync(yesterdayStart, yesterdayEnd)).FirstOrDefault();
+            long yesterdayTotal = yesterdayDaily?.TotalBytes ?? 0;
+            bool hasYesterday   = yesterdayTotal > 0 || yesterdayDaily != null;
 
             // Delta percentage vs yesterday
             string deltaText  = "—";
@@ -1343,8 +1469,6 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
             // ── 3. Month summary ─────────────────────────────────────────────
             var (monthDl, monthUl) = await _repository.GetMonthSummaryAsync();
-            monthDl = Math.Max(monthDl, todayDl);
-            monthUl = Math.Max(monthUl, todayUl);
             long monthTotal        = monthDl + monthUl;
 
             // Ratio (guard: avoid division by zero)
@@ -1352,20 +1476,11 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
             double ulRatio = monthTotal > 0 ? (double)monthUl / monthTotal : 0.5;
 
             // ── 4. Daily chart data — last ChartDays ─────────────────────────
-            var chartStart = DateTime.SpecifyKind(utcNow.Date.AddDays(-(ChartDays - 1)), DateTimeKind.Utc);
-            var chartEnd   = DateTime.SpecifyKind(utcNow.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
-            var procDailyRaw = (await _repository.GetAllProcessesDailyUsageAsync(chartStart, chartEnd)).ToList();
-            List<DailyUsageRecord> dailyRaw;
-            if (procDailyRaw.Count > 0)
-            {
-                dailyRaw = procDailyRaw;
-            }
-            else
-            {
-                dailyRaw = (await _repository.GetDailyUsageAsync(chartStart, chartEnd)).ToList();
-            }
+            var (chartStart, _) = DateRangeHelper.GetLocalDayRange(DateTime.Today.AddDays(-(ChartDays - 1)));
+            var (_, chartEnd)   = DateRangeHelper.GetLocalTodayRange();
+            var dailyRaw = (await _repository.GetDailyUsageAsync(chartStart, chartEnd)).ToList();
 
-            // GetAllProcessesDailyUsageAsync / GetDailyUsageAsync returns ORDER BY Day DESC — reverse to chronological
+            // GetDailyUsageAsync returns ORDER BY Day DESC — reverse to chronological
             dailyRaw.Reverse();
             var chartData = dailyRaw.TakeLast(ChartDays).ToList();
 
@@ -1447,8 +1562,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 }
             });
 
-            // Record the UTC date so midnight auto-refresh fires correctly
-            _lastAnalyticsDate = utcNow.Date;
+            // Record the date so midnight auto-refresh fires correctly
+            _lastAnalyticsDate = DateTime.Today;
 
             // Load period analytics
             await LoadPeriodAnalyticsAsync(showLoading);
@@ -1583,20 +1698,17 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 if (showLoading) IsPeriodAnalyticsLoading = false;
             });
 
-            // Load Top Processes (Historical Profiles) with forceRefresh to bypass TTL cache
-            var allProfiles = (await _applicationAnalyticsService.GetApplicationProfilesAsync(forceRefresh: true)).ToList();
-
             // ── Top Processes for TODAY ─────────────────────────────────────────
-            var todayTopGrouped = allProfiles
-                .Where(p => p.TodayBytes > 0 || p.TodayDownloadBytes > 0 || p.TodayUploadBytes > 0)
+            var (todayStart, todayEnd) = DateRangeHelper.GetLocalTodayRange();
+            var todayTopRecords = (await _repository.GetTopProcessesAsync(todayStart, todayEnd, 100)).ToList();
+            var todayTopGrouped = todayTopRecords
                 .GroupBy(p => p.ProcessName.Trim().ToLowerInvariant())
                 .Select(g =>
                 {
                     var first = g.First();
-                    long todayDl = g.Sum(x => x.TodayDownloadBytes);
-                    long todayUl = g.Sum(x => x.TodayUploadBytes);
-                    long todayTotal = g.Sum(x => x.TodayBytes);
-                    if (todayTotal == 0) todayTotal = todayDl + todayUl;
+                    long todayDl = g.Sum(x => x.BytesDownloaded);
+                    long todayUl = g.Sum(x => x.BytesUploaded);
+                    long todayTotal = todayDl + todayUl;
 
                     return new ApplicationHistoricalProfile
                     {
@@ -1610,9 +1722,6 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                         TodayBytes = todayTotal,
                         TodayDownloadBytes = todayDl,
                         TodayUploadBytes = todayUl,
-                        YesterdayBytes = g.Sum(x => x.YesterdayBytes),
-                        SevenDayTotalBytes = g.Sum(x => x.SevenDayTotalBytes),
-                        ThirtyDayTotalBytes = g.Sum(x => x.ThirtyDayTotalBytes),
                         ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessName, first.ExecutablePath),
                         ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessName, first.ExecutablePath)
                     };
@@ -1622,56 +1731,24 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 .Take(5)
                 .ToList();
 
-            var topProcessesList = todayTopGrouped;
-
-            // Fallback to active live process telemetry if database process table has no today records yet
-            if (topProcessesList.Count == 0 && LiveProcessTraffic.Count > 0)
+            lock (_todayDbTopProcesses)
             {
-                var liveGrouped = LiveProcessTraffic
-                    .GroupBy(p => p.ProcessIdentifier.Trim().ToLowerInvariant())
-                    .Select(g =>
-                    {
-                        var first = g.First();
-                        long dl = g.Sum(x => x.DownloadBytes);
-                        long ul = g.Sum(x => x.UploadBytes);
-                        return new ApplicationHistoricalProfile
-                        {
-                            ProcessName = first.ProcessIdentifier,
-                            DownloadBytes = dl,
-                            UploadBytes = ul,
-                            TodayBytes = dl + ul,
-                            DataSource = "Live Telemetry",
-                            ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessIdentifier, first.ExecutablePath),
-                            ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessIdentifier, first.ExecutablePath)
-                        };
-                    })
-                    .Where(p => p.TodayBytes > 0)
-                    .OrderByDescending(p => p.TodayBytes)
-                    .Take(5)
-                    .ToList();
-                topProcessesList = liveGrouped;
-            }
-
-            long totalTodayProcessBytes = topProcessesList.Sum(p => p.TodayBytes);
-            for (int i = 0; i < topProcessesList.Count; i++)
-            {
-                var p = topProcessesList[i];
-                if (totalTodayProcessBytes > 0)
-                {
-                    p.PercentageOfTotal = (double)p.TodayBytes / totalTodayProcessBytes * 100.0;
-                }
-                p.DisplayIndex = i;
+                _todayDbTopProcesses.Clear();
+                _todayDbTopProcesses.AddRange(todayTopGrouped);
             }
 
             // ── Top Processes for THIS MONTH ────────────────────────────────────
-            var monthTopGrouped = allProfiles
+            var (mStart, mEnd) = DateRangeHelper.GetLocalMonthRange(DateTime.Today.Year, DateTime.Today.Month);
+            var monthTopRecords = (await _repository.GetTopProcessesAsync(mStart, mEnd, 100)).ToList();
+            var monthTopGrouped = monthTopRecords
                 .GroupBy(p => p.ProcessName.Trim().ToLowerInvariant())
                 .Select(g =>
                 {
                     var first = g.First();
-                    long monthDl = g.Sum(x => x.DownloadBytes);
-                    long monthUl = g.Sum(x => x.UploadBytes);
-                    long monthTotal = g.Sum(x => x.ThirtyDayTotalBytes > 0 ? x.ThirtyDayTotalBytes : x.TodayBytes);
+                    long monthDl = g.Sum(x => x.BytesDownloaded);
+                    long monthUl = g.Sum(x => x.BytesUploaded);
+                    long monthTotal = monthDl + monthUl;
+
                     return new ApplicationHistoricalProfile
                     {
                         ProcessName = first.ProcessName,
@@ -1681,54 +1758,24 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                         DataSource = first.DataSource,
                         DownloadBytes = monthDl,
                         UploadBytes = monthUl,
-                        TodayBytes = g.Sum(x => x.TodayBytes),
-                        YesterdayBytes = g.Sum(x => x.YesterdayBytes),
-                        SevenDayTotalBytes = g.Sum(x => x.SevenDayTotalBytes),
-                        ThirtyDayTotalBytes = monthTotal > 0 ? monthTotal : (monthDl + monthUl),
+                        TodayBytes = monthTotal,
+                        ThirtyDayTotalBytes = monthTotal,
                         ApplicationDisplayName = _appIconService.GetApplicationDisplayName(first.ProcessName, first.ExecutablePath),
                         ApplicationIcon = _appIconService.GetApplicationIcon(first.ProcessName, first.ExecutablePath)
                     };
                 })
-                .Where(p => p.ThirtyDayTotalBytes > 0)
-                .OrderByDescending(p => p.ThirtyDayTotalBytes)
+                .Where(p => p.TotalBytes > 0)
+                .OrderByDescending(p => p.TotalBytes)
                 .Take(5)
                 .ToList();
 
-            var topMonthProcessesList = monthTopGrouped;
-
-            if (topMonthProcessesList.Count == 0 && topProcessesList.Count > 0)
+            lock (_monthDbTopProcesses)
             {
-                topMonthProcessesList = topProcessesList.Select(p => new ApplicationHistoricalProfile
-                {
-                    ProcessName = p.ProcessName,
-                    Pid = p.Pid,
-                    ExecutablePath = p.ExecutablePath,
-                    UserName = p.UserName,
-                    DataSource = p.DataSource,
-                    DownloadBytes = p.DownloadBytes,
-                    UploadBytes = p.UploadBytes,
-                    TodayBytes = p.TodayBytes,
-                    YesterdayBytes = p.YesterdayBytes,
-                    SevenDayTotalBytes = p.SevenDayTotalBytes,
-                    ThirtyDayTotalBytes = p.TodayBytes,
-                    ApplicationDisplayName = p.ApplicationDisplayName,
-                    ApplicationIcon = p.ApplicationIcon
-                }).ToList();
+                _monthDbTopProcesses.Clear();
+                _monthDbTopProcesses.AddRange(monthTopGrouped);
             }
 
-            long totalMonthProcessBytes = topMonthProcessesList.Sum(p => p.ThirtyDayTotalBytes);
-            for (int i = 0; i < topMonthProcessesList.Count; i++)
-            {
-                var p = topMonthProcessesList[i];
-                if (totalMonthProcessBytes > 0)
-                {
-                    p.PercentageOfTotal = (double)p.ThirtyDayTotalBytes / totalMonthProcessBytes * 100.0;
-                }
-                p.DisplayIndex = i;
-            }
-
-            var dlHeavy = topProcessesList.Count > 0 ? topProcessesList.MaxBy(p => p.TodayBytes) : null; // simplified max
-            var ulHeavy = dlHeavy; // Profiles don't separate dl/ul cleanly for MaxBy, but we can just map it
+            var dlHeavy = todayTopGrouped.Count > 0 ? todayTopGrouped.MaxBy(p => p.TodayBytes) : null;
 
             // Application Intelligence Insight
             string insight = "Insufficient application history.";
@@ -1740,9 +1787,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 {
                     insight = topRec.Description;
                 }
-                else if (topProcessesList.Count > 0)
+                else if (todayTopGrouped.Count > 0)
                 {
-                    var topApp = topProcessesList[0];
+                    var topApp = todayTopGrouped[0];
                     if (topApp.PercentageOfTotal > 0)
                         insight = $"{topApp.ProcessName} is responsible for {topApp.PercentageOfTotal:F0}% of usage.";
                     else
@@ -1754,22 +1801,9 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                 System.Diagnostics.Debug.WriteLine($"App intelligence failed: {ex.Message}");
             }
 
-            long totalTodayProcBytes = topProcessesList.Sum(p => p.TodayBytes);
-            long totalMonthProcBytes = topMonthProcessesList.Sum(p => p.ThirtyDayTotalBytes);
-
-            string todayProcText = ByteFormatter.FormatBytes(totalTodayProcBytes);
-            string monthProcText = ByteFormatter.FormatBytes(totalMonthProcBytes);
-
             Dispatcher.UIThread.Post(() =>
             {
-                SyncProfileCollection(TopProcesses, topProcessesList);
-                HasTopProcesses = TopProcesses.Count > 0;
-
-                SyncProfileCollection(TopMonthProcesses, topMonthProcessesList);
-                HasTopMonthProcesses = TopMonthProcesses.Count > 0;
-
-                TodayProcessTotalText = todayProcText;
-                MonthProcessTotalText = monthProcText;
+                UpdateTopProcessesRealtime();
 
                 TopAppInsightText = insight;
                 
@@ -1783,8 +1817,6 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
                     DownloadHeavyProcessText = "—";
                     UploadHeavyProcessText = "—";
                 }
-
-                TopProcessesBaselineText = HasTopProcesses ? "" : "Collecting process usage baseline...";
             });
         }
         catch (Exception ex)

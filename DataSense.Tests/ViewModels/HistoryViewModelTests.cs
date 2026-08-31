@@ -159,8 +159,8 @@ public class HistoryViewModelTests : IDisposable
         await vm.LoadAsync(showLoading: false);
 
         Assert.Equal(7, vm.HistoricalChartPoints.Count);
-        Assert.Equal("Mon", vm.HistoricalChartPoints[0].Label);
-        Assert.Equal("Sun", vm.HistoricalChartPoints[6].Label);
+        Assert.Equal(start.Date.ToString("ddd", System.Globalization.CultureInfo.InvariantCulture), vm.HistoricalChartPoints[0].Label);
+        Assert.Equal(start.Date.AddDays(6).ToString("ddd", System.Globalization.CultureInfo.InvariantCulture), vm.HistoricalChartPoints[6].Label);
 
         var activePoint = vm.HistoricalChartPoints.FirstOrDefault(p => p.DownloadBytes == 50_000_000);
         Assert.NotNull(activePoint);

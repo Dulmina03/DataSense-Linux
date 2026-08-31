@@ -11,4 +11,6 @@ public class NetworkUsageRecord
     public double UploadSpeed { get; set; }
     public long BytesReceived { get; set; }
     public long BytesSent { get; set; }
+    public long DownloadDelta { get; set; }
+    public long UploadDelta { get; set; }
 }

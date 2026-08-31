@@ -227,14 +227,35 @@ public class ApplicationHistoricalProfile : ObservableObject
 
     // ── Period Aggregates ─────────────────────────────────────────────────────
 
+    private long _todayBytes;
     /// <summary>Bytes today (UTC calendar day). 0 if no today records.</summary>
-    public long TodayBytes { get; set; }
+    public long TodayBytes
+    {
+        get => _todayBytes;
+        set
+        {
+            if (SetProperty(ref _todayBytes, value))
+            {
+                OnPropertyChanged(nameof(TooltipSummary));
+            }
+        }
+    }
 
+    private long _todayDownloadBytes;
     /// <summary>Download bytes today.</summary>
-    public long TodayDownloadBytes { get; set; }
+    public long TodayDownloadBytes
+    {
+        get => _todayDownloadBytes;
+        set => SetProperty(ref _todayDownloadBytes, value);
+    }
 
+    private long _todayUploadBytes;
     /// <summary>Upload bytes today.</summary>
-    public long TodayUploadBytes { get; set; }
+    public long TodayUploadBytes
+    {
+        get => _todayUploadBytes;
+        set => SetProperty(ref _todayUploadBytes, value);
+    }
 
     /// <summary>Bytes yesterday (UTC calendar day). 0 if no yesterday records.</summary>
     public long YesterdayBytes { get; set; }
@@ -248,8 +269,19 @@ public class ApplicationHistoricalProfile : ObservableObject
     /// </summary>
     public double? SevenDayAverageBytes { get; set; }
 
+    private long _thirtyDayTotalBytes;
     /// <summary>Bytes in last 30 days (rolling). 0 if no records.</summary>
-    public long ThirtyDayTotalBytes { get; set; }
+    public long ThirtyDayTotalBytes
+    {
+        get => _thirtyDayTotalBytes;
+        set
+        {
+            if (SetProperty(ref _thirtyDayTotalBytes, value))
+            {
+                OnPropertyChanged(nameof(TooltipSummary));
+            }
+        }
+    }
 
     /// <summary>
     /// Daily average over active days in last 30 days.
@@ -303,7 +335,13 @@ public class ApplicationHistoricalProfile : ObservableObject
     public double PercentageOfTotal
     {
         get => _percentageOfTotal;
-        set => SetProperty(ref _percentageOfTotal, value);
+        set
+        {
+            if (SetProperty(ref _percentageOfTotal, value))
+            {
+                OnPropertyChanged(nameof(TooltipSummary));
+            }
+        }
     }
 
     private double _relativeUsagePercent;

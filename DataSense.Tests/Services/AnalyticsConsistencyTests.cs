@@ -64,7 +64,7 @@ public class AnalyticsConsistencyTests
         };
         await context.Repository.SaveSessionAsync(activeSession);
 
-        var (dl, ul) = await context.Repository.GetTodaySummaryAsync(iface);
+        var (dl, ul) = await context.Repository.GetSessionsSummaryAsync(start, end, iface);
         var sessions = (await context.Repository.GetSessionsAsync(start, end, iface)).ToList();
 
         Assert.Equal(80 * mb, dl);
@@ -135,7 +135,7 @@ public class AnalyticsConsistencyTests
         };
         await context.Repository.SaveSessionAsync(ethSession);
 
-        var (todayDl, todayUl) = await context.Repository.GetTodaySummaryAsync(null);
+        var (todayDl, todayUl) = await context.Repository.GetSessionsSummaryAsync(start, end, null);
 
         Assert.Equal(150 * mb, todayDl);
         Assert.Equal(40 * mb, todayUl);
