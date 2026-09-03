@@ -5,3 +5,5 @@ obj/
 .vscode/
 .idea/
 packages-microsoft-prod.deb
+build/
+

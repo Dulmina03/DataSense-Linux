@@ -1594,8 +1594,9 @@ public class HistoryViewModelTests : IDisposable
         await vm.LoadAsync(showLoading: false);
 
         var monthDialog = vm.FilteredNetworkSessions.First(s => s.DisplayName == "Dialog 4G");
-        // Monthly total for Dialog 4G should be >= 4.2 GB (Today + 3 Days Ago) and exclude previous month (10.0 GB)
-        Assert.True(monthDialog.TotalBytes >= 4_200_000_000);
+        // Monthly total for Dialog 4G should be >= 1.2 GB (Today) + (3 Days Ago if in same month) and exclude previous month (10.0 GB)
+        long expectedMonthMin = threeDaysAgo.Month == today.Month ? 4_200_000_000 : 1_200_000_000;
+        Assert.True(monthDialog.TotalBytes >= expectedMonthMin);
         Assert.True(monthDialog.TotalBytes < 14_000_000_000);
 
         // 4. Switch back to TODAY (Round-trip test)

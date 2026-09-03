@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -7,17 +8,20 @@ using DataSense.Models;
 
 namespace DataSense.Services;
 
+/// <summary>
+/// Bridges the canonical <see cref="IUsageSnapshotService"/> to existing <see cref="INetworkMonitorWorker"/> consumers.
+/// Guarantees that there is only ONE measurement loop active in the application.
+/// </summary>
 public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
 {
-    private readonly INetworkMonitorService _networkMonitorService;
-    private CancellationTokenSource? _cts;
-    private Task? _runTask;
+    private readonly IUsageSnapshotService? _snapshotService;
+    private readonly INetworkMonitorService? _legacyMonitorService;
     private readonly object _stateLock = new();
+    private bool _isStarted;
     private bool _disposed;
-    private string? _previousInterface;
 
-    public string? ActiveInterface { get; private set; }
-    public bool IsRunning => _cts != null && !_cts.IsCancellationRequested;
+    public string? ActiveInterface { get; private set; } = "Disconnected";
+    public bool IsRunning => _snapshotService?.IsRunning ?? _isStarted;
     public double DownloadSpeed { get; private set; }
     public double UploadSpeed { get; private set; }
     public long TotalBytesDownloaded { get; private set; }
@@ -27,74 +31,143 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
 
     public event Action<NetworkUsage>? NetworkUsageUpdated;
 
+    /// <summary>
+    /// Canonical constructor accepting the single <see cref="IUsageSnapshotService"/>.
+    /// </summary>
+    public NetworkMonitorWorker(IUsageSnapshotService snapshotService)
+    {
+        _snapshotService = snapshotService ?? throw new ArgumentNullException(nameof(snapshotService));
+        _snapshotService.SnapshotsGenerated += OnCanonicalSnapshotsGenerated;
+    }
+
+    /// <summary>
+    /// Legacy constructor preserved for backwards compatibility with tests.
+    /// </summary>
     public NetworkMonitorWorker(INetworkMonitorService networkMonitorService)
     {
-        _networkMonitorService = networkMonitorService ?? throw new ArgumentNullException(nameof(networkMonitorService));
+        _legacyMonitorService = networkMonitorService ?? throw new ArgumentNullException(nameof(networkMonitorService));
     }
 
     public void Start()
     {
         lock (_stateLock)
         {
-            if (_cts != null) return; // Already running
+            if (_isStarted) return;
+            _isStarted = true;
 
-            _cts = new CancellationTokenSource();
-            _runTask = Task.Run(() => RunAsync(_cts.Token));
+            if (_snapshotService != null)
+            {
+                _snapshotService.Start();
+            }
+            else if (_legacyMonitorService != null)
+            {
+                StartLegacyPolling();
+            }
         }
     }
 
     public void Stop()
     {
-        CancellationTokenSource? cts;
-        Task? runTask;
-
         lock (_stateLock)
         {
-            cts = _cts;
-            runTask = _runTask;
+            if (!_isStarted) return;
+            _isStarted = false;
 
-            _cts = null;
-            _runTask = null;
-        }
-
-        if (cts != null)
-        {
-            cts.Cancel();
-            try
+            if (_snapshotService != null)
             {
-                runTask?.GetAwaiter().GetResult();
+                _snapshotService.Stop();
             }
-            catch (OperationCanceledException)
+            else
             {
-                // Expected
+                StopLegacyPolling();
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error stopping background worker: {ex}");
-            }
-            cts.Dispose();
         }
     }
 
-    private async Task RunAsync(CancellationToken cancellationToken)
+    private void OnCanonicalSnapshotsGenerated(IReadOnlyList<NetworkUsageSnapshot> snapshots)
+    {
+        var host = _snapshotService?.GetLatestHostSnapshot();
+        string activeIface = _snapshotService?.PrimaryActiveInterface ?? "Disconnected";
+
+        if (host != null && snapshots.Count > 0)
+        {
+            ActiveInterface = activeIface;
+            DownloadSpeed = host.DownloadSpeedBps;
+            UploadSpeed = host.UploadSpeedBps;
+            TotalBytesDownloaded = host.RawBytesReceived;
+            TotalBytesUploaded = host.RawBytesSent;
+
+            var usage = new NetworkUsage
+            {
+                InterfaceName = activeIface,
+                BytesReceived = host.RawBytesReceived,
+                BytesSent = host.RawBytesSent,
+                DownloadDelta = host.DeltaBytesReceived,
+                UploadDelta = host.DeltaBytesSent,
+                DownloadSpeed = host.DownloadSpeedBps,
+                UploadSpeed = host.UploadSpeedBps,
+                Timestamp = host.TimestampUtc
+            };
+
+            LatestUsage = usage;
+            NetworkUsageUpdated?.Invoke(usage);
+        }
+        else
+        {
+            ActiveInterface = "Disconnected";
+            DownloadSpeed = 0;
+            UploadSpeed = 0;
+
+            var fallbackUsage = new NetworkUsage
+            {
+                InterfaceName = "Disconnected",
+                Timestamp = DateTime.UtcNow
+            };
+
+            LatestUsage = fallbackUsage;
+            NetworkUsageUpdated?.Invoke(fallbackUsage);
+        }
+    }
+
+    #region Legacy Polling Fallback (For isolated legacy tests without snapshot service)
+
+    private CancellationTokenSource? _legacyCts;
+    private Task? _legacyTask;
+    private string? _previousInterface;
+
+    private void StartLegacyPolling()
+    {
+        _legacyCts = new CancellationTokenSource();
+        _legacyTask = Task.Run(() => RunLegacyAsync(_legacyCts.Token));
+    }
+
+    private void StopLegacyPolling()
+    {
+        _legacyCts?.Cancel();
+        try { _legacyTask?.GetAwaiter().GetResult(); } catch { }
+        _legacyCts?.Dispose();
+        _legacyCts = null;
+        _legacyTask = null;
+    }
+
+    private async Task RunLegacyAsync(CancellationToken ct)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-
-        while (!cancellationToken.IsCancellationRequested)
+        while (!ct.IsCancellationRequested)
         {
             try
             {
-                string? activeIface = await DetectActiveInterfaceAsync();
-                if (!string.IsNullOrEmpty(activeIface) && activeIface != "None" && activeIface != "Disconnected")
+                var interfaces = await _legacyMonitorService!.GetAvailableInterfacesAsync();
+                var activeIface = interfaces.FirstOrDefault();
+                if (!string.IsNullOrEmpty(activeIface) && activeIface != "None")
                 {
                     if (_previousInterface != null && _previousInterface != activeIface)
                     {
-                        // Interface changed (e.g. Wi-Fi <-> Ethernet) -> reset baseline to prevent cross-interface spike
-                        _networkMonitorService.ResetMeasurement(activeIface);
+                        _legacyMonitorService.ResetMeasurement(activeIface);
                     }
                     _previousInterface = activeIface;
 
-                    var usage = await _networkMonitorService.GetUsageAsync(activeIface);
+                    var usage = await _legacyMonitorService.GetUsageAsync(activeIface);
                     if (usage != null)
                     {
                         ActiveInterface = usage.InterfaceName;
@@ -103,164 +176,29 @@ public class NetworkMonitorWorker : INetworkMonitorWorker, IDisposable
                         TotalBytesDownloaded = usage.BytesReceived;
                         TotalBytesUploaded = usage.BytesSent;
                         LatestUsage = usage;
-
                         NetworkUsageUpdated?.Invoke(usage);
                     }
-                    else
-                    {
-                        ActiveInterface = activeIface;
-                        DownloadSpeed = 0;
-                        UploadSpeed = 0;
-
-                        var fallbackUsage = new NetworkUsage
-                        {
-                            InterfaceName = activeIface,
-                            Timestamp = DateTime.UtcNow
-                        };
-                        LatestUsage = fallbackUsage;
-                        NetworkUsageUpdated?.Invoke(fallbackUsage);
-                    }
-                }
-                else
-                {
-                    _previousInterface = null;
-                    ActiveInterface = "Disconnected";
-                    DownloadSpeed = 0;
-                    UploadSpeed = 0;
-
-                    var fallbackUsage = new NetworkUsage
-                    {
-                        InterfaceName = "Disconnected",
-                        Timestamp = DateTime.UtcNow
-                    };
-                    LatestUsage = fallbackUsage;
-                    NetworkUsageUpdated?.Invoke(fallbackUsage);
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in background monitor worker: {ex}");
-            }
+            catch { }
 
-            try
-            {
-                await timer.WaitForNextTickAsync(cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
+            try { await timer.WaitForNextTickAsync(ct); } catch { break; }
         }
     }
 
-    private async Task<string?> DetectActiveInterfaceAsync()
-    {
-        // 1. Try to find active interface via default gateway in /proc/net/route
-        string? routeInterface = GetDefaultRouteInterface();
-        if (!string.IsNullOrEmpty(routeInterface))
-        {
-            return routeInterface;
-        }
-
-        // 2. Try IPv6 default route in /proc/net/ipv6_route
-        string? ipv6RouteInterface = GetDefaultIpv6RouteInterface();
-        if (!string.IsNullOrEmpty(ipv6RouteInterface))
-        {
-            return ipv6RouteInterface;
-        }
-
-        // 3. Fallback: Query INetworkMonitorService for available interfaces (sorted with operational ones first)
-        var available = await _networkMonitorService.GetAvailableInterfacesAsync();
-        var availableList = available.ToList();
-        if (availableList.Any())
-        {
-            return availableList.First();
-        }
-
-        return null;
-    }
-
-    private string? GetDefaultRouteInterface()
-    {
-        const string routePath = "/proc/net/route";
-        if (!File.Exists(routePath))
-            return null;
-
-        try
-        {
-            var lines = File.ReadAllLines(routePath);
-            foreach (var line in lines.Skip(1))
-            {
-                var parts = line.Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                if (parts.Length < 8) continue;
-
-                var iface = parts[0];
-                var destination = parts[1];
-                var mask = parts[7];
-
-                // Default route destination is 00000000 and mask is 00000000
-                if (destination == "00000000" && mask == "00000000" && iface != "lo")
-                {
-                    return iface;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error reading default route: {ex}");
-        }
-
-        return null;
-    }
-
-    private string? GetDefaultIpv6RouteInterface()
-    {
-        const string ipv6RoutePath = "/proc/net/ipv6_route";
-        if (!File.Exists(ipv6RoutePath))
-            return null;
-
-        try
-        {
-            var lines = File.ReadAllLines(ipv6RoutePath);
-            foreach (var line in lines)
-            {
-                var parts = line.Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                if (parts.Length < 10) continue;
-
-                var dest = parts[0];
-                var prefix = parts[1];
-                var iface = parts[9];
-
-                // Default route has destination 00000000000000000000000000000000 and prefix 00
-                if (dest.StartsWith("00000000") && prefix == "00" && iface != "lo")
-                {
-                    return iface;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error reading default IPv6 route: {ex}");
-        }
-
-        return null;
-    }
+    #endregion
 
     public void Dispose()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
         if (!_disposed)
         {
-            if (disposing)
+            if (_snapshotService != null)
             {
-                Stop();
+                _snapshotService.SnapshotsGenerated -= OnCanonicalSnapshotsGenerated;
             }
+            Stop();
             _disposed = true;
         }
     }
 }
+

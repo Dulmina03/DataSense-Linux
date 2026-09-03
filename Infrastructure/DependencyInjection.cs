@@ -52,6 +52,8 @@ public static class DependencyInjection
         services.AddSingleton<ITopBarSpeedMeterService, TopBarSpeedMeterService>();
 
         // Monitoring Services
+        services.AddSingleton<INetworkUsageCollector, LinuxNetworkUsageCollector>();
+        services.AddSingleton<IUsageSnapshotService, UsageSnapshotService>();
         services.AddSingleton<INetworkMonitorService, LinuxNetworkMonitorService>();
         services.AddSingleton<INetworkMonitorWorker, NetworkMonitorWorker>();
         services.AddSingleton<INetworkPersistenceService, NetworkPersistenceService>();

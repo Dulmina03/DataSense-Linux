@@ -152,6 +152,13 @@ public partial class App : Application
 
         try
         {
+            var snapshotService = Services.GetService<IUsageSnapshotService>();
+            snapshotService?.Start();
+        }
+        catch { }
+
+        try
+        {
             var worker = Services.GetService<INetworkMonitorWorker>();
             worker?.Start();
         }
@@ -192,6 +199,7 @@ public partial class App : Application
 
         try { Services.GetService<ITopBarSpeedMeterService>()?.Dispose(); } catch { }
         try { Services.GetService<INetworkMonitorWorker>()?.Stop(); } catch { }
+        try { Services.GetService<IUsageSnapshotService>()?.Stop(); } catch { }
         try { Services.GetService<ProcessNetworkMonitorWorker>()?.Stop(); } catch { }
         try { Services.GetService<INetworkPersistenceService>()?.Stop(); } catch { }
         try { Services.GetService<NetworkSessionManager>()?.Stop(); } catch { }
